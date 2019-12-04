@@ -1,0 +1,7 @@
+### Batch_1 - SVALBARD SIMULATIONS ### all units in meters: 1) snowpack depth [m], 2) snowpack horizontal lenght [m], 3) vertical layer thickness in simulations [m], 4) horizontal layer thickness in simulation [m],5) qmelt file, 6) print interval in seconds
+2
+1
+0.005
+0.005
+qmelt.pls
+3600
