@@ -692,7 +692,7 @@ void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             (*gv.exchange_im).at(il,ih) = filedata(a,8);
         }
         msg = "Initial conditions found: " + init_file;
-        //rint_screen_log(logPULSEfile,&msg); 
+        print_screen_log(logPULSEfile,&msg);  
         
     }else{
         msg = "Initial conditions NOT FOUND: simulation aborted";  
