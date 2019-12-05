@@ -86,6 +86,10 @@ void print_screen_log(std::ofstream* logPULSEfile,std::string* msg)
 {
     std::cout << (*msg) << std::endl;
     (*logPULSEfile) << (*msg) + "\n";  
+    try{
+        
+    } catch(const std::exception& e){
+    }
     
 }
 
@@ -140,7 +144,7 @@ int findLastStep(const char *path) {
    
    timestart = 0;
    for(i=2;i<filenum;i++){
-       filename_i = filenames[i]; //.assign(filenames[i]); //strcpy(filename_i,(char *)(&filenames[i]));
+       filename_i = filenames[i]; //.assign(filenames[i]); //strcpy(filename_i,(char *).at(&filenames[i]));
         simnum_str_i = (char*) malloc(sizeof(filename_i)-2);
         strncpy (simnum_str_i, filename_i, sizeof(filename_i)-2);
         simnum = atoi(simnum_str_i);
@@ -424,13 +428,8 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
     {
 
         t += 1;
-        if (t==59){
-            std::cout << std::to_string(t) << std::endl; 
-            
-        }
         
-       
-        
+             
         q = std::fmax((*gv.qmelt).at(floor(tcum),1),0); // if there is increse in SWE, everything will freeze so there will be a stop
 
         // Estimate interstitial flow velocity 
@@ -579,14 +578,14 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 
             // add all immobile and solid slow that melted from the last cell) 
             if(upperboundary_cell_new != upperboundary_cell_prev){
-                (*gv.c_m)(arma::span(0,gv.nl),upperboundary_cell_new) = ( (*gv.c_m)(arma::span(0,gv.nl),upperboundary_cell_new) * gv.porosity_m_prev
-                    + (*gv.c_m)(arma::span(0,gv.nl),upperboundary_cell_prev) * gv.porosity_m_prev
-                    + (*gv.c_s)(arma::span(0,gv.nl),upperboundary_cell_prev) * gv.porosity_s_prev
-                    + (*gv.c_i)(arma::span(0,gv.nl),upperboundary_cell_prev) * gv.porosity_i_prev ) / gv.porosity_m; // gv.porosity_m;
+                (*gv.c_m)(arma::span(0,gv.nl-1),upperboundary_cell_new) = ( (*gv.c_m)(arma::span(0,gv.nl-1),upperboundary_cell_new) * gv.porosity_m_prev
+                    + (*gv.c_m)(arma::span(0,gv.nl-1),upperboundary_cell_prev) * gv.porosity_m_prev
+                    + (*gv.c_s)(arma::span(0,gv.nl-1),upperboundary_cell_prev) * gv.porosity_s_prev
+                    + (*gv.c_i)(arma::span(0,gv.nl-1),upperboundary_cell_prev) * gv.porosity_i_prev ) / gv.porosity_m; // gv.porosity_m;
 
-                (*gv.c_m)(arma::span(0,gv.nl),arma::span(0,upperboundary_cell_new)) = 0;
-                (*gv.c_s)(arma::span(0,gv.nl),arma::span(0,upperboundary_cell_new)) = 0;
-                (*gv.c_i)(arma::span(0,gv.nl),arma::span(0,upperboundary_cell_new)) = 0;
+                (*gv.c_m)(arma::span(0,gv.nl-1),arma::span(0,upperboundary_cell_new)) *= 0;
+                (*gv.c_s)(arma::span(0,gv.nl-1),arma::span(0,upperboundary_cell_new)) *= 0;
+                (*gv.c_i)(arma::span(0,gv.nl-1),arma::span(0,upperboundary_cell_new)) *= 0;
             }
             // if porosities are too small, they create instability
         }else{
@@ -693,15 +692,13 @@ void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             (*gv.exchange_im).at(il,ih) = filedata(a,8);
         }
         msg = "Initial conditions found: " + init_file;
-        print_screen_log(logPULSEfile,&msg);  
+        //rint_screen_log(logPULSEfile,&msg); 
+        
     }else{
         msg = "Initial conditions NOT FOUND: simulation aborted";  
         print_screen_log(logPULSEfile,&msg);  
         std::abort();
-    }
-    
-    
-    
+    }  
     
 }
 
@@ -714,35 +711,50 @@ int main(int argc, char** argv)
     
     // Assign global parameters
     globalpar gp; 
-        
-    msg = "......................................... \n PULSE: multi-phase multi-layer snowpack chemistry model \n......................................... \n";
-    print_screen_log(&logPULSEfile,&msg);   
     
-    // read simulation setup
-    int n_qmelt = read_simset(gp,&sim_purp, &H_local,&L_local,&h_layer,&l_layer,&qmelt_file,&logPULSEfile);   
+    try{
     
-    // create mesh
-    checkmesh(&H_local,&L_local,&h_layer,&l_layer,&nh,&nl,&logPULSEfile);
-    
-    // Asign global variables (heap)
-    globalvar gv(nh,nl,n_qmelt); 
-    (gv.snowH) = H_local;
-    (gv.snowL) = L_local;
-    (gv.snowh) = h_layer;
-    (gv.snowl) = l_layer;
-     
-    // read snowmelt input
-    read_qmelt(gp,gv,&qmelt_file,&logPULSEfile);
-    
-    // initial conditions
-    initiate(gp,gv,&logPULSEfile);
-    
-    // call the main PULSE model
-    PULSEmodel(gp,gv,&logPULSEfile);
+        msg = "......................................... \n PULSE: multi-phase multi-layer snowpack chemistry model \n......................................... \n";
+        print_screen_log(&logPULSEfile,&msg);   
 
-    // Simulation completed
-    msg = "\n......................................... \n Simulation complete";
-    print_screen_log(&logPULSEfile,&msg); 
+        // read simulation setup
+        int n_qmelt = read_simset(gp,&sim_purp, &H_local,&L_local,&h_layer,&l_layer,&qmelt_file,&logPULSEfile);   
+
+        // create mesh
+        checkmesh(&H_local,&L_local,&h_layer,&l_layer,&nh,&nl,&logPULSEfile);
+
+        // Asign global variables (heap)
+        globalvar gv(nh,nl,n_qmelt); 
+        (gv.snowH) = H_local;
+        (gv.snowL) = L_local;
+        (gv.snowh) = h_layer;
+        (gv.snowl) = l_layer;
+
+        // read snowmelt input
+        read_qmelt(gp,gv,&qmelt_file,&logPULSEfile);
+
+        // initial conditions
+        initiate(gp,gv,&logPULSEfile);
+
+        // call the main PULSE model
+        PULSEmodel(gp,gv,&logPULSEfile);
+
+        // Simulation completed
+        msg = "\n......................................... \n Simulation complete";
+        print_screen_log(&logPULSEfile,&msg); 
+        
+    } catch(const std::exception& e){
+        
+        try{
+            msg = "\n Error: some problem in the code that was not predicted";
+            print_screen_log(&logPULSEfile,&msg); 
+            
+        }catch(const std::exception& e){
+        }
+        
+        logPULSEfile.close(); 
+        
+    };
     
     return 0;
 }
