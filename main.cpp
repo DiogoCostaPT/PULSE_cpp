@@ -73,7 +73,7 @@ public:
     std::unique_ptr<arma::Mat<double>> c_m,c_i,c_s,qmelt,exchange_si,exchange_im;
     double porosity_m=0.008,
             porosity_i=0.001,
-            porosity_s=1 - porosity_m - porosity_i,
+            porosity_s= 1 - porosity_m - porosity_i,
             porosity_m_prev=porosity_m,
             porosity_i_prev=porosity_i,
             porosity_s_prev=porosity_s;
@@ -264,8 +264,8 @@ void Crank_Nicholson(globalvar& gv,int *wetfront_cell_prev, int *wetfront_cell_n
 
     // to solve A.x1=B.x0
     int nli = gv.nl-2;
-    int nyi = *wetfront_cell_new-2;                   // the boundaries are knowns, so don't need to be included in matrix A
-    int nt = nli*nyi;
+    int nhi = *wetfront_cell_new-2;                   // the boundaries are knowns, so don't need to be included in matrix A
+    int nt = nli*nhi;
     double k1 = (*v)*(*deltt)/(4*gv.snowh);       // constants for Crank-Nicholson scheme
     double k2 = (*D)*(*deltt)/(2*pow(gv.snowh,2));     // constants for Crank-Nicholson scheme
     double k3 = (*D)*(*deltt)/(2*pow(gv.snowl,2));     // constants for Crank-Nicholson scheme
@@ -294,17 +294,17 @@ void Crank_Nicholson(globalvar& gv,int *wetfront_cell_prev, int *wetfront_cell_n
     }
 
     // 2) first row (y=1)
-    A(arma::span(1,nli),arma::span(1,nli)) += a1*arma::diagmat(arma::ones(1,nli)); //diagonal
-    A(1,1)=a1+a2-k3; // left corner
-    A(nli,nli)=a2+a1-k3; // left corner
-    A(nli,nli+1)=0; // left corner
+    A(arma::span(0,nli-1),arma::span(0,nli-1)) += a1*arma::diagmat(arma::ones(1,nli)); //diagonal
+    A(0,0)=a1+a2-k3; // left corner
+    A(nli-1,nli-1)=a2+a1-k3; // left corner
+    //A(nli-1,nli)=0; // left corner
 
     
     // 3) last row (y=ny)
-    A(arma::span(nt-nli+1,nt),arma::span(nt-nli+1,nt))=(a2+a3)*arma::diagmat(arma::ones(1,nli)); // diagonal
-    A(nt,nt)=a2+a3-k3; // right corner
-    A(nt-nli+1,nt-nli+1)=a3+a2-k3; // left corner
-    A(nt-nli+1,nt-nli)=0; // left corner
+    A(arma::span(nt-nli,nt-1),arma::span(nt-nli,nt-1)) = (a2+a3)*arma::diagmat(arma::ones(1,nli)); // diagonal !!!! CHECK IF IT SHOULDN'T BE "+=" (LINE ABOVE) INSTEAD OF "="
+    A(nt-1,nt-1)=a2+a3-k3; // right corner
+    A(nt-nli,nt-nli)=a3+a2-k3; // left corner
+    //A(nt-nli,nt-nli)=0; // left corner
 
 
     // Creating B
@@ -319,37 +319,35 @@ void Crank_Nicholson(globalvar& gv,int *wetfront_cell_prev, int *wetfront_cell_n
             k3*arma::diagmat(arma::ones(1,nt-1),-1);
 
 
-    for(i=1;i<(nt/nli)-2 ;i++){         // inner cells - left and right marigns
-        B(i*nli+1,i*nli)=0;
-        B(i*nli+1,i*nli+1)=B(i*nli+1,i*nli+1)+k3;
-        B(i*nli+nli,i*nli+nli+1)=0;
+    for(i=0;i<(nt/nli)-2 ;i++){         // inner cells - left and right marigns
+        B(i*nli,i*nli)=0;
+        B(i*nli,i*nli)=B(i*nli+1,i*nli+1)+k3;
+        B(i*nli+nli,i*nli+nli)=0;
         B(i*nli+nli,i*nli+nli)=B(i*nli+nli,i*nli+nli)+k3;
     }
 
     // 2) first row (y=1)
-      
-    B(arma::span(1,nli),arma::span(1,nli)) += (-a1)*arma::diagmat(arma::ones(1,nli)); //diagonal
-    B(1,1)=-a1+a4+k3; // left corner
-    B(nli,nli)=a4-a1+k3; // left corner
-    B(nli,nli+1)=0; // left corner
+    B(arma::span(0,nli-1),arma::span(0,nli-1)) += (-a1)*arma::diagmat(arma::ones(1,nli)); //diagonal
+    B(0,0)=-a1+a4+k3; // left corner
+    B(nli-1,nli-1)=a4-a1+k3; // left corner
+    //B(nli,nli+1)=0; // left corner
 
     // 3) last row (y=ny)
-    B(arma::span(nt-nli+1,nt),arma::span(nt-nli+1,nt))=(a4-a3)*arma::diagmat(arma::ones(1,nli)); // diagonal
-    B(nt,nt)=a4-a3+k3; // right corner
-    B(nt-nli+1,nt-nli+1)=-a3+a4+k3; // left corner
-    B(nt-nli+1,nt-nli)=0; // left corner
+    B(arma::span(nt-nli,nt-1),arma::span(nt-nli,nt-1)) =(a4-a3)*arma::diagmat(arma::ones(1,nli)); // diagonal !!!! CHECK IF IT SHOULDN'T BE "+=" (LINE ABOVE) INSTEAD OF "="
+    B(nt-1,nt-1)=a4-a3+k3; // right corner
+    B(nt-nli,nt-nli)=-a3+a4+k3; // left corner
+    //B(nt-nli,nt-nli)=0; // left corner
 
     //c_m_new = c_m_prev;
     
-    int nxyi_act = (nli-2) * (nyi-2);
-    arma::mat c1 = arma::reshape((*gv.c_m)(arma::span(2,nli-1),arma::span(2,nyi-1)),1,nxyi_act);  //c1=reshape(c_m_prev(2:end-1,2:end-1),1,[]);
+    arma::mat c1 = arma::reshape((*gv.c_m)(arma::span(1,nli-1),arma::span(1,nhi-1)),1,nt);  //c1=reshape(c_m_prev(2:end-1,2:end-1),1,[]);
     arma::mat b=B*trans(c1);    // calculation of [b]
     arma::mat c2=arma::solve(A,b);     // calculation of c
-    (*gv.c_m)(arma::span(2,nli-1),arma::span(2,nyi-1)) = arma::reshape(c2,nli,nyi);
+    (*gv.c_m)(arma::span(1,nli-1),arma::span(1,nhi-1)) = arma::reshape(c2,nli-1,nhi-1);
 
 
-    for(i=1;i<nli ;i++){ // to avoid back flow due to roundoff errors
-        for(j=1;j<nyi ;j++){ 
+    for(i=0;i<=nli ;i++){ // to avoid back flow due to roundoff errors
+        for(j=0;j<=nhi ;j++){ 
              if ((*gv.c_m).at(i,j)<0){
                  (*gv.c_m).at(i,j)=0;
             }
@@ -408,9 +406,9 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
     int upperboundary_cell = 0,
         wetfront_cell_new = 0,wetfront_cell_prev,upperboundary_cell_new,upperboundary_cell_prev,
         flagt = 1, // for saving results
-        snowh_min,tmp_int; // min vertical grid size to comply with the Peclet condition
+        tmp_int; // min vertical grid size to comply with the Peclet condition
     std::string msg;  
-    double exchange_i,Peclet,Peclet_max = 0;
+    double exchange_i,Peclet,Peclet_max = 0,snowh_min;
     std::chrono::duration<double> elapsed_seconds;
     auto start = std::chrono::system_clock::now();
     auto end = std::chrono::system_clock::now();
@@ -426,6 +424,12 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
     {
 
         t += 1;
+        if (t==59){
+            std::cout << std::to_string(t) << std::endl; 
+            
+        }
+        
+       
         
         q = std::fmax((*gv.qmelt).at(floor(tcum),1),0); // if there is increse in SWE, everything will freeze so there will be a stop
 
@@ -445,7 +449,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             Peclet = (v * gv.snowh)/D;
             if (Peclet > 2 && Peclet > Peclet_max){
                 snowh_min = 2 * D / v;
-                msg = "Peclet number > 2. Delta y needs to be equal or smaller than " + std::to_string(ceil(snowh_min));
+                //msg = "Peclet number > 2. Delta y needs to be equal or smaller than " + std::to_string(snowh_min);
                 //print_screen_log(logPULSEfile,&msg);
             }
             Peclet_max = Peclet;
@@ -502,26 +506,26 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 
         if (gv.porosity_m < 1-gp.num_stblty_thrshld_prsity && gv.porosity_i > gp.num_stblty_thrshld_prsity && gv.porosity_s > gp.num_stblty_thrshld_prsity){
             if (wetfront_cell_new > 5){
-              //int nh_Crank = wetfront_cell_new - 1;        
-              //_m_prev_ii = c_m_prev_i(:,1:nh_Crank);
-              //c_m_prev_ii = c_m_prev_i(:,1:wetfront_cell_new);
+                //int nh_Crank = wetfront_cell_new - 1;        
+                //_m_prev_ii = c_m_prev_i(:,1:nh_Crank);
+                //c_m_prev_ii = c_m_prev_i(:,1:wetfront_cell_new);
 
-              // c_m_comp = Crank_Nicholson(t,nl,wetfront_cell_new,c_m_prev_ii,snowl,snowh,deltt,v(t),D(t)); % solve advection and dispersion in the mobile zone
-              Crank_Nicholson(gv,&wetfront_cell_prev, &wetfront_cell_new,&deltt,&v,&D); // solve advection and dispersion in the mobile zone
+                // c_m_comp = Crank_Nicholson(t,nl,wetfront_cell_new,c_m_prev_ii,snowl,snowh,deltt,v(t),D(t)); % solve advection and dispersion in the mobile zone
+                Crank_Nicholson(gv,&wetfront_cell_prev, &wetfront_cell_new,&deltt,&v,&D); // solve advection and dispersion in the mobile zone
 
-              // Computing the wet front - it needs to be calculated seperatly from
-              // Crank Nicolson to limit the fluxes across boundaries
+                // Computing the wet front - it needs to be calculated seperatly from
+                // Crank Nicolson to limit the fluxes across boundaries
 
-             (*gv.c_m)(arma::span(0,gv.nh),wetfront_cell_new) = (*gv.c_m)(arma::span(0,gv.nh),wetfront_cell_new) - v * deltt * ((*gv.c_m)(arma::span(0,gv.nh),wetfront_cell_new) - (*gv.c_m)(arma::span(0,gv.nh),wetfront_cell_new-1))/gv.snowh ; // compute onh advection to the wetting front
+               (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new) -= v * deltt * ((*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new) - (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1))/gv.snowh ; // compute onh advection to the wetting front
 
-             //c_m_new_i(:,wetfront_cell_new) = c_m_new_i_wetfront;
+               //c_m_new_i(:,wetfront_cell_new) = c_m_new_i_wetfront;
 
-             // fluxback = sum(c_m(:,wetfront_cell+1:end,t)');
-             //c_m(:,wetfront_cell-1,t) = c_m(:,wetfront_cell-1,t) + fluxback';
+               // fluxback = sum(c_m(:,wetfront_cell+1:end,t)');
+               //c_m(:,wetfront_cell-1,t) = c_m(:,wetfront_cell-1,t) + fluxback';
 
-            //-//}else{
-                // do nothing, onh add the sources
-            //-//    c_m_new_i =  c_m_prev_i;
+              //-//}else{
+                  // do nothing, onh add the sources
+              //-//    c_m_new_i =  c_m_prev_i;
             }
 
             // c_i_new_i = c_i_prev_i;
@@ -531,7 +535,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             // exchange = (c_s_new_i -  c_m_new_i) * rho_s/rho_m * q; %dporosity_s_dt;
             // exchange = c_s_new_i * rho_s/rho_m ; %dporosity_s_dt;
 
-            (*gv.exchange_si) = (*gv.c_s)* gp.rho_s/gp.rho_m * q * deltt / wetfront_cell_new * gp.alphaIE;
+            (*gv.exchange_si) = (*gv.c_s) * gp.rho_s/gp.rho_m * q * deltt / wetfront_cell_new * gp.alphaIE;
 
             // limit the flux to the available material
             for(il=0;il<=gv.nl ;il++){
@@ -589,9 +593,16 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             gv.porosity_i = 0;
             gv.porosity_m = 1;
             gv.porosity_s = 0;
-            (*gv.c_m)(arma::span(0,gv.nl),arma::span(0,upperboundary_cell_new)) = 0;
-            (*gv.c_s)(arma::span(0,gv.nl),arma::span(0,upperboundary_cell_new)) = 0;
-            (*gv.c_i)(arma::span(0,gv.nl),arma::span(0,upperboundary_cell_new)) = 0;
+            if(upperboundary_cell_new != 0){
+                (*gv.c_m)(arma::span(0,gv.nl),arma::span(0,upperboundary_cell_new)) = (*gv.c_m)(arma::span(0,gv.nl),arma::span(0,upperboundary_cell_new)) * 0;
+                (*gv.c_s)(arma::span(0,gv.nl),arma::span(0,upperboundary_cell_new)) = (*gv.c_m)(arma::span(0,gv.nl),arma::span(0,upperboundary_cell_new)) * 0;
+                (*gv.c_i)(arma::span(0,gv.nl),arma::span(0,upperboundary_cell_new)) = (*gv.c_m)(arma::span(0,gv.nl),arma::span(0,upperboundary_cell_new)) * 0;
+            }else{ // if only top layer is wet
+                (*gv.c_m)(arma::span(0,gv.nl-1),0) = (*gv.c_m)(arma::span(0,gv.nl-1),0) * 0;
+                (*gv.c_s)(arma::span(0,gv.nl-1),0) = (*gv.c_m)(arma::span(0,gv.nl-1),0) * 0;
+                (*gv.c_i)(arma::span(0,gv.nl-1),0) = (*gv.c_m)(arma::span(0,gv.nl-1),0) * 0;
+            }
+                        
         }
     
     
