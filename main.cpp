@@ -33,7 +33,7 @@ class globalpar
 public:
     
     double Courant=0.8,aD,alpha,rho_s,rho_m,
-           wetfront_z,num_stblty_thrshld_prsity = 1E-6,ionexcl_fact,Tperd;
+           wetfront_z,num_stblty_thrshld_prsity = 1E-6,alphaIE,Tperd;
     
     int flag_sens,run_id,s,print_step;
     //std::ofstream logPULSEfile;
@@ -47,9 +47,10 @@ public:
   globalvar() {
 
   }
-  globalvar(size_t nh, size_t nl) {
+  globalvar(size_t nh, size_t nl,size_t n_qmelt) {
     this->nh = nh;
     this->nl = nl;
+    this->n_qmelt = n_qmelt;
    
     c_m = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nh,nl));
     c_i = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nh,nl));
@@ -57,15 +58,15 @@ public:
     exchange_si = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nh,nl));
     exchange_im = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nh,nl));
     
-    qmelt = std::unique_ptr<arma::Mat<double>>( new  arma::mat(2000,2));
+    qmelt = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_qmelt,2));
 
   }
     
-    size_t nh,nl,
-        snowH, // snowpack depth
-        snowL, // snowpack horizontal lenght
-        snowl, // grid h lenght
-        snowh; // grtid l lenght
+    size_t nh,nl,n_qmelt,
+            snowH, // snowpack depth
+            snowL, // snowpack horizontal lenght
+            snowl, // grid h lenght
+            snowh; // grtid l lenght
   
     std::unique_ptr<arma::Mat<double>> c_m,c_i,c_s,qmelt,exchange_si,exchange_im;
     double porosity_m=0.008,
@@ -79,46 +80,46 @@ public:
 
 
 
-void print_screen_log(std::ofstream& logPULSEfile,std::string& msg)
+void print_screen_log(std::ofstream* logPULSEfile,std::string* msg)
 {
-    std::cout << msg << std::endl;
-    logPULSEfile << msg + "\n";  
+    std::cout << (*msg) << std::endl;
+    (*logPULSEfile) << (*msg) + "\n";  
     
 }
 
-void checkmesh(int* H_local,int* L_local,int* h_layer,int* l_layer,int* nl,int* nh,std::ofstream&logPULSEfile)
+void checkmesh(int* H_local,int* L_local,int* h_layer,int* l_layer,int* nh,int* nl,std::ofstream* logPULSEfile)
 {
-    float a,b;
+
     std::string msg;
     
-    a = (*H_local)/(*h_layer);
-    b = (*L_local)/(*l_layer);
+    double a = double(*H_local)/double(*h_layer);
+    double b = double(*L_local)/double(*l_layer);
     
     if(floor(a)==ceil(a) && floor(b)==ceil(b)){      
         (*nh) = a;
         (*nl) = b;
         msg = "Snowpack mesh: created";
-        print_screen_log(logPULSEfile,msg);
+        print_screen_log(logPULSEfile,&msg);
     }else{
         if (floor(a)==ceil(a)){
-        msg = "Snowpack mesh: H" + std::to_string ((*H_local)) + 
-                "(snowpack depth) is not divisible by h_layer" + std::to_string((*h_layer)) +
-                "(grid thickness) -> change the simulation setting in file 'simset.pulse'";
-        print_screen_log(logPULSEfile,msg);
+        msg = "Snowpack mesh: H = " + std::to_string ((*H_local)) + 
+                " mm (snowpack depth) is not divisible by h_layer = " + std::to_string((*h_layer)) +
+                " mm (grid thickness) -> change the simulation setting in file 'simset.pulse'";
+        print_screen_log(logPULSEfile,&msg);
         }
         if (floor(b)==ceil(b)){
-        msg = "Snowpack mesh: L" + std::to_string ((*L_local)) + 
-                "(snowpack horizontal length) is not divisible by l_layer" + std::to_string((*l_layer)) +
-                "(grid horizontal length) -> change the simulation setting in file 'simset.pulse'";
-        print_screen_log(logPULSEfile,msg);
+        msg = "Snowpack mesh: L = " + std::to_string ((*L_local)) + 
+                " mm (snowpack horizontal length) is not divisible by l_layer = " + std::to_string((*l_layer)) +
+                "mm (grid horizontal length) -> change the simulation setting in file 'simset.pulse'";
+        print_screen_log(logPULSEfile,&msg);
         }
-        abort();
+        std::abort();
     }
     
 }
     
 
-void read_simset(globalpar& gp,std::string& sim_purp, int *H_local,int *L_local, int *h_layer,int *l_layer, std::string& qmelt_file,std::ofstream& logPULSEfile)
+int read_simset(globalpar& gp,std::string* sim_purp, int *H_local,int *L_local, int *h_layer,int *l_layer, std::string* qmelt_file,std::ofstream* logPULSEfile)
 {
     // read_modset(ds,print_step,ks_input,zbinc,ntim_days)
     
@@ -131,13 +132,15 @@ void read_simset(globalpar& gp,std::string& sim_purp, int *H_local,int *L_local,
     while (std::getline(file, str)) 
     {
         i += 1;
-        if(i==1){sim_purp = str;};
-        if(i==2){(*H_local) = std::stoi(str);};
-        if(i==3){(*L_local) = std::stoi(str);};
-        if(i==4){(*h_layer) = std::stoi(str);};
-        if(i==5){(*l_layer) = std::stoi(str);};
-        if(i==6){qmelt_file = str;};  
-        if(i==7){gp.print_step = std::stoi(str);};  
+        if(i==1){(*sim_purp) = str;};
+        if(i==2){(*H_local) = std::round(std::stoi(str));};
+        if(i==3){(*L_local) = std::round(std::stoi(str));};
+        if(i==4){(*h_layer) = std::round(std::stoi(str));};
+        if(i==5){(*l_layer) = std::round(std::stoi(str));};
+        if(i==6){(*qmelt_file) = str;};  
+        if(i==7){gp.print_step = std::stoi(str);};
+        if(i==8){gp.aD = std::stof(str);}; 
+        if(i==9){gp.alphaIE = std::stof(str);}; 
     }
     file.close();
     
@@ -146,20 +149,25 @@ void read_simset(globalpar& gp,std::string& sim_purp, int *H_local,int *L_local,
     } else{
         msg = "PROBLEM loading the file: " + modset_flname;
     } 
-    print_screen_log(logPULSEfile,msg);   
+    print_screen_log(logPULSEfile,&msg); 
+    
+    arma::mat filedataQ; 
+    bool flstatusQ =  filedataQ.load((*qmelt_file),arma::csv_ascii);
+    int n_qmelt = filedataQ.col(1).n_elem;
+   
+    return n_qmelt;
     
 }    
 
 
-void read_qmelt(globalvar& gv,std::string& qmelt_file,std::ofstream& logPULSEfile)
+void read_qmelt(globalpar& gp,globalvar& gv,std::string* qmelt_file,std::ofstream* logPULSEfile)
 {
     unsigned int a; 
-    double tmelts,vmelt, tmelts_bef = 0.0f;
-    gv.qmelt  = 0;
+    double tmelts,vmelt;
     std::string msg;
     
     arma::mat filedataQ; 
-    bool flstatusQ =  filedataQ.load(qmelt_file,arma::csv_ascii);
+    bool flstatusQ =  filedataQ.load((*qmelt_file),arma::csv_ascii);
     if(flstatusQ == true) {
         for(a=0;a<filedataQ.col(1).n_elem;a++){
             tmelts = filedataQ(a,0);  // t melt seconds
@@ -167,13 +175,14 @@ void read_qmelt(globalvar& gv,std::string& qmelt_file,std::ofstream& logPULSEfil
             (*gv.qmelt).at(a,0) = tmelts;  
             (*gv.qmelt).at(a,1) = vmelt;
             //gv.qmelt += vmelt /(1000.*3600.*24.) * (tmelts - tmelts_bef); 
-            tmelts_bef = tmelts;
         }
-       msg = "Successful loading the file: " + qmelt_file;
+       (gp.Tperd) = tmelts;
+       msg = "Successful loading the file: " + (*qmelt_file);
     } else{
-        msg = "PROBLEM loading the file: " + qmelt_file;       
+        msg = "PROBLEM loading the file: " + (*qmelt_file);   
+        std::abort();
     } 
-    print_screen_log(logPULSEfile,msg);   
+    print_screen_log(logPULSEfile,&msg);
     
     return;
   
@@ -219,7 +228,7 @@ void Crank_Nicholson(globalvar& gv,int *wetfront_cell_prev, int *wetfront_cell_n
 
     // to solve A.x1=B.x0
     int nxi = *wetfront_cell_new-2;
-    int nyi = gv.nh-2;                  // the boundaries are knowns, so don't need to be included in matrix A
+    int nyi = gv.nh-2;                  // the boundaries are knowns, so don't need to be included in matril A
     int nt = nxi*nyi;
     double k1 = (*v)*(*deltt)/(4*gv.snowh);       // constants for Crank-Nicholson scheme
     double k2 = (*D)*(*deltt)/(2*pow(gv.snowh,2));     // constants for Crank-Nicholson scheme
@@ -227,7 +236,7 @@ void Crank_Nicholson(globalvar& gv,int *wetfront_cell_prev, int *wetfront_cell_n
 
     k3=0;     // to remove lateral dispersion (onh interested in 1D for now)
 
-    // Creating matrix A to be solved for Crank-Nicholson implicit scheme
+    // Creating matril A to be solved for Crank-Nicholson implicit scheme
     double a1=-(k1+k2);
     double a2=(1+2*k2+2*k3);
     double a3=k1-k2;
@@ -305,8 +314,8 @@ void Crank_Nicholson(globalvar& gv,int *wetfront_cell_prev, int *wetfront_cell_n
 
     for(i=1;i<nxi ;i++){ // to avoid back flow due to roundoff errors
         for(j=1;j<nyi ;j++){ 
-             if ((*gv.c_m)(i,j)<0){
-                 (*gv.c_m)(i,j)=0;
+             if ((*gv.c_m).at(i,j)<0){
+                 (*gv.c_m).at(i,j)=0;
             }
         }
     }
@@ -350,7 +359,7 @@ bool print_results(globalvar& gv,globalpar& gp, int print_tag, unsigned int prin
     return outwritestatus;
 }
 
-void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream& logPULSEfile)
+void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 {
     
     // initiation
@@ -360,20 +369,21 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream& logPULSEfile)
             deltt = 1.0f, // time step calculated from the CFL condition
             v = 0.f, // interstitial flow velocity [m s-1]
             D = 0.f; // dispersion coefficient [m2/s]
-    int upperboundary_cell = 1,
-        wetfront_cell_new,wetfront_cell_prev,upperboundary_cell_new,upperboundary_cell_prev,
+    int upperboundary_cell = 0,
+        wetfront_cell_new = 0,wetfront_cell_prev,upperboundary_cell_new,upperboundary_cell_prev,
         flagt = 1, // for saving results
         snowh_min,tmp_int; // min vertical grid size to comply with the Peclet condition
     std::string msg;  
-    double upperboundary_z = gp.wetfront_z,exchange_i;
-    double Peclet,Peclet_max = 0;
+    double exchange_i,Peclet,Peclet_max = 0;
     std::chrono::duration<double> elapsed_seconds;
     auto start = std::chrono::system_clock::now();
     auto end = std::chrono::system_clock::now();
     bool outwritestatus;
+    int nl_l = gv.nl,nh_l = gv.nh;
     
     gp.wetfront_z = gv.nh*gv.snowh; // starts at the top
-    unsigned int ix,iy, nh_l = gv.nh, nl_l = gv.nl,print_next;
+    double upperboundary_z = gp.wetfront_z;
+    unsigned int il,ih,print_next;
     
     print_next = gp.print_step;
     while (tcum < gp.Tperd)
@@ -381,14 +391,14 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream& logPULSEfile)
 
         t += 1;
 
-        q = std::fmax((*gv.qmelt).at(floor(tcum+1)),0); // if there is increse in SWE, everything will freeze so there will be a stop
+        q = std::fmax((*gv.qmelt).at(floor(tcum),1),0); // if there is increse in SWE, everything will freeze so there will be a stop
 
         // Estimate interstitial flow velocity 
         v = q / (gv.porosity_m); // interstitial flow velocity [m s-1]
         D = gp.aD * v;       // dispersion coefficient [m2/s]
 
         // Dynamic time interval to comply with Courant Condition
-        if (q != 0){
+        if (q != 0.0f){
             deltt = std::fmin(gp.Courant * gv.snowh / v,1);
         }else{
             deltt = 1;
@@ -400,7 +410,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream& logPULSEfile)
             if (Peclet > 2 && Peclet > Peclet_max){
                 snowh_min = 2 * D / v;
                 msg = "Peclet number > 2. Delta y needs to be equal or smaller than " + std::to_string(ceil(snowh_min));
-                print_screen_log(logPULSEfile,msg); 
+                print_screen_log(logPULSEfile,&msg);
             }
             Peclet_max = Peclet;
         }
@@ -421,17 +431,17 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream& logPULSEfile)
         //c_s_new_i=c_s(:,1:wetfront_cell,t);
 
         // Melting velocity: last cell
-        //upperboundary_cell_prev = upperboundary_cell; // wetting fron cell in the previous time step
-        //upperboundary_z =  std::fmax(upperboundary_z - q * deltt,0);
-        //tmp_int = std::round(nh_l-upperboundary_z/gv.snowh+1);
-        //upperboundary_cell_new = std::min(tmp_int,nh_l); // in what cell is the wetting front
+        upperboundary_cell_prev = upperboundary_cell; // wetting fron cell in the previous time step
+        upperboundary_z =  std::fmax(upperboundary_z - q * deltt,0);
+        tmp_int = int(std::round(nh_l-upperboundary_z/gv.snowh+1));
+        upperboundary_cell_new = std::min(tmp_int,nh_l); // in what cell is the wetting front
         //upperboundary_cell = [upperboundary_cell, upperboundary_cell_new];
         
         
         // add a new cell if the wetting front moves to the next cell
-        if(wetfront_cell_new - wetfront_cell_prev > 1){
+        if((wetfront_cell_new - wetfront_cell_prev) > 1){
             msg = "Courant condition violation - check code";
-            print_screen_log(logPULSEfile,msg); 
+            print_screen_log(logPULSEfile,&msg);
 
             break;
         //-// }else{ // moved inside the solver now in cpp
@@ -485,17 +495,17 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream& logPULSEfile)
             // exchange = (c_s_new_i -  c_m_new_i) * rho_s/rho_m * q; %dporosity_s_dt;
             // exchange = c_s_new_i * rho_s/rho_m ; %dporosity_s_dt;
 
-            (*gv.exchange_si) = (*gv.c_s)* gp.rho_s/gp.rho_m * q * deltt / wetfront_cell_new * gp.ionexcl_fact;
+            (*gv.exchange_si) = (*gv.c_s)* gp.rho_s/gp.rho_m * q * deltt / wetfront_cell_new * gp.alphaIE;
 
             // limit the flux to the available material
-            for(ix=1;ix<gv.nl ;ix++){
-                for(iy=1;iy<gv.nh ;iy++){
-                    if ((*gv.exchange_si)(ix,iy) > 0){
-                        (*gv.exchange_si)(ix,iy) = std::min((*gv.exchange_si)(ix,iy),(*gv.c_s)(ix,iy));
-                    }else if((*gv.exchange_si)(ix,iy) < 0){
+            for(il=0;il<=gv.nl ;il++){
+                for(ih=0;ih<=gv.nh ;ih++){
+                    if ((*gv.exchange_si).at(il,ih) > 0){
+                        (*gv.exchange_si).at(il,ih) = std::min((*gv.exchange_si).at(il,ih),(*gv.c_s).at(il,ih));
+                    }else if((*gv.exchange_si).at(il,ih) < 0){
                         msg = "PROBLEM: negative exchange";
-                        print_screen_log(logPULSEfile,msg);
-                        //-// (*gv.exchange)(ix,iy)  = - std::min(std::abs(exchange),abs(c_m_new_i)); 
+                        print_screen_log(logPULSEfile,&msg);
+                        //-// (*gv.exchange).at(il,ih)  = - std::min(std::abs(exchange),abs(c_m_new_i)); 
                     }
                 }
             };
@@ -512,13 +522,13 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream& logPULSEfile)
             // limit the flux to the available material
             
             // limit the flux to the available material
-            for(ix=1;ix<gv.nl ;ix++){
-                for(iy=1;iy<gv.nh ;iy++){
-                    if ((*gv.exchange_im)(ix,iy) > 0){
-                        (*gv.exchange_im)(ix,iy) = std::min((*gv.exchange_im)(ix,iy),(*gv.c_i)(ix,iy));
-                    }else if((*gv.exchange_im)(ix,iy) < 0){
+            for(il=1;il<gv.nl ;il++){
+                for(ih=1;ih<gv.nh ;ih++){
+                    if ((*gv.exchange_im).at(il,ih) > 0){
+                        (*gv.exchange_im).at(il,ih) = std::min((*gv.exchange_im).at(il,ih),(*gv.c_i).at(il,ih));
+                    }else if((*gv.exchange_im).at(il,ih) < 0){
                         msg = "PROBLEM: negative exchange";
-                        print_screen_log(logPULSEfile,msg);
+                        print_screen_log(logPULSEfile,&msg);
                     }
                 }
             };
@@ -590,13 +600,13 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream& logPULSEfile)
             if(outwritestatus == true) 
             {
                 std::cout << "Saved: '" << print_next << ".txt' || time step (min): " << std::to_string(gp.print_step/60) << " || Time elapsed (min): " << elapsed_seconds.count()/60 << std::endl;
-                logPULSEfile << "Saved: '" << print_next << ".txt' || time step (min): " << std::to_string(gp.print_step/60) << " || Time elapsed (min): " << std::to_string(elapsed_seconds.count()/60) + "\n";
+                (*logPULSEfile) << "Saved: '" << print_next << ".txt' || time step (min): " << std::to_string(gp.print_step/60) << " || Time elapsed (min): " << std::to_string(elapsed_seconds.count()/60) + "\n";
                 print_next += gp.print_step;
                 start = std::chrono::system_clock::now();
             } else
             {
                 msg = "Problem when saving the results:" + print_next;
-                print_screen_log(logPULSEfile,msg);
+                print_screen_log(logPULSEfile,&msg);
                 abort();
             }
              
@@ -619,31 +629,31 @@ int main(int argc, char** argv)
     // Assign global parameters
     globalpar gp; 
         
-    msg = "PULSE: multi-phase multi-layer snowpack chemistry model";
-    print_screen_log(logPULSEfile,msg);    
+    msg = "......................................... \n PULSE: multi-phase multi-layer snowpack chemistry model \n......................................... \n";
+    print_screen_log(&logPULSEfile,&msg);   
     
     // read simulation setup
-    read_simset(gp,sim_purp, &H_local,&L_local,&h_layer,&l_layer,qmelt_file,logPULSEfile);   
+    int n_qmelt = read_simset(gp,&sim_purp, &H_local,&L_local,&h_layer,&l_layer,&qmelt_file,&logPULSEfile);   
     
     // create mesh
-    checkmesh(&H_local,&L_local,&h_layer,&l_layer,&nl,&nh,logPULSEfile);
+    checkmesh(&H_local,&L_local,&h_layer,&l_layer,&nh,&nl,&logPULSEfile);
     
     // Asign global variables (heap)
-    globalvar gv(nl,nl); 
+    globalvar gv(nh,nl,n_qmelt); 
     (gv.snowH) = H_local;
     (gv.snowL) = L_local;
     (gv.snowh) = h_layer;
     (gv.snowl) = l_layer;
      
     // read snowmelt input
-    read_qmelt(gv,qmelt_file,logPULSEfile);
+    read_qmelt(gp,gv,&qmelt_file,&logPULSEfile);
     
     // call the main PULSE model
-    PULSEmodel(gp,gv,logPULSEfile);
+    PULSEmodel(gp,gv,&logPULSEfile);
 
     // Simulation completed
-    msg = "----- Simulation complete -----";
-    print_screen_log(logPULSEfile,msg);   
+    msg = "\n......................................... \n Simulation complete";
+    print_screen_log(&logPULSEfile,&msg); 
     
     return 0;
 }

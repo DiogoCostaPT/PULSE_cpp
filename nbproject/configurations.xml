@@ -26,7 +26,7 @@
         <rebuildPropChanged>false</rebuildPropChanged>
       </toolsSet>
       <flagsDictionary>
-        <element flagsID="0" commonFlags="-O3 -fopenmp -std=gnu++11"/>
+        <element flagsID="0" commonFlags="-pedantic -fopenmp -std=gnu++11"/>
       </flagsDictionary>
       <codeAssistance>
       </codeAssistance>
