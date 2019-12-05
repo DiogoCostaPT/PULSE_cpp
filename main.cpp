@@ -32,7 +32,9 @@ class globalpar
 {
 public:
     
-    double Courant=0.8,aD,alpha,rho_s,rho_m,
+    double Courant=0.8,aD,alpha,
+           rho_s=917.0, // kg.m-3 at 0 degrees
+           rho_m=998.8, // kg.m-3 at 0 degrees
            wetfront_z,num_stblty_thrshld_prsity = 1E-6,alphaIE,Tperd;
     
     int flag_sens,run_id,s,print_step;
@@ -52,11 +54,11 @@ public:
     this->nl = nl;
     this->n_qmelt = n_qmelt;
    
-    c_m = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nh,nl));
-    c_i = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nh,nl));
-    c_s = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nh,nl));
-    exchange_si = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nh,nl));
-    exchange_im = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nh,nl));
+    c_m = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
+    c_i = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
+    c_s = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
+    exchange_si = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
+    exchange_im = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     
     qmelt = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_qmelt,2));
 
@@ -117,7 +119,41 @@ void checkmesh(int* H_local,int* L_local,int* h_layer,int* l_layer,int* nh,int* 
     }
     
 }
-    
+   
+// read file names in Results directory
+int findLastStep(const char *path) {
+
+   struct dirent *entry;
+   int i, timestart, filenum = 0, simnum;
+   std::vector<char*> filenames; //stringvec filenames, filename_i;
+   const char *filename_i;
+   char *simnum_str_i;
+   DIR *dir = opendir(path);
+   
+   if (dir != NULL) {
+        while ((entry = readdir(dir)) != NULL) {
+        filenames.push_back(entry->d_name); // storing the file names
+        filenum = filenum + 1;
+        }
+   }
+   closedir(dir);
+   
+   timestart = 0;
+   for(i=2;i<filenum;i++){
+       filename_i = filenames[i]; //.assign(filenames[i]); //strcpy(filename_i,(char *)(&filenames[i]));
+        simnum_str_i = (char*) malloc(sizeof(filename_i)-2);
+        strncpy (simnum_str_i, filename_i, sizeof(filename_i)-2);
+        simnum = atoi(simnum_str_i);
+        timestart = std::max(timestart,simnum);
+        free(simnum_str_i);
+   }
+   
+   //free(filename_i);
+   free(entry);
+   //free(dir);
+   //std::cout << "Start time (s): " << timestart << " (initial conditions available)" << std::endl;
+   return timestart;
+}
 
 int read_simset(globalpar& gp,std::string* sim_purp, int *H_local,int *L_local, int *h_layer,int *l_layer, std::string* qmelt_file,std::ofstream* logPULSEfile)
 {
@@ -191,7 +227,7 @@ void read_qmelt(globalpar& gp,globalvar& gv,std::string* qmelt_file,std::ofstrea
 void calc_porosity(globalpar& gp,globalvar& gv,double *q, double *deltt)
 {
     
-    double dporosity_s_dt = (*q) / arma::accu((*gv.qmelt));
+    double dporosity_s_dt = (*q) / arma::accu((*gv.qmelt).col(1));
     double dporosity_i_dt = dporosity_s_dt;
 
     gv.porosity_m_prev = gv.porosity_m;
@@ -213,7 +249,7 @@ void wettingfront_cell_location(globalpar& gp,globalvar& gv,double *v, double *d
     int nh_l = gv.nh;
     *wetfront_cell_prev = *wetfront_cell_new; // wetting fron cell in the previous time step
     gp.wetfront_z = std::fmax(gp.wetfront_z - (*v) * (*deltt),0.f);
-    int tmp = std::round(nh_l-gp.wetfront_z/gv.snowh+1);
+    int tmp = std::round(nh_l-gp.wetfront_z/gv.snowh);
     *wetfront_cell_new = std::min(tmp,nh_l); // finding the cell when the wetting front is located
     //wetfront_cell = (*wetfront_cell_new);
     
@@ -227,9 +263,9 @@ void Crank_Nicholson(globalvar& gv,int *wetfront_cell_prev, int *wetfront_cell_n
     unsigned int i,j;    
 
     // to solve A.x1=B.x0
-    int nxi = *wetfront_cell_new-2;
-    int nyi = gv.nh-2;                  // the boundaries are knowns, so don't need to be included in matril A
-    int nt = nxi*nyi;
+    int nli = gv.nl-2;
+    int nyi = *wetfront_cell_new-2;                   // the boundaries are knowns, so don't need to be included in matrix A
+    int nt = nli*nyi;
     double k1 = (*v)*(*deltt)/(4*gv.snowh);       // constants for Crank-Nicholson scheme
     double k2 = (*D)*(*deltt)/(2*pow(gv.snowh,2));     // constants for Crank-Nicholson scheme
     double k3 = (*D)*(*deltt)/(2*pow(gv.snowl,2));     // constants for Crank-Nicholson scheme
@@ -243,32 +279,32 @@ void Crank_Nicholson(globalvar& gv,int *wetfront_cell_prev, int *wetfront_cell_n
     //A=zeros(nt,nt);
 
     // 1) all domain (diagonals: -9,-1,0,1,9)
-    arma::mat A = a3*(arma::diagmat(arma::ones(1,nt-nxi),nxi))+
-                    a1*arma::diagmat(arma::ones(1,nt-nxi),-(nxi))+
+    arma::mat A = a3*(arma::diagmat(arma::ones(1,nt-nli),nli))+
+                    a1*arma::diagmat(arma::ones(1,nt-nli),-(nli))+
                     a2*arma::diagmat(arma::ones(1,nt))
                     -k3*arma::diagmat(arma::ones(1,nt-1),1)-
                     k3*arma::diagmat(arma::ones(1,nt-1),-1);
 
 
-    for(i=1;i<(nt/nxi)-2 ;i++){ // inner cells - left and right marigns
-        A(i*nxi+1,i*nxi)=0;
-        A(i*nxi+1,i*nxi+1)=A(i*nxi+1,i*nxi+1)-k3;
-        A(i*nxi+nxi,i*nxi+nxi+1)=0;
-        A(i*nxi+nxi,i*nxi+nxi)=A(i*nxi+nxi,i*nxi+nxi)-k3;
+    for(i=0;i<=(nt/nli)-2 ;i++){ // inner cells - left and right marigns
+        A(i*nli,i*nli)=0;
+        A(i*nli,i*nli)=A(i*nli,i*nli)-k3;
+        A(i*nli+nli,i*nli+nli)=0;
+        A(i*nli+nli,i*nli+nli)=A(i*nli+nli,i*nli+nli)-k3;
     }
 
     // 2) first row (y=1)
-    A(arma::span(1,nxi),arma::span(1,nxi)) += a1*arma::diagmat(arma::ones(1,nxi)); //diagonal
+    A(arma::span(1,nli),arma::span(1,nli)) += a1*arma::diagmat(arma::ones(1,nli)); //diagonal
     A(1,1)=a1+a2-k3; // left corner
-    A(nxi,nxi)=a2+a1-k3; // left corner
-    A(nxi,nxi+1)=0; // left corner
+    A(nli,nli)=a2+a1-k3; // left corner
+    A(nli,nli+1)=0; // left corner
 
     
     // 3) last row (y=ny)
-    A(arma::span(nt-nxi+1,nt),arma::span(nt-nxi+1,nt))=(a2+a3)*arma::diagmat(arma::ones(1,nxi)); // diagonal
+    A(arma::span(nt-nli+1,nt),arma::span(nt-nli+1,nt))=(a2+a3)*arma::diagmat(arma::ones(1,nli)); // diagonal
     A(nt,nt)=a2+a3-k3; // right corner
-    A(nt-nxi+1,nt-nxi+1)=a3+a2-k3; // left corner
-    A(nt-nxi+1,nt-nxi)=0; // left corner
+    A(nt-nli+1,nt-nli+1)=a3+a2-k3; // left corner
+    A(nt-nli+1,nt-nli)=0; // left corner
 
 
     // Creating B
@@ -276,43 +312,43 @@ void Crank_Nicholson(globalvar& gv,int *wetfront_cell_prev, int *wetfront_cell_n
     //B=zeros(nt,nt);
 
     // 1) all domain (diagonals: -9,-1,0,1,9)
-    arma::mat B=-a3*arma::diagmat(arma::ones(1,nt-nxi),nxi)-
-            a1*arma::diagmat(arma::ones(1,nt-nxi),-(nxi))+
+    arma::mat B=-a3*arma::diagmat(arma::ones(1,nt-nli),nli)-
+            a1*arma::diagmat(arma::ones(1,nt-nli),-(nli))+
             a4*arma::diagmat(arma::ones(1,nt))+
             k3*arma::diagmat(arma::ones(1,nt-1),1)+
             k3*arma::diagmat(arma::ones(1,nt-1),-1);
 
 
-    for(i=1;i<(nt/nxi)-2 ;i++){         // inner cells - left and right marigns
-        B(i*nxi+1,i*nxi)=0;
-        B(i*nxi+1,i*nxi+1)=B(i*nxi+1,i*nxi+1)+k3;
-        B(i*nxi+nxi,i*nxi+nxi+1)=0;
-        B(i*nxi+nxi,i*nxi+nxi)=B(i*nxi+nxi,i*nxi+nxi)+k3;
+    for(i=1;i<(nt/nli)-2 ;i++){         // inner cells - left and right marigns
+        B(i*nli+1,i*nli)=0;
+        B(i*nli+1,i*nli+1)=B(i*nli+1,i*nli+1)+k3;
+        B(i*nli+nli,i*nli+nli+1)=0;
+        B(i*nli+nli,i*nli+nli)=B(i*nli+nli,i*nli+nli)+k3;
     }
 
     // 2) first row (y=1)
       
-    B(arma::span(1,nxi),arma::span(1,nxi)) += (-a1)*arma::diagmat(arma::ones(1,nxi)); //diagonal
+    B(arma::span(1,nli),arma::span(1,nli)) += (-a1)*arma::diagmat(arma::ones(1,nli)); //diagonal
     B(1,1)=-a1+a4+k3; // left corner
-    B(nxi,nxi)=a4-a1+k3; // left corner
-    B(nxi,nxi+1)=0; // left corner
+    B(nli,nli)=a4-a1+k3; // left corner
+    B(nli,nli+1)=0; // left corner
 
     // 3) last row (y=ny)
-    B(arma::span(nt-nxi+1,nt),arma::span(nt-nxi+1,nt))=(a4-a3)*arma::diagmat(arma::ones(1,nxi)); // diagonal
+    B(arma::span(nt-nli+1,nt),arma::span(nt-nli+1,nt))=(a4-a3)*arma::diagmat(arma::ones(1,nli)); // diagonal
     B(nt,nt)=a4-a3+k3; // right corner
-    B(nt-nxi+1,nt-nxi+1)=-a3+a4+k3; // left corner
-    B(nt-nxi+1,nt-nxi)=0; // left corner
+    B(nt-nli+1,nt-nli+1)=-a3+a4+k3; // left corner
+    B(nt-nli+1,nt-nli)=0; // left corner
 
     //c_m_new = c_m_prev;
     
-    int nxyi_act = (nxi-2) * (nyi-2);
-    arma::mat c1 = arma::reshape((*gv.c_m)(arma::span(2,nxi-1),arma::span(2,nyi-1)),1,nxyi_act);  //c1=reshape(c_m_prev(2:end-1,2:end-1),1,[]);
+    int nxyi_act = (nli-2) * (nyi-2);
+    arma::mat c1 = arma::reshape((*gv.c_m)(arma::span(2,nli-1),arma::span(2,nyi-1)),1,nxyi_act);  //c1=reshape(c_m_prev(2:end-1,2:end-1),1,[]);
     arma::mat b=B*trans(c1);    // calculation of [b]
     arma::mat c2=arma::solve(A,b);     // calculation of c
-    (*gv.c_m)(arma::span(2,nxi-1),arma::span(2,nyi-1)) = arma::reshape(c2,nxi,nyi);
+    (*gv.c_m)(arma::span(2,nli-1),arma::span(2,nyi-1)) = arma::reshape(c2,nli,nyi);
 
 
-    for(i=1;i<nxi ;i++){ // to avoid back flow due to roundoff errors
+    for(i=1;i<nli ;i++){ // to avoid back flow due to roundoff errors
         for(j=1;j<nyi ;j++){ 
              if ((*gv.c_m).at(i,j)<0){
                  (*gv.c_m).at(i,j)=0;
@@ -339,15 +375,15 @@ bool print_results(globalvar& gv,globalpar& gp, int print_tag, unsigned int prin
     {
         for(il=1;il<=gv.nl;il++)
         {
-            filedataR(a,0) = ih * gv.snowh;  
-            filedataR(a,1) = il * gv.snowl;  
-            filedataR(a,2) = (*gv.c_m).at(ih,il); 
-            filedataR(a,3) = (*gv.c_i).at(ih,il); 
-            filedataR(a,4) = (*gv.c_s).at(ih,il); 
+            filedataR(a,0) = ih;// * gv.snowh;  
+            filedataR(a,1) = il;// * gv.snowl;  
+            filedataR(a,2) = (*gv.c_m).at(il,ih); 
+            filedataR(a,3) = (*gv.c_i).at(il,ih); 
+            filedataR(a,4) = (*gv.c_s).at(il,ih); 
             filedataR(a,5) = (gv.porosity_m); 
             filedataR(a,6) = (gv.porosity_s); 
-            filedataR(a,7) = (*gv.exchange_si).at(ih,il); 
-            filedataR(a,8) = (*gv.exchange_im).at(ih,il); 
+            filedataR(a,7) = (*gv.exchange_si).at(il,ih); 
+            filedataR(a,8) = (*gv.exchange_im).at(il,ih); 
             a = a + 1;
         }
     }
@@ -390,7 +426,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
     {
 
         t += 1;
-
+        
         q = std::fmax((*gv.qmelt).at(floor(tcum),1),0); // if there is increse in SWE, everything will freeze so there will be a stop
 
         // Estimate interstitial flow velocity 
@@ -410,7 +446,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             if (Peclet > 2 && Peclet > Peclet_max){
                 snowh_min = 2 * D / v;
                 msg = "Peclet number > 2. Delta y needs to be equal or smaller than " + std::to_string(ceil(snowh_min));
-                print_screen_log(logPULSEfile,&msg);
+                //print_screen_log(logPULSEfile,&msg);
             }
             Peclet_max = Peclet;
         }
@@ -433,7 +469,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
         // Melting velocity: last cell
         upperboundary_cell_prev = upperboundary_cell; // wetting fron cell in the previous time step
         upperboundary_z =  std::fmax(upperboundary_z - q * deltt,0);
-        tmp_int = int(std::round(nh_l-upperboundary_z/gv.snowh+1));
+        tmp_int = int(std::round(nh_l-upperboundary_z/gv.snowh));
         upperboundary_cell_new = std::min(tmp_int,nh_l); // in what cell is the wetting front
         //upperboundary_cell = [upperboundary_cell, upperboundary_cell_new];
         
@@ -443,7 +479,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             msg = "Courant condition violation - check code";
             print_screen_log(logPULSEfile,&msg);
 
-            break;
+            abort();
         //-// }else{ // moved inside the solver now in cpp
         //-//     if (wetfront_cell_new == wetfront_cell_prev + 1){ // moved inside the solver now in cpp
              //-// c_m_prev_i =  arma::join_vert(c_m_prev_i,arma::zeros(nl_l,1));  // moved inside the solver now in cpp
@@ -510,6 +546,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                 }
             };
 
+           
             // c_m(:,wetfront_cell,t) = c_m(:,wetfront_cell,t) + u * c_s(:,wetfront_cell,t) / rho_m;
             // c_i_new_i =  c_i_new_i + exchange * deltt / wetfront_cell(t); % / porosity_m(t); 
             (*gv.c_i) =  ( (*gv.c_i) * gv.porosity_i_prev + (*gv.exchange_si) * gv.porosity_s_prev ) / gv.porosity_i; // / porosity_m(t);
@@ -522,8 +559,8 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             // limit the flux to the available material
             
             // limit the flux to the available material
-            for(il=1;il<gv.nl ;il++){
-                for(ih=1;ih<gv.nh ;ih++){
+            for(il=0;il<=gv.nl ;il++){
+                for(ih=0;ih<=gv.nh ;ih++){
                     if ((*gv.exchange_im).at(il,ih) > 0){
                         (*gv.exchange_im).at(il,ih) = std::min((*gv.exchange_im).at(il,ih),(*gv.c_i).at(il,ih));
                     }else if((*gv.exchange_im).at(il,ih) < 0){
@@ -617,7 +654,45 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
     
 }
 
+void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
+{
+    
+    unsigned int a, ih, il,
+                timstart = findLastStep("Results/"); // list the results files to get the last time step
+    
+    arma::mat filedata; 
+    std::string init_file, msg;
+    
+    init_file = "Results/" + std::to_string(timstart) + ".txt";
+    
+    bool flstatus = filedata.load(init_file,arma::csv_ascii);
 
+    if(flstatus == true) 
+    {
+        for(a=0;a<filedata.col(1).n_elem;a++)
+        {
+            ih = filedata(a,0);  
+            il = filedata(a,1);  
+            (*gv.c_m).at(il,ih) = filedata(a,2); 
+            (*gv.c_i).at(il,ih) = filedata(a,3);
+            (*gv.c_s).at(il,ih) = filedata(a,4);
+            (gv.porosity_m) = filedata(a,5);
+            (gv.porosity_s) = filedata(a,6);
+            (*gv.exchange_si).at(il,ih) = filedata(a,7);
+            (*gv.exchange_im).at(il,ih) = filedata(a,8);
+        }
+        msg = "Initial conditions found: " + init_file;
+        print_screen_log(logPULSEfile,&msg);  
+    }else{
+        msg = "Initial conditions NOT FOUND: simulation aborted";  
+        print_screen_log(logPULSEfile,&msg);  
+        std::abort();
+    }
+    
+    
+    
+    
+}
 
 int main(int argc, char** argv) 
 {   
@@ -647,6 +722,9 @@ int main(int argc, char** argv)
      
     // read snowmelt input
     read_qmelt(gp,gv,&qmelt_file,&logPULSEfile);
+    
+    // initial conditions
+    initiate(gp,gv,&logPULSEfile);
     
     // call the main PULSE model
     PULSEmodel(gp,gv,&logPULSEfile);
