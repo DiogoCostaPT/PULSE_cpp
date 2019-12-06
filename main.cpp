@@ -558,11 +558,15 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                         print_screen_log(logPULSEfile,&msg);
                         //-// (*gv.exchange).at(il,ih)  = - std::min(std::abs(exchange),abs(c_m_new_i)); 
                     }
-                    if(ih<upperboundary_cell_new){
+                    if(ih<upperboundary_cell_new || ih>wetfront_cell_new){
                         (*gv.exchange_si).at(il,ih) = 0.0f;
                     };
                 }
             };
+            
+            if(upperboundary_cell_new>=1){
+                        std::cout << "exchange_si_5 =  " + std::to_string((*gv.exchange_si).at(il,ih)) << std::endl;
+                    };
             
                 //for(il=0;il<=gv.nl ;il++){
                 //for(ih=0;ih<=gv.nh ;ih++){
@@ -613,7 +617,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                         //msg = "PROBLEM: negative i->m exchange";
                         //print_screen_log(logPULSEfile,&msg);
                     }
-                    if(ih<upperboundary_cell_new){
+                     if(ih<upperboundary_cell_new || ih>wetfront_cell_new){
                         (*gv.exchange_im).at(il,ih) = 0.0f;
                     };
                 }
@@ -705,7 +709,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
         //- removed this code; check if it is important) //}
 
         // Print results                
-        //  if (tcum>=print_next){
+          if (tcum>=print_next){
 
              end = std::chrono::system_clock::now();
              elapsed_seconds = end-start;
@@ -725,7 +729,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                 abort();
             }
              
-         //}
+         }
 
     }
     
