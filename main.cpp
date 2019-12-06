@@ -32,7 +32,7 @@ class globalpar
 {
 public:
     
-    double Courant=0.8,aD,alpha,
+    double Courant=0.8,aD,
            rho_s=917.0, // kg.m-3 at 0 degrees
            rho_m=998.8, // kg.m-3 at 0 degrees
            wetfront_z,num_stblty_thrshld_prsity = 1E-6,alphaIE,Tperd;
@@ -264,7 +264,7 @@ void wettingfront_cell_location(globalpar& gp,globalvar& gv,double *v, double *d
 void Crank_Nicholson(globalvar& gv,int *wetfront_cell_prev, int *wetfront_cell_new, double *deltt,double *v,double *D)
 {
     // calculation - implicit scheme
-    unsigned int i,j;    
+    unsigned int il,ih;    
 
     // to solve A.x1=B.x0
     int nli = gv.nl-2;
@@ -283,32 +283,32 @@ void Crank_Nicholson(globalvar& gv,int *wetfront_cell_prev, int *wetfront_cell_n
     //A=zeros(nt,nt);
 
     // 1) all domain (diagonals: -9,-1,0,1,9)
-    arma::mat A = a3*(arma::diagmat(arma::ones(1,nt-nli),nli))+
-                    a1*arma::diagmat(arma::ones(1,nt-nli),-(nli))+
-                    a2*arma::diagmat(arma::ones(1,nt))
-                    -k3*arma::diagmat(arma::ones(1,nt-1),1)-
-                    k3*arma::diagmat(arma::ones(1,nt-1),-1);
+    arma::mat A = a3*(arma::diagmat(arma::ones(1,nt-nli),nli))
+                    +a1*arma::diagmat(arma::ones(1,nt-nli),-(nli))
+                    +a2*arma::diagmat(arma::ones(1,nt))
+                    -k3*arma::diagmat(arma::ones(1,nt-1),1)
+                    -k3*arma::diagmat(arma::ones(1,nt-1),-1);
 
 
-    for(i=0;i<=(nt/nli)-2 ;i++){ // inner cells - left and right marigns
-        A(i*nli,i*nli)=0;
-        A(i*nli,i*nli)=A(i*nli,i*nli)-k3;
-        A(i*nli+nli,i*nli+nli)=0;
-        A(i*nli+nli,i*nli+nli)=A(i*nli+nli,i*nli+nli)-k3;
+    for(il=0;il<=(nt/nli)-2 ;il++){ // inner cells - left and right marigns
+        A(il*nli+1,il*nli)=0;
+        A(il*nli+1,il*nli+1)=A(il*nli+1,il*nli+1)-k3;
+        A(il*nli+nli,il*nli+nli+1)=0;
+        A(il*nli+nli,il*nli+nli)=A(il*nli+nli,il*nli+nli)-k3;
     }
 
     // 2) first row (y=1)
     A(arma::span(0,nli-1),arma::span(0,nli-1)) += a1*arma::diagmat(arma::ones(1,nli)); //diagonal
     A(0,0)=a1+a2-k3; // left corner
     A(nli-1,nli-1)=a2+a1-k3; // left corner
-    //A(nli-1,nli)=0; // left corner
+    A(nli-1,nli)=0; // left corner
 
     
     // 3) last row (y=ny)
     A(arma::span(nt-nli,nt-1),arma::span(nt-nli,nt-1)) = (a2+a3)*arma::diagmat(arma::ones(1,nli)); // diagonal !!!! CHECK IF IT SHOULDN'T BE "+=" (LINE ABOVE) INSTEAD OF "="
     A(nt-1,nt-1)=a2+a3-k3; // right corner
     A(nt-nli,nt-nli)=a3+a2-k3; // left corner
-    //A(nt-nli,nt-nli)=0; // left corner
+    A(nt-nli,nt-nli-1)=0; // left corner
 
 
     // Creating B
@@ -323,40 +323,52 @@ void Crank_Nicholson(globalvar& gv,int *wetfront_cell_prev, int *wetfront_cell_n
             k3*arma::diagmat(arma::ones(1,nt-1),-1);
 
 
-    for(i=0;i<(nt/nli)-2 ;i++){         // inner cells - left and right marigns
-        B(i*nli,i*nli)=0;
-        B(i*nli,i*nli)=B(i*nli+1,i*nli+1)+k3;
-        B(i*nli+nli,i*nli+nli)=0;
-        B(i*nli+nli,i*nli+nli)=B(i*nli+nli,i*nli+nli)+k3;
+    for(il=0;il<=(nt/nli)-2 ;il++){         // inner cells - left and right marigns
+        B(il*nli+1,il*nli)=0;
+        B(il*nli+1,il*nli+1)=A(il*nli+1,il*nli+1)-k3;
+        B(il*nli+nli,il*nli+nli+1)=0;
+        B(il*nli+nli,il*nli+nli)=A(il*nli+nli,il*nli+nli)-k3;
     }
 
     // 2) first row (y=1)
     B(arma::span(0,nli-1),arma::span(0,nli-1)) += (-a1)*arma::diagmat(arma::ones(1,nli)); //diagonal
     B(0,0)=-a1+a4+k3; // left corner
     B(nli-1,nli-1)=a4-a1+k3; // left corner
-    //B(nli,nli+1)=0; // left corner
+    B(nli-1,nli)=0; // left corner
 
     // 3) last row (y=ny)
     B(arma::span(nt-nli,nt-1),arma::span(nt-nli,nt-1)) =(a4-a3)*arma::diagmat(arma::ones(1,nli)); // diagonal !!!! CHECK IF IT SHOULDN'T BE "+=" (LINE ABOVE) INSTEAD OF "="
     B(nt-1,nt-1)=a4-a3+k3; // right corner
     B(nt-nli,nt-nli)=-a3+a4+k3; // left corner
-    //B(nt-nli,nt-nli)=0; // left corner
+    B(nt-nli,nt-nli-1)=0; // left corner
 
     //c_m_new = c_m_prev;
     
-    arma::mat c1 = arma::reshape((*gv.c_m)(arma::span(1,nli-1),arma::span(1,nhi-1)),1,nt);  //c1=reshape(c_m_prev(2:end-1,2:end-1),1,[]);
+    arma::mat c1 = arma::reshape((*gv.c_m)(arma::span(1,nli-2),arma::span(1,nhi-2)),1,nt);  //c1=reshape(c_m_prev(2:end-1,2:end-1),1,[]);
     arma::mat b=B*trans(c1);    // calculation of [b]
     arma::mat c2=arma::solve(A,b);     // calculation of c
-    (*gv.c_m)(arma::span(1,nli-1),arma::span(1,nhi-1)) = arma::reshape(c2,nli-1,nhi-1);
+    (*gv.c_m)(arma::span(1,nli),arma::span(1,nhi)) = arma::reshape(c2,nli,nhi);
 
 
-    for(i=0;i<=nli ;i++){ // to avoid back flow due to roundoff errors
-        for(j=0;j<=nhi ;j++){ 
-             if ((*gv.c_m).at(i,j)<0){
-                 (*gv.c_m).at(i,j)=0;
+    for(il=0;il<=nli ;il++){ // to avoid back flow due to roundoff errors
+        for(ih=0;ih<=nhi ;ih++){ 
+             if ((*gv.c_m).at(il,ih)<0){
+                 (*gv.c_m).at(il,ih)=0;
             }
         }
     }
+    
+        //for(il=0;il<=gv.nl ;il++){
+        //        for(ih=0;ih<=gv.nh ;ih++){
+        //            if ((*gv.c_i).at(il,ih) > 10000){
+                        std::cout << "c_i_2 =  " + std::to_string((*gv.c_i).at(il,ih)) << std::endl;
+        //            }
+        //             if ((*gv.c_m).at(il,ih) > 10000){
+                        std::cout << "c_m_2 =  " + std::to_string((*gv.c_i).at(il,ih)) << std::endl;
+        //            }
+        //        }
+        //}
+    
 }
 
 
@@ -428,8 +440,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
     {
 
         t += 1;
-        
-             
+                
         q = std::fmax((*gv.qmelt).at(floor(tcum),1),0); // if there is increse in SWE, everything will freeze so there will be a stop
 
         // Estimate interstitial flow velocity 
@@ -534,48 +545,94 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             // exchange = (c_s_new_i -  c_m_new_i) * rho_s/rho_m * q; %dporosity_s_dt;
             // exchange = c_s_new_i * rho_s/rho_m ; %dporosity_s_dt;
 
-            (*gv.exchange_si) = (*gv.c_s) * gp.rho_s/gp.rho_m * q * deltt / wetfront_cell_new * gp.alphaIE;
+            (*gv.exchange_si) = (*gv.c_s) * gp.rho_s/gp.rho_m * q * deltt / wetfront_cell_new;
 
             // limit the flux to the available material
             for(il=0;il<=gv.nl ;il++){
                 for(ih=0;ih<=gv.nh ;ih++){
+                                                           
                     if ((*gv.exchange_si).at(il,ih) > 0){
                         (*gv.exchange_si).at(il,ih) = std::min((*gv.exchange_si).at(il,ih),(*gv.c_s).at(il,ih));
                     }else if((*gv.exchange_si).at(il,ih) < 0){
-                        msg = "PROBLEM: negative exchange";
+                        msg = "PROBLEM: negative s->i exchange";
                         print_screen_log(logPULSEfile,&msg);
                         //-// (*gv.exchange).at(il,ih)  = - std::min(std::abs(exchange),abs(c_m_new_i)); 
                     }
+                    if(ih<upperboundary_cell_new){
+                        (*gv.exchange_si).at(il,ih) = 0.0f;
+                    };
                 }
             };
-
-           
+            
+                //for(il=0;il<=gv.nl ;il++){
+                //for(ih=0;ih<=gv.nh ;ih++){
+                //    if ((*gv.c_i).at(il,ih) > 1400){
+                        std::cout << "c_i_5 =  " + std::to_string((*gv.c_i).at(il,ih)) << std::endl;
+                        std::cout << "exchange_si_5 =  " + std::to_string((*gv.exchange_si).at(il,ih)) << std::endl;
+                //    }
+                //     if ((*gv.c_m).at(il,ih) > 10000){
+                        std::cout << "c_m_5 =  " + std::to_string((*gv.c_m).at(il,ih)) << std::endl;
+                //    }
+                //}
+                //}
+            
+            
             // c_m(:,wetfront_cell,t) = c_m(:,wetfront_cell,t) + u * c_s(:,wetfront_cell,t) / rho_m;
             // c_i_new_i =  c_i_new_i + exchange * deltt / wetfront_cell(t); % / porosity_m(t); 
             (*gv.c_i) =  ( (*gv.c_i) * gv.porosity_i_prev + (*gv.exchange_si) * gv.porosity_s_prev ) / gv.porosity_i; // / porosity_m(t);
             (*gv.c_s) = ( (*gv.c_s) * gv.porosity_s_prev - (*gv.exchange_si) * gv.porosity_s_prev ) / gv.porosity_s;
             //c_s_new_i = c_s_new_i  - exchange ; 
 
+                //    for(il=0;il<=gv.nl ;il++){
+                //for(ih=0;ih<=gv.nh ;ih++){
+                 //   if ((*gv.c_i).at(il,ih) > 1400){
+                        std::cout << "c_i_6 =  " + std::to_string((*gv.c_i).at(il,ih)) << std::endl;
+                        std::cout << "exchange_si_6 =  " + std::to_string((*gv.exchange_si).at(il,ih)) << std::endl;
+                //    }
+                //     if ((*gv.c_m).at(il,ih) > 10000){
+                        std::cout << "c_m_6 =  " + std::to_string((*gv.c_m).at(il,ih)) << std::endl;
+                //   }
+                //}
+                //}
+            
             // Exchange with immobile phase (just exchange)
-            (*gv.exchange_im)  = gp.alpha/gv.porosity_m_prev * ((*gv.c_i) - (*gv.c_m)) ; 
+            (*gv.exchange_im)  = deltt * (gp.alphaIE/gv.porosity_m_prev * ((*gv.c_i) - (*gv.c_m))) ; 
+            
+            
+            
             // exchange = alpha .* (c_i_new_i - c_m_new_i) ; 
             // limit the flux to the available material
             
             // limit the flux to the available material
             for(il=0;il<=gv.nl ;il++){
                 for(ih=0;ih<=gv.nh ;ih++){
-                    if ((*gv.exchange_im).at(il,ih) > 0){
+                                        if ((*gv.exchange_im).at(il,ih) > 0){
                         (*gv.exchange_im).at(il,ih) = std::min((*gv.exchange_im).at(il,ih),(*gv.c_i).at(il,ih));
                     }else if((*gv.exchange_im).at(il,ih) < 0){
-                        msg = "PROBLEM: negative exchange";
-                        print_screen_log(logPULSEfile,&msg);
+                        (*gv.exchange_im).at(il,ih) = -(std::min(std::abs((*gv.exchange_im).at(il,ih)),std::abs((*gv.c_m).at(il,ih))));
+                        //msg = "PROBLEM: negative i->m exchange";
+                        //print_screen_log(logPULSEfile,&msg);
                     }
+                    if(ih<upperboundary_cell_new){
+                        (*gv.exchange_im).at(il,ih) = 0.0f;
+                    };
                 }
             };
 
             (*gv.c_m) =  ( (*gv.c_m) * gv.porosity_m_prev + (*gv.exchange_im) * gv.porosity_i_prev ) / gv.porosity_m; // / porosity_m(t);
             (*gv.c_i) = ( (*gv.c_i) * gv.porosity_i_prev - (*gv.exchange_im) * gv.porosity_i_prev ) / gv.porosity_i;
 
+                //    for(il=0;il<=gv.nl ;il++){
+                //for(ih=0;ih<=gv.nh ;ih++){
+                //    if ((*gv.c_i).at(il,ih) > 10000){
+                        std::cout << "c_i_7 =  " + std::to_string((*gv.c_i).at(il,ih)) << std::endl;
+                //    }
+                //     if ((*gv.c_m).at(il,ih) > 10000){
+                        std::cout << "c_m_7 =  " + std::to_string((*gv.c_i).at(il,ih)) << std::endl;
+                //    }
+                //}
+                //}
+            
             // add all immobile and solid slow that melted from the last cell) 
             if(upperboundary_cell_new != upperboundary_cell_prev){
                 (*gv.c_m)(arma::span(0,gv.nl-1),upperboundary_cell_new) = ( (*gv.c_m)(arma::span(0,gv.nl-1),upperboundary_cell_new) * gv.porosity_m_prev
@@ -604,6 +661,16 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                         
         }
     
+                //for(il=0;il<=gv.nl ;il++){
+                //for(ih=0;ih<=gv.nh ;ih++){
+                //    if ((*gv.c_i).at(il,ih) > 10000){
+                        std::cout << "c_i_8 =  " + std::to_string((*gv.c_i).at(il,ih)) << std::endl;
+                //    }
+                //     if ((*gv.c_m).at(il,ih) > 10000){
+                        std::cout << "c_m_8 =  " + std::to_string((*gv.c_i).at(il,ih)) << std::endl;
+                //    }
+                //}
+                //}
     
         //- removed this code; check if it is important) // c_m_new_i(1,:) = c_m_new_i(3,:);
         //- removed this code; check if it is important) // c_m_new_i(2,:) = c_m_new_i(3,:);   
@@ -637,8 +704,9 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
         //- removed this code; check if it is important) //    tcum_prev = 0;
         //- removed this code; check if it is important) //}
 
-          if (tcum>=print_next)
-        {
+        // Print results                
+        //  if (tcum>=print_next){
+
              end = std::chrono::system_clock::now();
              elapsed_seconds = end-start;
              
@@ -657,7 +725,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                 abort();
             }
              
-         }
+         //}
 
     }
     
