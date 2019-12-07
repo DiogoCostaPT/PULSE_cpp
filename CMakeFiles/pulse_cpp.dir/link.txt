@@ -1,1 +1,1 @@
-/usr/bin/g++  -g3 -Wall -pedantic -fopenmp -g3 -gdwarf-2   CMakeFiles/pulse_cpp.dir/main.cpp.o  -o pulse_cpp /usr/lib/libarmadillo.so 
+/usr/bin/g++  -O3 -fopenmp -g3 -gdwarf-2   CMakeFiles/pulse_cpp.dir/main.cpp.o  -o pulse_cpp /usr/lib/libarmadillo.so 
