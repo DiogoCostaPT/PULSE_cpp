@@ -265,7 +265,7 @@ void Crank_Nicholson(globalvar& gv,int *upperboundary_cell_new, int *wetfront_ce
 
     // to solve A.x1=B.x0
     int nli = gv.nl;
-    int nhi = *wetfront_cell_new-*upperboundary_cell_new+1;                   // the boundaries are knowns, so don't need to be included in matrix A
+    int nhi = (*wetfront_cell_new)-(*upperboundary_cell_new);                   // the boundaries are knowns, so don't need to be included in matrix A
     int nt = nli*nhi;
     double k1 = (*v)*(*deltt)/(4*gv.snowh);       // constants for Crank-Nicholson scheme
     double k2 = (*D)*(*deltt)/(2*pow(gv.snowh,2));     // constants for Crank-Nicholson scheme
@@ -297,7 +297,7 @@ void Crank_Nicholson(globalvar& gv,int *upperboundary_cell_new, int *wetfront_ce
     A(arma::span(0,nli-1),arma::span(0,nli-1)) = a1*arma::diagmat(arma::ones(1,nli)); //diagonal
     A(0,0)=a1+a2-k3; // left corner
     A(nli-1,nli-1)=a2+a1-k3; // left corner
-
+    
     
     // 3) last row (y=ny)
     A(arma::span(nt-nli,nt-1),arma::span(nt-nli,nt-1)) = (a2+a3)*arma::diagmat(arma::ones(1,nli)); // diagonal !!!! CHECK IF IT SHOULDN'T BE "+=" (LINE ABOVE) INSTEAD OF "="
@@ -333,10 +333,10 @@ void Crank_Nicholson(globalvar& gv,int *upperboundary_cell_new, int *wetfront_ce
     B(nt-1,nt-1)=a4-a3+k3; // right corner
     B(nt-nli,nt-nli)=-a3+a4+k3; // left corner
    
-    arma::mat c1 = arma::reshape((*gv.c_m)(arma::span(0,nli-1),arma::span(*upperboundary_cell_new,*wetfront_cell_new)),1,nt);  //c1=reshape(c_m_prev(2:end-1,2:end-1),1,[]);
+    arma::mat c1 = arma::reshape((*gv.c_m)(arma::span(0,nli-1),arma::span((*upperboundary_cell_new),(*wetfront_cell_new)-1)),1,nt);  //c1=reshape(c_m_prev(2:end-1,2:end-1),1,[]);
     arma::mat b=B*trans(c1);    // calculation of [b]
     arma::mat c2=arma::solve(A,b);     // calculation of c
-    (*gv.c_m)(arma::span(0,nli-1),arma::span(*upperboundary_cell_new,*wetfront_cell_new)) = arma::reshape(c2,nli,nhi);
+    (*gv.c_m)(arma::span(0,nli-1),arma::span((*upperboundary_cell_new),(*wetfront_cell_new)-1)) = arma::reshape(c2,nli,nhi);
 
 }
 
@@ -428,8 +428,8 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                 //print_screen_log(logPULSEfile,&msg);
             }
             Peclet_max = Peclet;
-            
-        }
+    
+            }
         }else{
             deltt = 1;
         }
@@ -471,8 +471,8 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 
                 // Crank Nicolson to limit the fluxes across boundaries
      
-               (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new) -= v * deltt * ((*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new) - (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1))/gv.snowh ; // compute onh advection to the wetting front
-
+               (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) -= v * deltt * ((*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) - (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new))/gv.snowh ; // compute onh advection to the wetting front
+               (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new) += v * deltt * ((*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) - (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new))/gv.snowh ; // compute onh advection to the wetting front
             }
 
             (*gv.exchange_si) = (*gv.c_s) * gp.rho_s/gp.rho_m * q * deltt / (wetfront_cell_new+1);
@@ -517,7 +517,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 
             
             // add all immobile and solid slow that melted from the last cell) 
-            if(upperboundary_cell_new >= upperboundary_cell_prev){
+            if(upperboundary_cell_new != upperboundary_cell_prev){
                 (*gv.c_m)(arma::span(0,gv.nl-1),upperboundary_cell_new) = ( (*gv.c_m)(arma::span(0,gv.nl-1),upperboundary_cell_new) * gv.porosity_m_prev
                     + (*gv.c_m)(arma::span(0,gv.nl-1),upperboundary_cell_prev) * gv.porosity_m_prev
                     + (*gv.c_s)(arma::span(0,gv.nl-1),upperboundary_cell_prev) * gv.porosity_s_prev
