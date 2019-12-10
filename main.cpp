@@ -78,7 +78,11 @@ public:
             porosity_i_prev=porosity_i,
             porosity_s_prev=porosity_s,
             qtotal,
-            timstart;
+            timstart,
+            upperboundary_z,
+            upperboundary_cell,
+            wetfront_z,
+            wetfront_cell;
                  
 };
 
@@ -247,13 +251,13 @@ void calc_porosity(globalpar& gp,globalvar& gv,double *q, double *deltt)
        
 }
 
-void wettingfront_cell_location(globalpar& gp,globalvar& gv,double *v, double *deltt, int *wetfront_cell_new,int *wetfront_cell_prev)
+void wettingfront_cell_location(globalpar& gp,globalvar& gv,double *v, double *deltt,int *wetfront_cell_prev)
 {
     int nh_l = gv.nh;
-    *wetfront_cell_prev = *wetfront_cell_new; // wetting fron cell in the previous time step
-    gp.wetfront_z = std::fmax(gp.wetfront_z - (*v) * (*deltt),0.f);
-    int tmp = std::round(nh_l-gp.wetfront_z/gv.snowh);
-    *wetfront_cell_new = std::min(tmp,nh_l); // finding the cell when the wetting front is located
+    (*wetfront_cell_prev) = gv.wetfront_cell; // wetting fron cell in the previous time step
+    gv.wetfront_z = std::fmax(gv.wetfront_z - (*v) * (*deltt),0.f);
+    int tmp = std::round((nh_l-gv.wetfront_z)/gv.snowh);
+    gv.wetfront_cell = std::min(tmp,nh_l); // finding the cell when the wetting front is located
     
 }
 
@@ -392,8 +396,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             deltt = 1.0f, // time step calculated from the CFL condition
             v = 0.f, // interstitial flow velocity [m s-1]
             D = 0.f; // dispersion coefficient [m2/s]
-    int upperboundary_cell = 0,
-        wetfront_cell_new = 0,wetfront_cell_prev,upperboundary_cell_new,upperboundary_cell_prev,
+    int wetfront_cell_prev,upperboundary_cell_prev,
         flagt = 1, // for saving results
         tmp_int; // min vertical grid size to comply with the Peclet condition
     std::string msg;  
@@ -405,12 +408,15 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
     arma::mat exchange_i;
     int nl_l = gv.nl,nh_l = gv.nh;
     
-    gp.wetfront_z = gv.nh*gv.snowh; // starts at the top
-    double upperboundary_z = gp.wetfront_z;
+    //gp.wetfront_z = gv.nh*gv.snowh; // starts at the top
+    //double upperboundary_z = gp.wetfront_z;
     unsigned int il,ih,print_next;
       
     tcum = gv.timstart;
     print_next = tcum + gp.print_step;
+    
+    wetfront_cell_prev = gv.wetfront_cell;
+    upperboundary_cell_prev = gv.upperboundary_cell;
     
     while (tcum < gp.Tperd)
     {
@@ -450,19 +456,19 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             calc_porosity(gp,gv,&q,&deltt);
 
             // limiting the flux to the wetting front (uses intersticial velocity to determine the wetting front)
-            wettingfront_cell_location(gp,gv,&v,&deltt,&wetfront_cell_new,&wetfront_cell_prev);
+            wettingfront_cell_location(gp,gv,&v,&deltt,&wetfront_cell_prev);
 
 
             // Melting velocity: last cell
-            upperboundary_cell_prev = upperboundary_cell; // wetting fron cell in the previous time step
-            upperboundary_z =  std::fmax(upperboundary_z - q * deltt,0);
-            tmp_int = int(std::round(nh_l-upperboundary_z/gv.snowh));
-            upperboundary_cell_new = std::min(tmp_int,nh_l); // in what cell is the wetting front
+            upperboundary_cell_prev = gv.upperboundary_cell; // wetting fron cell in the previous time step
+            gv.upperboundary_z =  std::fmax(gv.upperboundary_z - q * deltt,0);
+            tmp_int = int(std::round(nh_l-gv.upperboundary_z/gv.snowh));
+            gv.upperboundary_cell = std::min(tmp_int,nh_l); // in what cell is the wetting front
             //upperboundary_cell = [upperboundary_cell, upperboundary_cell_new];
 
 
             // add a new cell if the wetting front moves to the next cell
-            if((wetfront_cell_new - wetfront_cell_prev) > 1){
+            if((gv.wetfront_cell - wetfront_cell_prev) > 1){
                 msg = "Courant condition violation - check code";
                 print_screen_log(logPULSEfile,&msg);
 
@@ -472,7 +478,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
         }
 
         if (gv.porosity_m < 1-gp.num_stblty_thrshld_prsity && gv.porosity_i > gp.num_stblty_thrshld_prsity && gv.porosity_s > gp.num_stblty_thrshld_prsity){
-            if (wetfront_cell_new > 5){
+            if (gv.wetfront_cell > 5){
 
                //Crank_Nicholson(gv,&upperboundary_cell_new, &wetfront_cell_new,&deltt,&v,&D); // solve advection and dispersion in the mobile zone
 
@@ -482,7 +488,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                //(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new) += exchange_i; // compute onh advection to the wetting front
             }
 
-            (*gv.exchange_si) = (*gv.c_s) * gp.rho_s/gp.rho_m * q * deltt / (wetfront_cell_new+1);
+            (*gv.exchange_si) = (*gv.c_s) * gp.rho_s/gp.rho_m * q * deltt / (gv.wetfront_cell+1);
 
             // limit the flux to the available material
             for(il=0;il<=gv.nl ;il++){
@@ -495,7 +501,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                             print_screen_log(logPULSEfile,&msg);
                             //-// (*gv.exchange).at(il,ih)  = - std::min(std::abs(exchange),abs(c_m_new_i)); 
                         }
-                        if(ih<upperboundary_cell_new || ih>wetfront_cell_new){
+                        if(ih<gv.upperboundary_cell || ih>gv.wetfront_cell){
                             (*gv.exchange_si).at(il,ih) = 0.0f;
                         };
                 }
@@ -514,7 +520,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                     }else if((*gv.exchange_im).at(il,ih) < 0){
                         (*gv.exchange_im).at(il,ih) = -(std::min(std::abs((*gv.exchange_im).at(il,ih)),std::abs((*gv.c_m).at(il,ih))));
                     }
-                     if(ih<upperboundary_cell_new || ih>wetfront_cell_new){
+                     if(ih<gv.upperboundary_cell || ih>gv.wetfront_cell){
                         (*gv.exchange_im).at(il,ih) = 0.0f;
                     };
                 }
@@ -524,8 +530,8 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 
             
             // add all immobile and solid slow that melted from the last cell) 
-            if(upperboundary_cell_new != upperboundary_cell_prev){
-                (*gv.c_m)(arma::span(0,gv.nl-1),upperboundary_cell_new) = ( (*gv.c_m)(arma::span(0,gv.nl-1),upperboundary_cell_new) * gv.porosity_m_prev
+            if(gv.upperboundary_cell != gv.upperboundary_cell){
+                (*gv.c_m)(arma::span(0,gv.nl-1),gv.upperboundary_cell) = ( (*gv.c_m)(arma::span(0,gv.nl-1),gv.upperboundary_cell) * gv.porosity_m_prev
                     + (*gv.c_m)(arma::span(0,gv.nl-1),upperboundary_cell_prev) * gv.porosity_m_prev
                     + (*gv.c_s)(arma::span(0,gv.nl-1),upperboundary_cell_prev) * gv.porosity_s_prev
                     + (*gv.c_i)(arma::span(0,gv.nl-1),upperboundary_cell_prev) * gv.porosity_i_prev ) / gv.porosity_m; // gv.porosity_m;
@@ -539,10 +545,10 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             gv.porosity_i = 0;
             gv.porosity_m = 1;
             gv.porosity_s = 0;
-            if(upperboundary_cell_new != 0){
-                (*gv.c_m)(arma::span(0,gv.nl-1),arma::span(0,upperboundary_cell_new)) *= 0;
-                (*gv.c_s)(arma::span(0,gv.nl-1),arma::span(0,upperboundary_cell_new)) *= 0;
-                (*gv.c_i)(arma::span(0,gv.nl-1),arma::span(0,upperboundary_cell_new)) *= 0;
+            if(gv.upperboundary_cell != 0){
+                (*gv.c_m)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell)) *= 0;
+                (*gv.c_s)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell)) *= 0;
+                (*gv.c_i)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell)) *= 0;
             }else{ // if only top layer is wet
                 (*gv.c_m)(arma::span(0,gv.nl-1),0) *= 0;
                 (*gv.c_s)(arma::span(0,gv.nl-1),0) *= 0;
@@ -583,6 +589,7 @@ void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 {
     
     unsigned int a, ih, il;
+    int nh_l = gv.nh;
     
     arma::mat filedata; 
     std::string init_file, msg;
@@ -592,20 +599,28 @@ void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
     init_file = "Results/" + std::to_string(int(gv.timstart)) + ".txt";
     
     bool flstatus = filedata.load(init_file,arma::csv_ascii);
-
+    gv.upperboundary_z = 0.0f;
+    gv.wetfront_z = 9999;
+    
     if(flstatus == true) 
     {
         for(a=0;a<filedata.col(1).n_elem;a++)
         {
             ih = filedata(a,0);  
             il = filedata(a,1);  
-            (*gv.c_m).at(il,ih) = filedata(a,2); 
+            (*gv.c_m).at(il,ih) = filedata(a,2);
             (*gv.c_i).at(il,ih) = filedata(a,3);
             (*gv.c_s).at(il,ih) = filedata(a,4);
             (gv.porosity_m) = filedata(a,5);
             (gv.porosity_s) = filedata(a,6);
             (*gv.exchange_si).at(il,ih) = filedata(a,7);
             (*gv.exchange_im).at(il,ih) = filedata(a,8);
+            if((*gv.c_m).at(il,ih)!=0){
+                gv.wetfront_z = std::fmin(gv.nh - (ih+1) * gv.snowh,gv.wetfront_z);
+                gv.wetfront_cell = std::min(int(std::round((nh_l-gv.wetfront_z)/gv.snowh)),nh_l); // finding the cell when the wetting front is located
+                gv.upperboundary_z = std::fmax(gv.nh - (ih) * gv.snowh,gv.upperboundary_z);  
+                gv.upperboundary_cell = std::min(int(std::round((nh_l-gv.upperboundary_z)/gv.snowh)),nh_l);
+            }
         }
         msg = "Initial conditions found: " + init_file;
         print_screen_log(logPULSEfile,&msg);  
