@@ -77,7 +77,8 @@ public:
             porosity_m_prev=porosity_m,
             porosity_i_prev=porosity_i,
             porosity_s_prev=porosity_s,
-            qtotal;
+            qtotal,
+            timstart;
                  
 };
 
@@ -176,7 +177,7 @@ int read_simset(globalpar& gp,std::string* sim_purp, int *H_local,int *L_local, 
         if(i==5){(*l_layer) = std::round(std::stoi(str));};
         if(i==6){(*qmelt_file) = str;};  
         if(i==7){gp.print_step = std::stoi(str);};
-        if(i==8){gp.aD = std::stof(str);}; 
+        if(i==8){gp.aD = std::stof(str)/3600;}; 
         if(i==9){gp.alphaIE = std::stof(str)/3600;}; 
     }
     file.close();
@@ -278,6 +279,10 @@ void Crank_Nicholson(globalvar& gv,int *upperboundary_cell_new, int *wetfront_ce
     double a2=(1+2*k2+2*k3);
     double a3=k1-k2;
 
+    if(k1<0){
+        std::cout << std::to_string(k3) <<std::endl;
+    }
+
     // 1) all domain (diagonals: -9,-1,0,1,9)
     arma::mat A = a3*(arma::diagmat(arma::ones(1,nt-nli),nli))
                     +a1*arma::diagmat(arma::ones(1,nt-nli),-(nli))
@@ -297,13 +302,12 @@ void Crank_Nicholson(globalvar& gv,int *upperboundary_cell_new, int *wetfront_ce
     A(arma::span(0,nli-1),arma::span(0,nli-1)) = a1*arma::diagmat(arma::ones(1,nli)); //diagonal
     A(0,0)=a1+a2-k3; // left corner
     A(nli-1,nli-1)=a2+a1-k3; // left corner
-    
+
     
     // 3) last row (y=ny)
     A(arma::span(nt-nli,nt-1),arma::span(nt-nli,nt-1)) = (a2+a3)*arma::diagmat(arma::ones(1,nli)); // diagonal !!!! CHECK IF IT SHOULDN'T BE "+=" (LINE ABOVE) INSTEAD OF "="
     A(nt-1,nt-1)=a2+a3-k3; // right corner
     A(nt-nli,nt-nli)=a3+a2-k3; // left corner
-
 
     // Creating B
     double a4=(1-2*k2-2*k3);
@@ -393,18 +397,21 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
         flagt = 1, // for saving results
         tmp_int; // min vertical grid size to comply with the Peclet condition
     std::string msg;  
-    double exchange_i,Peclet,Peclet_max = 0,snowh_min;
+    double Peclet,Peclet_max = 0,snowh_min;
     std::chrono::duration<double> elapsed_seconds;
     auto start = std::chrono::system_clock::now();
     auto end = std::chrono::system_clock::now();
     bool outwritestatus;
+    arma::mat exchange_i;
     int nl_l = gv.nl,nh_l = gv.nh;
     
     gp.wetfront_z = gv.nh*gv.snowh; // starts at the top
     double upperboundary_z = gp.wetfront_z;
     unsigned int il,ih,print_next;
+      
+    tcum = gv.timstart;
+    print_next = tcum + gp.print_step;
     
-    print_next = gp.print_step;
     while (tcum < gp.Tperd)
     {
 
@@ -467,12 +474,12 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
         if (gv.porosity_m < 1-gp.num_stblty_thrshld_prsity && gv.porosity_i > gp.num_stblty_thrshld_prsity && gv.porosity_s > gp.num_stblty_thrshld_prsity){
             if (wetfront_cell_new > 5){
 
-               Crank_Nicholson(gv,&upperboundary_cell_new, &wetfront_cell_new,&deltt,&v,&D); // solve advection and dispersion in the mobile zone
+               //Crank_Nicholson(gv,&upperboundary_cell_new, &wetfront_cell_new,&deltt,&v,&D); // solve advection and dispersion in the mobile zone
 
                 // Crank Nicolson to limit the fluxes across boundaries
-     
-               (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) -= v * deltt * ((*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) - (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new))/gv.snowh ; // compute onh advection to the wetting front
-               (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new) += v * deltt * ((*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) - (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new))/gv.snowh ; // compute onh advection to the wetting front
+               //exchange_i = arma::max(v * deltt * ((*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) - (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new))/gv.snowh,(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1));
+               //(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) -= exchange_i; // compute onh advection to the wetting front
+               //(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new) += exchange_i; // compute onh advection to the wetting front
             }
 
             (*gv.exchange_si) = (*gv.c_s) * gp.rho_s/gp.rho_m * q * deltt / (wetfront_cell_new+1);
@@ -575,13 +582,14 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 {
     
-    unsigned int a, ih, il,
-                timstart = findLastStep("Results/"); // list the results files to get the last time step
+    unsigned int a, ih, il;
     
     arma::mat filedata; 
     std::string init_file, msg;
     
-    init_file = "Results/" + std::to_string(timstart) + ".txt";
+    gv.timstart = findLastStep("Results/"); // list the results files to get the last time step
+    
+    init_file = "Results/" + std::to_string(int(gv.timstart)) + ".txt";
     
     bool flstatus = filedata.load(init_file,arma::csv_ascii);
 
