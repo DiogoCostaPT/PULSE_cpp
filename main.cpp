@@ -256,21 +256,21 @@ void wettingfront_cell_location(globalpar& gp,globalvar& gv,double *v, double *d
     int nh_l = gv.nh;
     (*wetfront_cell_prev) = gv.wetfront_cell; // wetting fron cell in the previous time step
     gv.wetfront_z = std::fmax(gv.wetfront_z - (*v) * (*deltt),0.f);
-    int tmp = std::round((nh_l-gv.wetfront_z)/gv.snowh);
+    int tmp = std::round(nh_l-gv.wetfront_z/gv.snowh);
     gv.wetfront_cell = std::min(tmp,nh_l); // finding the cell when the wetting front is located
     
 }
 
 
 // Crank-Nicholson Scheme (implicit)
-void Crank_Nicholson(globalvar& gv,int *upperboundary_cell_new, int *wetfront_cell_new, double *deltt,double *v,double *D)
+void Crank_Nicholson(globalvar& gv,double *deltt,double *v,double *D)
 {
     // calculation - implicit scheme
     unsigned int il,ih;    
 
     // to solve A.x1=B.x0
     int nli = gv.nl;
-    int nhi = (*wetfront_cell_new)-(*upperboundary_cell_new);                   // the boundaries are knowns, so don't need to be included in matrix A
+    int nhi = (gv.wetfront_cell)-(gv.upperboundary_cell);                   // the boundaries are knowns, so don't need to be included in matrix A
     int nt = nli*nhi;
     double k1 = (*v)*(*deltt)/(4*gv.snowh);       // constants for Crank-Nicholson scheme
     double k2 = (*D)*(*deltt)/(2*pow(gv.snowh,2));     // constants for Crank-Nicholson scheme
@@ -341,10 +341,10 @@ void Crank_Nicholson(globalvar& gv,int *upperboundary_cell_new, int *wetfront_ce
     B(nt-1,nt-1)=a4-a3+k3; // right corner
     B(nt-nli,nt-nli)=-a3+a4+k3; // left corner
    
-    arma::mat c1 = arma::reshape((*gv.c_m)(arma::span(0,nli-1),arma::span((*upperboundary_cell_new),(*wetfront_cell_new)-1)),1,nt);  //c1=reshape(c_m_prev(2:end-1,2:end-1),1,[]);
+    arma::mat c1 = arma::reshape((*gv.c_m)(arma::span(0,nli-1),arma::span((gv.upperboundary_cell),(gv.wetfront_cell)-1)),1,nt);  //c1=reshape(c_m_prev(2:end-1,2:end-1),1,[]);
     arma::mat b=B*trans(c1);    // calculation of [b]
     arma::mat c2=arma::solve(A,b);     // calculation of c
-    (*gv.c_m)(arma::span(0,nli-1),arma::span((*upperboundary_cell_new),(*wetfront_cell_new)-1)) = arma::reshape(c2,nli,nhi);
+    (*gv.c_m)(arma::span(0,nli-1),arma::span((gv.upperboundary_cell),(gv.wetfront_cell)-1)) = arma::reshape(c2,nli,nhi);
 
 }
 
@@ -480,7 +480,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
         if (gv.porosity_m < 1-gp.num_stblty_thrshld_prsity && gv.porosity_i > gp.num_stblty_thrshld_prsity && gv.porosity_s > gp.num_stblty_thrshld_prsity){
             if (gv.wetfront_cell > 5){
 
-               //Crank_Nicholson(gv,&upperboundary_cell_new, &wetfront_cell_new,&deltt,&v,&D); // solve advection and dispersion in the mobile zone
+               Crank_Nicholson(gv,&deltt,&v,&D); // solve advection and dispersion in the mobile zone
 
                 // Crank Nicolson to limit the fluxes across boundaries
                //exchange_i = arma::max(v * deltt * ((*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) - (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new))/gv.snowh,(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1));
@@ -599,8 +599,10 @@ void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
     init_file = "Results/" + std::to_string(int(gv.timstart)) + ".txt";
     
     bool flstatus = filedata.load(init_file,arma::csv_ascii);
-    gv.upperboundary_z = 0.0f;
-    gv.wetfront_z = 9999;
+    gv.upperboundary_z = gv.nh*gv.snowh;
+    gv.wetfront_z = gv.nh*gv.snowh;
+    gv.wetfront_cell = 0;
+    gv.upperboundary_cell = 0;
     
     if(flstatus == true) 
     {
@@ -616,10 +618,10 @@ void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             (*gv.exchange_si).at(il,ih) = filedata(a,7);
             (*gv.exchange_im).at(il,ih) = filedata(a,8);
             if((*gv.c_m).at(il,ih)!=0){
-                gv.wetfront_z = std::fmin(gv.nh - (ih+1) * gv.snowh,gv.wetfront_z);
-                gv.wetfront_cell = std::min(int(std::round((nh_l-gv.wetfront_z)/gv.snowh)),nh_l); // finding the cell when the wetting front is located
-                gv.upperboundary_z = std::fmax(gv.nh - (ih) * gv.snowh,gv.upperboundary_z);  
-                gv.upperboundary_cell = std::min(int(std::round((nh_l-gv.upperboundary_z)/gv.snowh)),nh_l);
+                gv.wetfront_z = std::fmin((gv.nh - (ih+1)) * gv.snowh,gv.wetfront_z);
+                gv.wetfront_cell = std::min(int(std::round(nh_l-gv.wetfront_z/gv.snowh)),nh_l); // finding the cell when the wetting front is located
+                gv.upperboundary_z = std::fmax((gv.nh - (ih)) * gv.snowh,gv.upperboundary_z);  
+                gv.upperboundary_cell = std::min(int(std::round(nh_l-gv.upperboundary_z/gv.snowh)),nh_l);
             }
         }
         msg = "Initial conditions found: " + init_file;
