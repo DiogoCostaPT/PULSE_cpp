@@ -162,6 +162,27 @@ int findLastStep(const char *path) {
    return timestart;
 }
 
+
+double findQmelt(globalvar& gv,double *tcum)
+{
+    double qmelt_i,qmelt_t_i;
+    unsigned a,nqmelt;
+    
+    nqmelt = int((*gv.qmelt).col(0).n_elem);
+    
+    for(a=0;a< nqmelt;a++){
+        qmelt_t_i = (*gv.qmelt).at(a,0);
+        if (qmelt_t_i >= *tcum){
+            qmelt_i =  (*gv.qmelt).at(a,1);
+            break;
+        }
+    }
+    
+    return qmelt_i;
+}
+
+
+
 int read_simset(globalpar& gp,std::string* sim_purp, int *H_local,int *L_local, int *h_layer,int *l_layer, std::string* qmelt_file,std::ofstream* logPULSEfile)
 {
     
@@ -386,6 +407,7 @@ bool print_results(globalvar& gv,globalpar& gp, int print_tag, unsigned int prin
     return outwritestatus;
 }
 
+
 void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 {
     
@@ -423,7 +445,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 
         t += 1;
                 
-        q = std::fmax((*gv.qmelt).at(floor(tcum),1),0); // if there is increse in SWE, everything will freeze so there will be a stop
+        q = findQmelt(gv,&tcum); // if there is increse in SWE, everything will freeze so there will be a stop
 
         // Estimate interstitial flow velocity 
         v = q / (gv.porosity_m); // interstitial flow velocity [m s-1]
@@ -461,7 +483,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 
             // Melting velocity: last cell
             upperboundary_cell_prev = gv.upperboundary_cell; // wetting fron cell in the previous time step
-            gv.upperboundary_z =  std::fmax(gv.upperboundary_z - q * deltt,0);
+            gv.upperboundary_z =  std::fmax(gv.upperboundary_z - q * deltt,0.0f);
             tmp_int = int(std::round(nh_l-gv.upperboundary_z/gv.snowh));
             gv.upperboundary_cell = std::min(tmp_int,nh_l); // in what cell is the wetting front
             //upperboundary_cell = [upperboundary_cell, upperboundary_cell_new];
@@ -488,11 +510,11 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                //(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new) += exchange_i; // compute onh advection to the wetting front
             }
 
-            (*gv.exchange_si) = (*gv.c_s) * gp.rho_s/gp.rho_m * q * deltt / (gv.wetfront_cell+1);
+            (*gv.exchange_si) = (*gv.c_s) * gp.rho_s/gp.rho_m * q * deltt / (gv.wetfront_cell-gv.upperboundary_cell+1);
 
             // limit the flux to the available material
-            for(il=0;il<=gv.nl ;il++){
-                for(ih=0;ih<=gv.nh ;ih++){
+            for(il=0;il<gv.nl ;il++){
+                for(ih=0;ih<gv.nh ;ih++){
                                                         
                         if ((*gv.exchange_si).at(il,ih) > 0){
                             (*gv.exchange_si).at(il,ih) = std::min((*gv.exchange_si).at(il,ih),(*gv.c_s).at(il,ih));
@@ -519,6 +541,8 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                         (*gv.exchange_im).at(il,ih) = std::min((*gv.exchange_im).at(il,ih),(*gv.c_i).at(il,ih));
                     }else if((*gv.exchange_im).at(il,ih) < 0){
                         (*gv.exchange_im).at(il,ih) = -(std::min(std::abs((*gv.exchange_im).at(il,ih)),std::abs((*gv.c_m).at(il,ih))));
+                        msg = "PROBLEM: negative i->m exchange";
+                        print_screen_log(logPULSEfile,&msg);
                     }
                      if(ih<gv.upperboundary_cell || ih>gv.wetfront_cell){
                         (*gv.exchange_im).at(il,ih) = 0.0f;
