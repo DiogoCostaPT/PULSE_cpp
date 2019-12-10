@@ -76,7 +76,8 @@ public:
             porosity_s= 1 - porosity_m - porosity_i,
             porosity_m_prev=porosity_m,
             porosity_i_prev=porosity_i,
-            porosity_s_prev=porosity_s;
+            porosity_s_prev=porosity_s,
+            qtotal;
                  
 };
 
@@ -199,7 +200,7 @@ int read_simset(globalpar& gp,std::string* sim_purp, int *H_local,int *L_local, 
 void read_qmelt(globalpar& gp,globalvar& gv,std::string* qmelt_file,std::ofstream* logPULSEfile)
 {
     unsigned int a; 
-    double tmelts,vmelt;
+    double tmelts=0.0f,tmelts_prev=0.0f,qmelt_i;
     std::string msg;
     
     arma::mat filedataQ; 
@@ -207,9 +208,11 @@ void read_qmelt(globalpar& gp,globalvar& gv,std::string* qmelt_file,std::ofstrea
     if(flstatusQ == true) {
         for(a=0;a<filedataQ.col(1).n_elem;a++){
             tmelts = filedataQ(a,0);  // t melt seconds
-            vmelt = filedataQ(a,1);  // value of melt
+            qmelt_i = filedataQ(a,1);  // value of melt
             (*gv.qmelt).at(a,0) = tmelts;  
-            (*gv.qmelt).at(a,1) = vmelt;
+            (*gv.qmelt).at(a,1) = qmelt_i/3600; // hh-> sec
+            gv.qtotal += (tmelts-tmelts_prev) * (qmelt_i/3600); 
+            tmelts_prev = tmelts;
         }
        (gp.Tperd) = tmelts;
        msg = "Successful loading the file: " + (*qmelt_file);
@@ -226,7 +229,7 @@ void read_qmelt(globalpar& gp,globalvar& gv,std::string* qmelt_file,std::ofstrea
 void calc_porosity(globalpar& gp,globalvar& gv,double *q, double *deltt)
 {
     
-    double dporosity_s_dt = (*q) / arma::accu((*gv.qmelt).col(1));
+    double dporosity_s_dt = (*q) / gv.qtotal;
     double dporosity_i_dt = dporosity_s_dt;
 
     gv.porosity_m_prev = gv.porosity_m;
@@ -546,7 +549,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
              end = std::chrono::system_clock::now();
              elapsed_seconds = end-start;
              
-              outwritestatus = print_results(gv,gp,std::round(print_next),gp.print_step,elapsed_seconds);
+              //outwritestatus = print_results(gv,gp,std::round(print_next),gp.print_step,elapsed_seconds);
                 
             if(outwritestatus == true) 
             {
