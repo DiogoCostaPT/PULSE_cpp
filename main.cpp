@@ -177,7 +177,7 @@ int read_simset(globalpar& gp,std::string* sim_purp, int *H_local,int *L_local, 
         if(i==6){(*qmelt_file) = str;};  
         if(i==7){gp.print_step = std::stoi(str);};
         if(i==8){gp.aD = std::stof(str);}; 
-        if(i==9){gp.alphaIE = std::stof(str);}; 
+        if(i==9){gp.alphaIE = std::stof(str)/3600;}; 
     }
     file.close();
     
@@ -419,12 +419,8 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
         // Dynamic time interval to comply with Courant Condition
         if (q != 0.0f){
             deltt = std::fmin(gp.Courant * gv.snowh / v,1);
-        }else{
-            deltt = 1;
-        }
-
-        // Calculate the Peclet number
-        if (v > 0){
+            
+            if (v > 0){
             Peclet = (v * gv.snowh)/D;
             if (Peclet > 2 && Peclet > Peclet_max){
                 snowh_min = 2 * D / v;
@@ -432,70 +428,76 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                 //print_screen_log(logPULSEfile,&msg);
             }
             Peclet_max = Peclet;
+            
         }
+        }else{
+            deltt = 1;
+        }
+
+        // Calculate the Peclet number
+        
         tcum = tcum + deltt; 
 
-        // Calculate porosity for next time step
-        calc_porosity(gp,gv,&q,&deltt);
-        
-        // limiting the flux to the wetting front (uses intersticial velocity to determine the wetting front)
-        wettingfront_cell_location(gp,gv,&v,&deltt,&wetfront_cell_new,&wetfront_cell_prev);
-        
+        if (q != 0.0f){
+            // Calculate porosity for next time step
+            calc_porosity(gp,gv,&q,&deltt);
 
-        // Melting velocity: last cell
-        upperboundary_cell_prev = upperboundary_cell; // wetting fron cell in the previous time step
-        upperboundary_z =  std::fmax(upperboundary_z - q * deltt,0);
-        tmp_int = int(std::round(nh_l-upperboundary_z/gv.snowh));
-        upperboundary_cell_new = std::min(tmp_int,nh_l); // in what cell is the wetting front
-        //upperboundary_cell = [upperboundary_cell, upperboundary_cell_new];
-        
-        
-        // add a new cell if the wetting front moves to the next cell
-        if((wetfront_cell_new - wetfront_cell_prev) > 1){
-            msg = "Courant condition violation - check code";
-            print_screen_log(logPULSEfile,&msg);
+            // limiting the flux to the wetting front (uses intersticial velocity to determine the wetting front)
+            wettingfront_cell_location(gp,gv,&v,&deltt,&wetfront_cell_new,&wetfront_cell_prev);
 
-            abort();
-       
+
+            // Melting velocity: last cell
+            upperboundary_cell_prev = upperboundary_cell; // wetting fron cell in the previous time step
+            upperboundary_z =  std::fmax(upperboundary_z - q * deltt,0);
+            tmp_int = int(std::round(nh_l-upperboundary_z/gv.snowh));
+            upperboundary_cell_new = std::min(tmp_int,nh_l); // in what cell is the wetting front
+            //upperboundary_cell = [upperboundary_cell, upperboundary_cell_new];
+
+
+            // add a new cell if the wetting front moves to the next cell
+            if((wetfront_cell_new - wetfront_cell_prev) > 1){
+                msg = "Courant condition violation - check code";
+                print_screen_log(logPULSEfile,&msg);
+
+                abort();
+
+            }
         }
 
         if (gv.porosity_m < 1-gp.num_stblty_thrshld_prsity && gv.porosity_i > gp.num_stblty_thrshld_prsity && gv.porosity_s > gp.num_stblty_thrshld_prsity){
             if (wetfront_cell_new > 5){
 
-                Crank_Nicholson(gv,&upperboundary_cell_new, &wetfront_cell_new,&deltt,&v,&D); // solve advection and dispersion in the mobile zone
+               Crank_Nicholson(gv,&upperboundary_cell_new, &wetfront_cell_new,&deltt,&v,&D); // solve advection and dispersion in the mobile zone
 
                 // Crank Nicolson to limit the fluxes across boundaries
-
+     
                (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new) -= v * deltt * ((*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new) - (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1))/gv.snowh ; // compute onh advection to the wetting front
 
             }
 
-            (*gv.exchange_si) = (*gv.c_s) * gp.rho_s/gp.rho_m * q * deltt / wetfront_cell_new;
+            (*gv.exchange_si) = (*gv.c_s) * gp.rho_s/gp.rho_m * q * deltt / (wetfront_cell_new+1);
 
             // limit the flux to the available material
             for(il=0;il<=gv.nl ;il++){
                 for(ih=0;ih<=gv.nh ;ih++){
-                                                           
-                    if ((*gv.exchange_si).at(il,ih) > 0){
-                        (*gv.exchange_si).at(il,ih) = std::min((*gv.exchange_si).at(il,ih),(*gv.c_s).at(il,ih));
-                    }else if((*gv.exchange_si).at(il,ih) < 0){
-                        msg = "PROBLEM: negative s->i exchange";
-                        print_screen_log(logPULSEfile,&msg);
-                        //-// (*gv.exchange).at(il,ih)  = - std::min(std::abs(exchange),abs(c_m_new_i)); 
-                    }
-                    if(ih<upperboundary_cell_new || ih>wetfront_cell_new){
-                        (*gv.exchange_si).at(il,ih) = 0.0f;
-                    };
+                                                        
+                        if ((*gv.exchange_si).at(il,ih) > 0){
+                            (*gv.exchange_si).at(il,ih) = std::min((*gv.exchange_si).at(il,ih),(*gv.c_s).at(il,ih));
+                        }else if((*gv.exchange_si).at(il,ih) < 0){
+                            msg = "PROBLEM: negative s->i exchange";
+                            print_screen_log(logPULSEfile,&msg);
+                            //-// (*gv.exchange).at(il,ih)  = - std::min(std::abs(exchange),abs(c_m_new_i)); 
+                        }
+                        if(ih<upperboundary_cell_new || ih>wetfront_cell_new){
+                            (*gv.exchange_si).at(il,ih) = 0.0f;
+                        };
                 }
             };
-          
             (*gv.c_i) =  ( (*gv.c_i) * gv.porosity_i_prev + (*gv.exchange_si) * gv.porosity_s_prev ) / gv.porosity_i; // / porosity_m(t);
             (*gv.c_s) = ( (*gv.c_s) * gv.porosity_s_prev - (*gv.exchange_si) * gv.porosity_s_prev ) / gv.porosity_s;
             
             // Exchange with immobile phase (just exchange)
             (*gv.exchange_im)  = deltt * (gp.alphaIE/gv.porosity_m_prev * ((*gv.c_i) - (*gv.c_m))) ; 
-                 
-            // limit the flux to the available material
             
             // limit the flux to the available material
             for(il=0;il<gv.nl ;il++){
@@ -510,13 +512,12 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                     };
                 }
             };
-
             (*gv.c_m) =  ( (*gv.c_m) * gv.porosity_m_prev + (*gv.exchange_im) * gv.porosity_i_prev ) / gv.porosity_m; // / porosity_m(t);
             (*gv.c_i) = ( (*gv.c_i) * gv.porosity_i_prev - (*gv.exchange_im) * gv.porosity_i_prev ) / gv.porosity_i;
 
             
             // add all immobile and solid slow that melted from the last cell) 
-            if(upperboundary_cell_new != upperboundary_cell_prev){
+            if(upperboundary_cell_new >= upperboundary_cell_prev){
                 (*gv.c_m)(arma::span(0,gv.nl-1),upperboundary_cell_new) = ( (*gv.c_m)(arma::span(0,gv.nl-1),upperboundary_cell_new) * gv.porosity_m_prev
                     + (*gv.c_m)(arma::span(0,gv.nl-1),upperboundary_cell_prev) * gv.porosity_m_prev
                     + (*gv.c_s)(arma::span(0,gv.nl-1),upperboundary_cell_prev) * gv.porosity_s_prev
@@ -549,7 +550,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
              end = std::chrono::system_clock::now();
              elapsed_seconds = end-start;
              
-              //outwritestatus = print_results(gv,gp,std::round(print_next),gp.print_step,elapsed_seconds);
+              outwritestatus = print_results(gv,gp,std::round(print_next),gp.print_step,elapsed_seconds);
                 
             if(outwritestatus == true) 
             {
