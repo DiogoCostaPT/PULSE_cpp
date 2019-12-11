@@ -82,7 +82,8 @@ public:
             upperboundary_z,
             upperboundary_cell,
             wetfront_z,
-            wetfront_cell;
+            wetfront_cell,
+            layer_incrmt;
                  
 };
 
@@ -414,6 +415,28 @@ bool print_results(globalvar& gv,globalpar& gp, int print_tag, unsigned int prin
     return outwritestatus;
 }
 
+void acmltsnow(globalvar& gv,double* q,std::ofstream* logPULSEfile){
+
+   
+    gv.layer_incrmt += std::abs((*q)); // cell increment
+    
+    if (gv.layer_incrmt>=gv.snowh){
+        gv.nh += gv.layer_incrmt;
+        gv.snowH += gv.layer_incrmt*gv.snowh; // snowpack depth
+
+        (*gv.c_m).insert_cols(0,gv.layer_incrmt);
+        (*gv.c_s).insert_cols(0,gv.layer_incrmt);
+        (*gv.c_s).insert_cols(0,gv.layer_incrmt);
+        (*gv.exchange_im).insert_cols(0,gv.layer_incrmt);
+        (*gv.exchange_im).insert_cols(0,gv.layer_incrmt);
+        
+        gv.layer_incrmt = 0;
+    }
+    
+    return;
+    
+}
+
 
 void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 {
@@ -452,8 +475,15 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 
         t += 1;
                 
-        q = findInterpQmelt(gv,&tcum); // if there is increse in SWE, everything will freeze so there will be a stop
+        q = findInterpQmelt(gv,&tcum); // if there is increase in SWE, everything will freeze so there will be a stop
 
+         // if accumulation add snow and don't melt
+        if (q<0.0f){
+            
+            acmltsnow(gv,&q,logPULSEfile);
+            continue;
+            
+        }
         
         // Estimate interstitial flow velocity 
         v = q / (gv.porosity_m); // interstitial flow velocity [m s-1]
