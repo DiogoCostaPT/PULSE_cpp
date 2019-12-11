@@ -163,22 +163,29 @@ int findLastStep(const char *path) {
 }
 
 
-double findQmelt(globalvar& gv,double *tcum)
+double findInterpQmelt(globalvar& gv,double *tcum)
 {
-    double qmelt_i,qmelt_t_i;
+    double qmelt_i,qmelt_i_prev=0.0f,qmelt_i_intrp,qmelt_t_i,qmelt_t_i_prev = 0.0f;
     unsigned a,nqmelt;
     
     nqmelt = int((*gv.qmelt).col(0).n_elem);
     
     for(a=0;a< nqmelt;a++){
         qmelt_t_i = (*gv.qmelt).at(a,0);
-        if (qmelt_t_i >= *tcum){
-            qmelt_i =  (*gv.qmelt).at(a,1);
+        qmelt_i = (*gv.qmelt).at(a,1);
+        if(qmelt_t_i < *tcum){
+            qmelt_t_i_prev = qmelt_t_i;
+            qmelt_i_prev = qmelt_i;
+        }else if (qmelt_t_i == *tcum){
+            qmelt_i_intrp =  qmelt_i;
+            break;
+        }else if(qmelt_t_i > *tcum){
+            qmelt_i_intrp = qmelt_i_prev + (qmelt_i - qmelt_i_prev) / (qmelt_t_i - qmelt_t_i_prev);
             break;
         }
     }
     
-    return qmelt_i;
+    return qmelt_i_intrp;
 }
 
 
@@ -445,8 +452,9 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 
         t += 1;
                 
-        q = findQmelt(gv,&tcum); // if there is increse in SWE, everything will freeze so there will be a stop
+        q = findInterpQmelt(gv,&tcum); // if there is increse in SWE, everything will freeze so there will be a stop
 
+        
         // Estimate interstitial flow velocity 
         v = q / (gv.porosity_m); // interstitial flow velocity [m s-1]
         D = gp.aD * v;       // dispersion coefficient [m2/s]
