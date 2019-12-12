@@ -498,8 +498,8 @@ void upbound_calc(globalvar& gv,double* q,double* deltt,std::ofstream* logPULSEf
             
     } else if ((*q)<0.0f && abs(gv.layer_incrmt)>gv.snowh){ // ACCUMULATION - add layer
         gv.nh++; // remove one layer
-        gv.wetfront_cell++;
-        gv.wetfront_cell_prev++;
+        gv.wetfront_cell= 0; // assumes refreezing
+        gv.wetfront_cell_prev = 0; // assumes refreezing
         gv.snowH += gv.snowh; // snowpack depth
         gv.wetfront_z += gv.snowh;
         gv.layer_incrmt += gv.snowh; 
@@ -536,7 +536,6 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
     auto end = std::chrono::system_clock::now();
     bool outwritestatus;
     arma::mat exchange_i;
-    int nl_l = gv.nl,nh_l = gv.nh;
     
     //gp.wetfront_z = gv.nh*gv.snowh; // starts at the top
     //double upperboundary_z = gp.wetfront_z;
