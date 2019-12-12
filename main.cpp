@@ -101,37 +101,38 @@ void print_screen_log(std::ofstream* logPULSEfile,std::string* msg)
     
 }
 
-void checkmesh(int* H_local,int* L_local,int* h_layer,int* l_layer,int* nh,int* nl,std::ofstream* logPULSEfile)
-{
+//void checkmesh(int* H_local,int* L_local,int* h_layer,int* l_layer,int* nh,int* nl,std::ofstream* logPULSEfile)
+//{
+//
+//    std::string msg;
+//    
+//    double a = double(*H_local)/double(*h_layer);
+//    double b = double(*L_local)/double(*l_layer);
+//    
+//    if(floor(a)==ceil(a) && floor(b)==ceil(b)){      
+//        (*nh) = a;
+//        (*nl) = b;
+//        msg = "Snowpack mesh: created";
+//        print_screen_log(logPULSEfile,&msg);
+//    }else{
+//        if (floor(a)==ceil(a)){
+//        msg = "Snowpack mesh: H = " + std::to_string ((*H_local)) + 
+//                " mm (snowpack depth) is not divisible by h_layer = " + std::to_string((*h_layer)) +
+//                " mm (grid thickness) -> change the simulation setting in file 'simset.pulse'";
+//        print_screen_log(logPULSEfile,&msg);
+//        }
+//        if (floor(b)==ceil(b)){
+//        msg = "Snowpack mesh: L = " + std::to_string ((*L_local)) + 
+//                " mm (snowpack horizontal length) is not divisible by l_layer = " + std::to_string((*l_layer)) +
+//                "mm (grid horizontal length) -> change the simulation setting in file 'simset.pulse'";
+//        print_screen_log(logPULSEfile,&msg);
+//        }
+//        std::abort();
+//    }
+//    
+//}
+ 
 
-    std::string msg;
-    
-    double a = double(*H_local)/double(*h_layer);
-    double b = double(*L_local)/double(*l_layer);
-    
-    if(floor(a)==ceil(a) && floor(b)==ceil(b)){      
-        (*nh) = a;
-        (*nl) = b;
-        msg = "Snowpack mesh: created";
-        print_screen_log(logPULSEfile,&msg);
-    }else{
-        if (floor(a)==ceil(a)){
-        msg = "Snowpack mesh: H = " + std::to_string ((*H_local)) + 
-                " mm (snowpack depth) is not divisible by h_layer = " + std::to_string((*h_layer)) +
-                " mm (grid thickness) -> change the simulation setting in file 'simset.pulse'";
-        print_screen_log(logPULSEfile,&msg);
-        }
-        if (floor(b)==ceil(b)){
-        msg = "Snowpack mesh: L = " + std::to_string ((*L_local)) + 
-                " mm (snowpack horizontal length) is not divisible by l_layer = " + std::to_string((*l_layer)) +
-                "mm (grid horizontal length) -> change the simulation setting in file 'simset.pulse'";
-        print_screen_log(logPULSEfile,&msg);
-        }
-        std::abort();
-    }
-    
-}
-   
 // read file names in Results directory
 int findLastStep(const char *path) {
 
@@ -163,6 +164,45 @@ int findLastStep(const char *path) {
    free(entry);
    return timestart;
 }
+
+
+void checkmesh2(int* H_local,int* L_local,int* h_layer,int* l_layer,int* nh,int* nl,std::ofstream* logPULSEfile)
+{
+    unsigned int a, timstart;
+    //int nh_l = gv.nh;
+    
+    arma::mat filedata; 
+    std::string init_file, msg;
+    
+    timstart = findLastStep("Results/"); // list the results files to get the last time step
+    
+    init_file = "Results/" + std::to_string(int(timstart)) + ".txt";
+    
+    bool flstatus = filedata.load(init_file,arma::csv_ascii);
+
+    
+    if(flstatus == true) 
+    {
+        for(a=0;a<filedata.col(1).n_elem;a++)
+        {
+            (*nh) = std::max((*nh), int(filedata(a,0)) + 1);  
+            (*nl) = std::max((*nl), int(filedata(a,1)) + 1);  
+          
+        }
+        
+        (*H_local) =  (*nh) * (*h_layer);
+        (*L_local) =  (*nl) * (*l_layer);
+        
+        msg = "Mesh: identified ";
+        print_screen_log(logPULSEfile,&msg);  
+        
+    }else{
+        msg = "Mesh: not identified -> Results/*.txt file(s) missing";
+        print_screen_log(logPULSEfile,&msg);  
+        std::abort();
+    }  
+     
+};
 
 
 double findInterpQmelt(globalvar& gv,double *tcum)
@@ -205,14 +245,14 @@ int read_simset(globalpar& gp,std::string* sim_purp, int *H_local,int *L_local, 
     {
         i += 1;
         if(i==1){(*sim_purp) = str;};
-        if(i==2){(*H_local) = std::round(std::stoi(str));};
-        if(i==3){(*L_local) = std::round(std::stoi(str));};
-        if(i==4){(*h_layer) = std::round(std::stoi(str));};
-        if(i==5){(*l_layer) = std::round(std::stoi(str));};
-        if(i==6){(*qmelt_file) = str;};  
-        if(i==7){gp.print_step = std::stoi(str);};
-        if(i==8){gp.aD = std::stof(str)/3600;}; 
-        if(i==9){gp.alphaIE = std::stof(str)/3600;}; 
+        //if(i==2){(*H_local) = std::round(std::stoi(str));};
+        //if(i==3){(*L_local) = std::round(std::stoi(str));};
+        if(i==2){(*h_layer) = std::round(std::stoi(str));};
+        if(i==3){(*l_layer) = std::round(std::stoi(str));};
+        if(i==4){(*qmelt_file) = str;};  
+        if(i==5){gp.print_step = std::stoi(str);};
+        if(i==6){gp.aD = std::stof(str)/3600;}; 
+        if(i==7){gp.alphaIE = std::stof(str)/3600;}; 
     }
     file.close();
     
@@ -725,7 +765,8 @@ int main(int argc, char** argv)
         int n_qmelt = read_simset(gp,&sim_purp, &H_local,&L_local,&h_layer,&l_layer,&qmelt_file,&logPULSEfile);   
 
         // create mesh
-        checkmesh(&H_local,&L_local,&h_layer,&l_layer,&nh,&nl,&logPULSEfile);
+        //checkmesh(&H_local,&L_local,&h_layer,&l_layer,&nh,&nl,&logPULSEfile);
+        checkmesh2(&H_local,&L_local,&h_layer,&l_layer,&nh,&nl,&logPULSEfile);
 
         // Asign global variables (heap)
         globalvar gv(nh,nl,n_qmelt); 
