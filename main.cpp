@@ -515,11 +515,9 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 
         if(q==0.0f){ // nothing happens
             tcum++; 
-            continue;
         }else if (q<0.0f){ // accumulation only 
             upbound_calc(gv,&q,&deltt,logPULSEfile);
             tcum++;
-            continue;
         } else {// melt       
                 // Estimate interstitial flow velocity 
             v = q / (gv.porosity_m); // interstitial flow velocity [m s-1]
@@ -540,96 +538,97 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             
         }
 
+        if (q>0.0f){ // if melt
+            // Calculate porosity for next time step
+            calc_porosity(gp,gv,&q,&deltt);
 
-        // Calculate porosity for next time step
-        calc_porosity(gp,gv,&q,&deltt);
+            // limiting the flux to the wetting front (uses intersticial velocity to determine the wetting front)
+            wetfront_calc(gp,gv,&v,&deltt);
 
-        // limiting the flux to the wetting front (uses intersticial velocity to determine the wetting front)
-        wetfront_calc(gp,gv,&v,&deltt);
+            // Melting velocity: last cell
+            //upbound_calc(gv,&q,&deltt,logPULSEfile);
 
-        // Melting velocity: last cell
-        //upbound_calc(gv,&q,&deltt,logPULSEfile);
+            // add a new cell if the wetting front moves to the next cell
+            if((gv.wetfront_cell - gv.wetfront_cell_prev) > 1){
+                msg = "Courant condition violation - check code";
+                print_screen_log(logPULSEfile,&msg);
 
-        // add a new cell if the wetting front moves to the next cell
-        if((gv.wetfront_cell - gv.wetfront_cell_prev) > 1){
-            msg = "Courant condition violation - check code";
-            print_screen_log(logPULSEfile,&msg);
+                abort();
 
-            abort();
-
-        }
-
-        if (gv.porosity_m < 1-gp.num_stblty_thrshld_prsity && gv.porosity_i > gp.num_stblty_thrshld_prsity && gv.porosity_s > gp.num_stblty_thrshld_prsity){
-            if (gv.wetfront_cell > 5){
-
-               Crank_Nicholson(gv,&deltt,&v,&D); // solve advection and dispersion in the mobile zone
-
-                // Crank Nicolson to limit the fluxes across boundaries
-               //exchange_i = arma::max(v * deltt * ((*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) - (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new))/gv.snowh,(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1));
-               //(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) -= exchange_i; // compute onh advection to the wetting front
-               //(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new) += exchange_i; // compute onh advection to the wetting front
             }
 
-            (*gv.exchange_si) = (*gv.c_s) * gp.rho_s/gp.rho_m * q * deltt / (gv.wetfront_cell+1);
+            if (gv.porosity_m < 1-gp.num_stblty_thrshld_prsity && gv.porosity_i > gp.num_stblty_thrshld_prsity && gv.porosity_s > gp.num_stblty_thrshld_prsity){
+                if (gv.wetfront_cell > 5){
 
-            // limit the flux to the available material
-            for(il=0;il<gv.nl ;il++){
-                for(ih=0;ih<gv.nh ;ih++){
+                   Crank_Nicholson(gv,&deltt,&v,&D); // solve advection and dispersion in the mobile zone
 
-                        if ((*gv.exchange_si).at(il,ih) > 0){
-                            (*gv.exchange_si).at(il,ih) = std::min((*gv.exchange_si).at(il,ih),(*gv.c_s).at(il,ih));
-                        }else if((*gv.exchange_si).at(il,ih) < 0){
-                            msg = "PROBLEM: negative s->i exchange";
-                            print_screen_log(logPULSEfile,&msg);
-                            //-// (*gv.exchange).at(il,ih)  = - std::min(std::abs(exchange),abs(c_m_new_i)); 
-                        }
-                        //if(ih<gv.upperboundary_cell || ih>gv.wetfront_cell){
-                        if(ih>gv.wetfront_cell){
-                            (*gv.exchange_si).at(il,ih) = 0.0f;
-                        };
+                    // Crank Nicolson to limit the fluxes across boundaries
+                   //exchange_i = arma::max(v * deltt * ((*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) - (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new))/gv.snowh,(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1));
+                   //(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) -= exchange_i; // compute onh advection to the wetting front
+                   //(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new) += exchange_i; // compute onh advection to the wetting front
                 }
-            };
-            (*gv.c_i) =  ( (*gv.c_i) * gv.porosity_i_prev + (*gv.exchange_si) * gv.porosity_s_prev ) / gv.porosity_i; // / porosity_m(t);
-            (*gv.c_s) = ( (*gv.c_s) * gv.porosity_s_prev - (*gv.exchange_si) * gv.porosity_s_prev ) / gv.porosity_s;
 
-            // Exchange with immobile phase (just exchange)
-            (*gv.exchange_im)  = deltt * (gp.alphaIE/gv.porosity_m_prev * ((*gv.c_i) - (*gv.c_m))) ; 
+                (*gv.exchange_si) = (*gv.c_s) * gp.rho_s/gp.rho_m * q * deltt / (gv.wetfront_cell+1);
 
-            // limit the flux to the available material
-            for(il=0;il<gv.nl ;il++){
-                for(ih=0;ih<gv.nh ;ih++){
-                     if ((*gv.exchange_im).at(il,ih) > 0){
-                        (*gv.exchange_im).at(il,ih) = std::min((*gv.exchange_im).at(il,ih),(*gv.c_i).at(il,ih));
-                    }else if((*gv.exchange_im).at(il,ih) < 0){
-                        (*gv.exchange_im).at(il,ih) = -(std::min(std::abs((*gv.exchange_im).at(il,ih)),std::abs((*gv.c_m).at(il,ih))));
-                        msg = "PROBLEM: negative i->m exchange";
-                        print_screen_log(logPULSEfile,&msg);
+                // limit the flux to the available material
+                for(il=0;il<gv.nl ;il++){
+                    for(ih=0;ih<gv.nh ;ih++){
+
+                            if ((*gv.exchange_si).at(il,ih) > 0){
+                                (*gv.exchange_si).at(il,ih) = std::min((*gv.exchange_si).at(il,ih),(*gv.c_s).at(il,ih));
+                            }else if((*gv.exchange_si).at(il,ih) < 0){
+                                msg = "PROBLEM: negative s->i exchange";
+                                print_screen_log(logPULSEfile,&msg);
+                                //-// (*gv.exchange).at(il,ih)  = - std::min(std::abs(exchange),abs(c_m_new_i)); 
+                            }
+                            //if(ih<gv.upperboundary_cell || ih>gv.wetfront_cell){
+                            if(ih>gv.wetfront_cell){
+                                (*gv.exchange_si).at(il,ih) = 0.0f;
+                            };
                     }
-                     //if(ih<gv.upperboundary_cell || ih>gv.wetfront_cell){
-                     if(ih>gv.wetfront_cell){
-                            (*gv.exchange_si).at(il,ih) = 0.0f;
-                        };
-                }
-            };
-            (*gv.c_m) =  ( (*gv.c_m) * gv.porosity_m_prev + (*gv.exchange_im) * gv.porosity_i_prev ) / gv.porosity_m; // / porosity_m(t);
-            (*gv.c_i) = ( (*gv.c_i) * gv.porosity_i_prev - (*gv.exchange_im) * gv.porosity_i_prev ) / gv.porosity_i;
+                };
+                (*gv.c_i) =  ( (*gv.c_i) * gv.porosity_i_prev + (*gv.exchange_si) * gv.porosity_s_prev ) / gv.porosity_i; // / porosity_m(t);
+                (*gv.c_s) = ( (*gv.c_s) * gv.porosity_s_prev - (*gv.exchange_si) * gv.porosity_s_prev ) / gv.porosity_s;
 
-            // if porosities are too small, they create instability
-        }//else{
-            //gv.porosity_i = 0;
-            //gv.porosity_m = 1;
-            //gv.porosity_s = 0;
-            //if(gv.upperboundary_cell != 0){
-            //    (*gv.c_m)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell)) *= 0;
-            //    (*gv.c_s)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell)) *= 0;
-            //    (*gv.c_i)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell)) *= 0;
-            //}else{ // if only top layer is wet
-            //    (*gv.c_m)(arma::span(0,gv.nl-1),0) *= 0;
-            //    (*gv.c_s)(arma::span(0,gv.nl-1),0) *= 0;
-            //    (*gv.c_i)(arma::span(0,gv.nl-1),0) *= 0;
+                // Exchange with immobile phase (just exchange)
+                (*gv.exchange_im)  = deltt * (gp.alphaIE/gv.porosity_m_prev * ((*gv.c_i) - (*gv.c_m))) ; 
+
+                // limit the flux to the available material
+                for(il=0;il<gv.nl ;il++){
+                    for(ih=0;ih<gv.nh ;ih++){
+                         if ((*gv.exchange_im).at(il,ih) > 0){
+                            (*gv.exchange_im).at(il,ih) = std::min((*gv.exchange_im).at(il,ih),(*gv.c_i).at(il,ih));
+                        }else if((*gv.exchange_im).at(il,ih) < 0){
+                            (*gv.exchange_im).at(il,ih) = -(std::min(std::abs((*gv.exchange_im).at(il,ih)),std::abs((*gv.c_m).at(il,ih))));
+                            msg = "PROBLEM: negative i->m exchange";
+                            print_screen_log(logPULSEfile,&msg);
+                        }
+                         //if(ih<gv.upperboundary_cell || ih>gv.wetfront_cell){
+                         if(ih>gv.wetfront_cell){
+                                (*gv.exchange_si).at(il,ih) = 0.0f;
+                            };
+                    }
+                };
+                (*gv.c_m) =  ( (*gv.c_m) * gv.porosity_m_prev + (*gv.exchange_im) * gv.porosity_i_prev ) / gv.porosity_m; // / porosity_m(t);
+                (*gv.c_i) = ( (*gv.c_i) * gv.porosity_i_prev - (*gv.exchange_im) * gv.porosity_i_prev ) / gv.porosity_i;
+
+                // if porosities are too small, they create instability
+            }//else{
+                //gv.porosity_i = 0;
+                //gv.porosity_m = 1;
+                //gv.porosity_s = 0;
+                //if(gv.upperboundary_cell != 0){
+                //    (*gv.c_m)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell)) *= 0;
+                //    (*gv.c_s)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell)) *= 0;
+                //    (*gv.c_i)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell)) *= 0;
+                //}else{ // if only top layer is wet
+                //    (*gv.c_m)(arma::span(0,gv.nl-1),0) *= 0;
+                //    (*gv.c_s)(arma::span(0,gv.nl-1),0) *= 0;
+                //    (*gv.c_i)(arma::span(0,gv.nl-1),0) *= 0;
+                //}
+
             //}
-
-        //}
+        }
 
         // Print results                
           if (tcum>=print_next){
