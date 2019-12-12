@@ -59,7 +59,6 @@ public:
     c_s = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     exchange_si = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     exchange_im = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
-    
     qmelt = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_qmelt,2));
 
   }
@@ -79,10 +78,12 @@ public:
             porosity_s_prev=porosity_s,
             qtotal,
             timstart,
-            upperboundary_z,
-            upperboundary_cell,
+            //upperboundary_z,
+            //upperboundary_cell,
             wetfront_z,
             wetfront_cell,
+            wetfront_cell_prev,
+            upperboundary_cell_prev,
             layer_incrmt;
                  
 };
@@ -280,10 +281,10 @@ void calc_porosity(globalpar& gp,globalvar& gv,double *q, double *deltt)
        
 }
 
-void wettingfront_cell_location(globalpar& gp,globalvar& gv,double *v, double *deltt,int *wetfront_cell_prev)
+void wettingfront_cell_location(globalpar& gp,globalvar& gv,double *v, double *deltt)
 {
     int nh_l = gv.nh;
-    (*wetfront_cell_prev) = gv.wetfront_cell; // wetting fron cell in the previous time step
+    gv.wetfront_cell_prev = gv.wetfront_cell; // wetting fron cell in the previous time step
     gv.wetfront_z = std::fmax(gv.wetfront_z - (*v) * (*deltt),0.f);
     int tmp = std::round(nh_l-gv.wetfront_z/gv.snowh);
     gv.wetfront_cell = std::min(tmp,nh_l); // finding the cell when the wetting front is located
@@ -299,7 +300,7 @@ void Crank_Nicholson(globalvar& gv,double *deltt,double *v,double *D)
 
     // to solve A.x1=B.x0
     int nli = gv.nl;
-    int nhi = (gv.wetfront_cell)-(gv.upperboundary_cell);                   // the boundaries are knowns, so don't need to be included in matrix A
+    int nhi = (gv.wetfront_cell);//-(gv.upperboundary_cell);                   // the boundaries are knowns, so don't need to be included in matrix A
     int nt = nli*nhi;
     double k1 = (*v)*(*deltt)/(4*gv.snowh);       // constants for Crank-Nicholson scheme
     double k2 = (*D)*(*deltt)/(2*pow(gv.snowh,2));     // constants for Crank-Nicholson scheme
@@ -370,10 +371,10 @@ void Crank_Nicholson(globalvar& gv,double *deltt,double *v,double *D)
     B(nt-1,nt-1)=a4-a3+k3; // right corner
     B(nt-nli,nt-nli)=-a3+a4+k3; // left corner
    
-    arma::mat c1 = arma::reshape((*gv.c_m)(arma::span(0,nli-1),arma::span((gv.upperboundary_cell),(gv.wetfront_cell)-1)),1,nt);  //c1=reshape(c_m_prev(2:end-1,2:end-1),1,[]);
+    arma::mat c1 = arma::reshape((*gv.c_m)(arma::span(0,nli-1),arma::span((0),(gv.wetfront_cell)-1)),1,nt);  //c1=reshape(c_m_prev(2:end-1,2:end-1),1,[]);
     arma::mat b=B*trans(c1);    // calculation of [b]
     arma::mat c2=arma::solve(A,b);     // calculation of c
-    (*gv.c_m)(arma::span(0,nli-1),arma::span((gv.upperboundary_cell),(gv.wetfront_cell)-1)) = arma::reshape(c2,nli,nhi);
+    (*gv.c_m)(arma::span(0,nli-1),arma::span((0),(gv.wetfront_cell)-1)) = arma::reshape(c2,nli,nhi);
 
 }
 
@@ -384,6 +385,7 @@ bool print_results(globalvar& gv,globalpar& gp, int print_tag, unsigned int prin
     unsigned int il,ih;
     int a = 0;
     double ux;
+    int nh_l = gv.nh;
     
     std::string tprint = "Results/" + std::to_string(print_tag); 
     std::string filext(".txt");
@@ -395,7 +397,7 @@ bool print_results(globalvar& gv,globalpar& gp, int print_tag, unsigned int prin
     {
         for(il=0;il<gv.nl;il++)
         {
-            filedataR(a,0) = ih;// * gv.snowh;  
+            filedataR(a,0) = nh_l - ih - 1;// * gv.snowh;  
             filedataR(a,1) = il;// * gv.snowl;  
             filedataR(a,2) = (*gv.c_m).at(il,ih); 
             filedataR(a,3) = (*gv.c_i).at(il,ih); 
@@ -415,22 +417,59 @@ bool print_results(globalvar& gv,globalpar& gp, int print_tag, unsigned int prin
     return outwritestatus;
 }
 
-void acmltsnow(globalvar& gv,double* q,std::ofstream* logPULSEfile){
+void upbound_calc(globalvar& gv,double* q,double* deltt,std::ofstream* logPULSEfile){
 
-   
-    gv.layer_incrmt += std::abs((*q)); // cell increment
+    int tmp_int,nh_l;
     
-    if (gv.layer_incrmt>=gv.snowh){
-        gv.nh += gv.layer_incrmt;
-        gv.snowH += gv.layer_incrmt*gv.snowh; // snowpack depth
-
-        (*gv.c_m).insert_cols(0,gv.layer_incrmt);
-        (*gv.c_s).insert_cols(0,gv.layer_incrmt);
-        (*gv.c_s).insert_cols(0,gv.layer_incrmt);
-        (*gv.exchange_im).insert_cols(0,gv.layer_incrmt);
-        (*gv.exchange_im).insert_cols(0,gv.layer_incrmt);
+    nh_l = gv.nh;
+    
+    gv.layer_incrmt += std::abs((*q))*(*deltt); // cell increment
+    
+    if ((*q)>0.0f && gv.layer_incrmt>=gv.snowh){ // MELT - remove layer
         
-        gv.layer_incrmt = 0;
+         // add all immobile and solid slow that melted from the last cell) 
+        (*gv.c_m)(arma::span(0,gv.nl-1),1) = ( (*gv.c_m)(arma::span(0,gv.nl-1),1) * gv.porosity_m_prev
+            + (*gv.c_m)(arma::span(0,gv.nl-1),0) * gv.porosity_m_prev
+            + (*gv.c_s)(arma::span(0,gv.nl-1),0) * gv.porosity_s_prev
+            + (*gv.c_i)(arma::span(0,gv.nl-1),0) * gv.porosity_i_prev ) / gv.porosity_m; // gv.porosity_m;
+
+        //(*gv.c_m)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell_prev)) *= 0;
+        //(*gv.c_s)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell_prev)) *= 0;
+        //(*gv.c_i)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell_prev)) *= 0;
+        
+        gv.nh--; // remove one layer
+        gv.wetfront_cell--;
+        gv.wetfront_cell_prev--;
+        gv.snowH -= gv.snowh; // snowpack depth
+        gv.wetfront_z -= gv.snowh;
+        gv.layer_incrmt -= gv.snowh;
+        
+        //gv.upperboundary_cell_prev = gv.upperboundary_cell; // wetting fron cell in the previous time step
+        //gv.upperboundary_z =  std::fmax(gv.upperboundary_z - (*q) * (*deltt),0.0f);
+        //tmp_int = int(std::round(gv.nh-gv.upperboundary_z/gv.snowh));
+        //gv.upperboundary_cell = std::min(tmp_int,nh_l); // in what cell is the wetting front
+        //upperboundary_cell = [upperboundary_cell, upperboundary_cell_new];
+        
+        (*gv.c_m).shed_cols(0,1);
+        (*gv.c_s).shed_cols(0,1);
+        (*gv.c_s).shed_cols(0,1);
+        (*gv.exchange_im).shed_cols(0,1);
+        (*gv.exchange_im).shed_cols(0,1);
+            
+    } else if ((*q)<0.0f && abs(gv.layer_incrmt)>gv.snowh){ // ACCUMULATION - add layer
+        gv.nh++; // remove one layer
+        gv.wetfront_cell++;
+        gv.wetfront_cell_prev++;
+        gv.snowH += gv.snowh; // snowpack depth
+        gv.wetfront_z += gv.snowh;
+        gv.layer_incrmt += gv.snowh; 
+
+        (*gv.c_m).insert_cols(0,1);
+        (*gv.c_s).insert_cols(0,1);
+        (*gv.c_s).insert_cols(0,1);
+        (*gv.exchange_im).insert_cols(0,1);
+        (*gv.exchange_im).insert_cols(0,1);
+
     }
     
     return;
@@ -448,8 +487,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             deltt = 1.0f, // time step calculated from the CFL condition
             v = 0.f, // interstitial flow velocity [m s-1]
             D = 0.f; // dispersion coefficient [m2/s]
-    int wetfront_cell_prev,upperboundary_cell_prev,
-        flagt = 1, // for saving results
+    int flagt = 1, // for saving results
         tmp_int; // min vertical grid size to comply with the Peclet condition
     std::string msg;  
     double Peclet,Peclet_max = 0,snowh_min;
@@ -466,10 +504,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
       
     tcum = gv.timstart;
     print_next = tcum + gp.print_step;
-    
-    wetfront_cell_prev = gv.wetfront_cell;
-    upperboundary_cell_prev = gv.upperboundary_cell;
-    
+        
     while (tcum < gp.Tperd)
     {
 
@@ -477,12 +512,16 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                 
         q = findInterpQmelt(gv,&tcum); // if there is increase in SWE, everything will freeze so there will be a stop
 
-         // if accumulation add snow and don't melt
-        if (q<0.0f){
-            
-            acmltsnow(gv,&q,logPULSEfile);
+
+        if(q==0.0f){
+            tcum++; 
             continue;
-            
+        }else{
+            upbound_calc(gv,&q,&deltt,logPULSEfile);
+        }
+        
+        if (q<0.0f){ // accumulation (so no calculation of melt)
+            continue;
         }
         
         // Estimate interstitial flow velocity 
@@ -516,19 +555,14 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             calc_porosity(gp,gv,&q,&deltt);
 
             // limiting the flux to the wetting front (uses intersticial velocity to determine the wetting front)
-            wettingfront_cell_location(gp,gv,&v,&deltt,&wetfront_cell_prev);
+            wettingfront_cell_location(gp,gv,&v,&deltt);
 
 
             // Melting velocity: last cell
-            upperboundary_cell_prev = gv.upperboundary_cell; // wetting fron cell in the previous time step
-            gv.upperboundary_z =  std::fmax(gv.upperboundary_z - q * deltt,0.0f);
-            tmp_int = int(std::round(nh_l-gv.upperboundary_z/gv.snowh));
-            gv.upperboundary_cell = std::min(tmp_int,nh_l); // in what cell is the wetting front
-            //upperboundary_cell = [upperboundary_cell, upperboundary_cell_new];
-
-
+            upbound_calc(gv,&q,&deltt,logPULSEfile);
+            
             // add a new cell if the wetting front moves to the next cell
-            if((gv.wetfront_cell - wetfront_cell_prev) > 1){
+            if((gv.wetfront_cell - gv.wetfront_cell_prev) > 1){
                 msg = "Courant condition violation - check code";
                 print_screen_log(logPULSEfile,&msg);
 
@@ -548,7 +582,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                //(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new) += exchange_i; // compute onh advection to the wetting front
             }
 
-            (*gv.exchange_si) = (*gv.c_s) * gp.rho_s/gp.rho_m * q * deltt / (gv.wetfront_cell-gv.upperboundary_cell+1);
+            (*gv.exchange_si) = (*gv.c_s) * gp.rho_s/gp.rho_m * q * deltt / (gv.wetfront_cell+1);
 
             // limit the flux to the available material
             for(il=0;il<gv.nl ;il++){
@@ -561,9 +595,9 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                             print_screen_log(logPULSEfile,&msg);
                             //-// (*gv.exchange).at(il,ih)  = - std::min(std::abs(exchange),abs(c_m_new_i)); 
                         }
-                        if(ih<gv.upperboundary_cell || ih>gv.wetfront_cell){
-                            (*gv.exchange_si).at(il,ih) = 0.0f;
-                        };
+                        //if(ih<gv.upperboundary_cell || ih>gv.wetfront_cell){
+                        //    (*gv.exchange_si).at(il,ih) = 0.0f;
+                        //};
                 }
             };
             (*gv.c_i) =  ( (*gv.c_i) * gv.porosity_i_prev + (*gv.exchange_si) * gv.porosity_s_prev ) / gv.porosity_i; // / porosity_m(t);
@@ -582,42 +616,30 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                         msg = "PROBLEM: negative i->m exchange";
                         print_screen_log(logPULSEfile,&msg);
                     }
-                     if(ih<gv.upperboundary_cell || ih>gv.wetfront_cell){
-                        (*gv.exchange_im).at(il,ih) = 0.0f;
-                    };
+                     //if(ih<gv.upperboundary_cell || ih>gv.wetfront_cell){
+                     //   (*gv.exchange_im).at(il,ih) = 0.0f;
+                    //};
                 }
             };
             (*gv.c_m) =  ( (*gv.c_m) * gv.porosity_m_prev + (*gv.exchange_im) * gv.porosity_i_prev ) / gv.porosity_m; // / porosity_m(t);
             (*gv.c_i) = ( (*gv.c_i) * gv.porosity_i_prev - (*gv.exchange_im) * gv.porosity_i_prev ) / gv.porosity_i;
 
-            
-            // add all immobile and solid slow that melted from the last cell) 
-            if(gv.upperboundary_cell != gv.upperboundary_cell){
-                (*gv.c_m)(arma::span(0,gv.nl-1),gv.upperboundary_cell) = ( (*gv.c_m)(arma::span(0,gv.nl-1),gv.upperboundary_cell) * gv.porosity_m_prev
-                    + (*gv.c_m)(arma::span(0,gv.nl-1),upperboundary_cell_prev) * gv.porosity_m_prev
-                    + (*gv.c_s)(arma::span(0,gv.nl-1),upperboundary_cell_prev) * gv.porosity_s_prev
-                    + (*gv.c_i)(arma::span(0,gv.nl-1),upperboundary_cell_prev) * gv.porosity_i_prev ) / gv.porosity_m; // gv.porosity_m;
-
-                (*gv.c_m)(arma::span(0,gv.nl-1),arma::span(0,upperboundary_cell_prev)) *= 0;
-                (*gv.c_s)(arma::span(0,gv.nl-1),arma::span(0,upperboundary_cell_prev)) *= 0;
-                (*gv.c_i)(arma::span(0,gv.nl-1),arma::span(0,upperboundary_cell_prev)) *= 0;
-            }
             // if porosities are too small, they create instability
-        }else{
-            gv.porosity_i = 0;
-            gv.porosity_m = 1;
-            gv.porosity_s = 0;
-            if(gv.upperboundary_cell != 0){
-                (*gv.c_m)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell)) *= 0;
-                (*gv.c_s)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell)) *= 0;
-                (*gv.c_i)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell)) *= 0;
-            }else{ // if only top layer is wet
-                (*gv.c_m)(arma::span(0,gv.nl-1),0) *= 0;
-                (*gv.c_s)(arma::span(0,gv.nl-1),0) *= 0;
-                (*gv.c_i)(arma::span(0,gv.nl-1),0) *= 0;
-            }
+        }//else{
+            //gv.porosity_i = 0;
+            //gv.porosity_m = 1;
+            //gv.porosity_s = 0;
+            //if(gv.upperboundary_cell != 0){
+            //    (*gv.c_m)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell)) *= 0;
+            //    (*gv.c_s)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell)) *= 0;
+            //    (*gv.c_i)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell)) *= 0;
+            //}else{ // if only top layer is wet
+            //    (*gv.c_m)(arma::span(0,gv.nl-1),0) *= 0;
+            //    (*gv.c_s)(arma::span(0,gv.nl-1),0) *= 0;
+            //    (*gv.c_i)(arma::span(0,gv.nl-1),0) *= 0;
+            //}
                         
-        }
+        //}
 
         // Print results                
           if (tcum>=print_next){
@@ -661,16 +683,16 @@ void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
     init_file = "Results/" + std::to_string(int(gv.timstart)) + ".txt";
     
     bool flstatus = filedata.load(init_file,arma::csv_ascii);
-    gv.upperboundary_z = gv.nh*gv.snowh;
+    //gv.upperboundary_z = gv.nh*gv.snowh;
     gv.wetfront_z = gv.nh*gv.snowh;
     gv.wetfront_cell = 0;
-    gv.upperboundary_cell = 0;
+    //gv.upperboundary_cell = 0;
     
     if(flstatus == true) 
     {
         for(a=0;a<filedata.col(1).n_elem;a++)
         {
-            ih = filedata(a,0);  
+            ih = nh_l - filedata(a,0) - 1;  
             il = filedata(a,1);  
             (*gv.c_m).at(il,ih) = filedata(a,2);
             (*gv.c_i).at(il,ih) = filedata(a,3);
@@ -682,8 +704,8 @@ void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             if((*gv.c_m).at(il,ih)!=0){
                 gv.wetfront_z = std::fmin((gv.nh - (ih+1)) * gv.snowh,gv.wetfront_z);
                 gv.wetfront_cell = std::min(int(std::round(nh_l-gv.wetfront_z/gv.snowh)),nh_l); // finding the cell when the wetting front is located
-                gv.upperboundary_z = std::fmax((gv.nh - (ih)) * gv.snowh,gv.upperboundary_z);  
-                gv.upperboundary_cell = std::min(int(std::round(nh_l-gv.upperboundary_z/gv.snowh)),nh_l);
+                //gv.upperboundary_z = std::fmax((gv.nh - (ih)) * gv.snowh,gv.upperboundary_z);  
+                //gv.upperboundary_cell = std::min(int(std::round(nh_l-gv.upperboundary_z/gv.snowh)),nh_l);
             }
         }
         msg = "Initial conditions found: " + init_file;
@@ -741,7 +763,7 @@ int main(int argc, char** argv)
     } catch(const std::exception& e){
         
         try{
-            msg = "\n Error: some problem in the code that was not predicted";
+            msg = "\nError: there was a problem in the code that was not expected (please contact diogo.pinhodacosta@canada.ca)";
             print_screen_log(&logPULSEfile,&msg); 
             
         }catch(const std::exception& e){
