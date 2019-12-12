@@ -423,7 +423,7 @@ void upbound_calc(globalvar& gv,double* q,double* deltt,std::ofstream* logPULSEf
     
     nh_l = gv.nh;
     
-    gv.layer_incrmt += std::abs((*q))*(*deltt); // cell increment
+    gv.layer_incrmt += (*q)*(*deltt); // cell increment
     
     if ((*q)>0.0f && gv.layer_incrmt>=gv.snowh){ // MELT - remove layer
         

@@ -3,7 +3,7 @@
 50
 5
 5
-qmelt_svalbard.pulse
-3600
+qmelt_test.pulse
+1000
 0.0005
 0.0011
