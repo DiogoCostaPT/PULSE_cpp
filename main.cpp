@@ -281,7 +281,7 @@ void calc_porosity(globalpar& gp,globalvar& gv,double *q, double *deltt)
        
 }
 
-void wettingfront_cell_location(globalpar& gp,globalvar& gv,double *v, double *deltt)
+void wetfront_calc(globalpar& gp,globalvar& gv,double *v, double *deltt)
 {
     int nh_l = gv.nh;
     gv.wetfront_cell_prev = gv.wetfront_cell; // wetting fron cell in the previous time step
@@ -300,7 +300,7 @@ void Crank_Nicholson(globalvar& gv,double *deltt,double *v,double *D)
 
     // to solve A.x1=B.x0
     int nli = gv.nl;
-    int nhi = (gv.wetfront_cell);//-(gv.upperboundary_cell);                   // the boundaries are knowns, so don't need to be included in matrix A
+    int nhi = gv.wetfront_cell;//-(gv.upperboundary_cell);                   // the boundaries are knowns, so don't need to be included in matrix A
     int nt = nli*nhi;
     double k1 = (*v)*(*deltt)/(4*gv.snowh);       // constants for Crank-Nicholson scheme
     double k2 = (*D)*(*deltt)/(2*pow(gv.snowh,2));     // constants for Crank-Nicholson scheme
@@ -371,10 +371,10 @@ void Crank_Nicholson(globalvar& gv,double *deltt,double *v,double *D)
     B(nt-1,nt-1)=a4-a3+k3; // right corner
     B(nt-nli,nt-nli)=-a3+a4+k3; // left corner
    
-    arma::mat c1 = arma::reshape((*gv.c_m)(arma::span(0,nli-1),arma::span((0),(gv.wetfront_cell)-1)),1,nt);  //c1=reshape(c_m_prev(2:end-1,2:end-1),1,[]);
+    arma::mat c1 = arma::reshape((*gv.c_m)(arma::span(0,nli-1),arma::span(0,(gv.wetfront_cell)-1)),1,nt);  //c1=reshape(c_m_prev(2:end-1,2:end-1),1,[]);
     arma::mat b=B*trans(c1);    // calculation of [b]
     arma::mat c2=arma::solve(A,b);     // calculation of c
-    (*gv.c_m)(arma::span(0,nli-1),arma::span((0),(gv.wetfront_cell)-1)) = arma::reshape(c2,nli,nhi);
+    (*gv.c_m)(arma::span(0,nli-1),arma::span(0,gv.wetfront_cell-1)) = arma::reshape(c2,nli,nhi);
 
 }
 
@@ -472,7 +472,7 @@ void upbound_calc(globalvar& gv,double* q,double* deltt,std::ofstream* logPULSEf
 
     }
     
-    return;
+   return;
     
 }
 
@@ -513,62 +513,50 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
         q = findInterpQmelt(gv,&tcum); // if there is increase in SWE, everything will freeze so there will be a stop
 
 
-        if(q==0.0f){
+        if(q==0.0f){ // nothing happens
             tcum++; 
             continue;
-        }else{
+        }else if (q<0.0f){ // accumulation only 
             upbound_calc(gv,&q,&deltt,logPULSEfile);
-        }
-        
-        if (q<0.0f){ // accumulation (so no calculation of melt)
+            tcum++;
             continue;
-        }
-        
-        // Estimate interstitial flow velocity 
-        v = q / (gv.porosity_m); // interstitial flow velocity [m s-1]
-        D = gp.aD * v;       // dispersion coefficient [m2/s]
-
-        // Dynamic time interval to comply with Courant Condition
-        if (q != 0.0f){
-            deltt = std::fmin(gp.Courant * gv.snowh / v,1);
+        } else {// melt       
+                // Estimate interstitial flow velocity 
+            v = q / (gv.porosity_m); // interstitial flow velocity [m s-1]
+            D = gp.aD * v;       // dispersion coefficient [m2/s]
             
-            if (v > 0){
-            Peclet = (v * gv.snowh)/D;
-            if (Peclet > 2 && Peclet > Peclet_max){
-                snowh_min = 2 * D / v;
+            deltt = std::fmin(gp.Courant * gv.snowh / v,1);
+            tcum = tcum + deltt; 
+            
+            upbound_calc(gv,&q,&deltt,logPULSEfile);
+
+            //if (v > 0){
+            //    Peclet = (v * gv.snowh)/D;
+            //if (Peclet > 2 && Peclet > Peclet_max){
+            //    snowh_min = 2 * D / v;
                 //msg = "Peclet number > 2. Delta y needs to be equal or smaller than " + std::to_string(snowh_min);
                 //print_screen_log(logPULSEfile,&msg);
-            }
-            Peclet_max = Peclet;
-    
-            }
-        }else{
-            deltt = 1;
+            //};
+            
         }
 
-        // Calculate the Peclet number
-        
-        tcum = tcum + deltt; 
 
-        if (q != 0.0f){
-            // Calculate porosity for next time step
-            calc_porosity(gp,gv,&q,&deltt);
+        // Calculate porosity for next time step
+        calc_porosity(gp,gv,&q,&deltt);
 
-            // limiting the flux to the wetting front (uses intersticial velocity to determine the wetting front)
-            wettingfront_cell_location(gp,gv,&v,&deltt);
+        // limiting the flux to the wetting front (uses intersticial velocity to determine the wetting front)
+        wetfront_calc(gp,gv,&v,&deltt);
 
+        // Melting velocity: last cell
+        //upbound_calc(gv,&q,&deltt,logPULSEfile);
 
-            // Melting velocity: last cell
-            upbound_calc(gv,&q,&deltt,logPULSEfile);
-            
-            // add a new cell if the wetting front moves to the next cell
-            if((gv.wetfront_cell - gv.wetfront_cell_prev) > 1){
-                msg = "Courant condition violation - check code";
-                print_screen_log(logPULSEfile,&msg);
+        // add a new cell if the wetting front moves to the next cell
+        if((gv.wetfront_cell - gv.wetfront_cell_prev) > 1){
+            msg = "Courant condition violation - check code";
+            print_screen_log(logPULSEfile,&msg);
 
-                abort();
+            abort();
 
-            }
         }
 
         if (gv.porosity_m < 1-gp.num_stblty_thrshld_prsity && gv.porosity_i > gp.num_stblty_thrshld_prsity && gv.porosity_s > gp.num_stblty_thrshld_prsity){
@@ -587,7 +575,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             // limit the flux to the available material
             for(il=0;il<gv.nl ;il++){
                 for(ih=0;ih<gv.nh ;ih++){
-                                                        
+
                         if ((*gv.exchange_si).at(il,ih) > 0){
                             (*gv.exchange_si).at(il,ih) = std::min((*gv.exchange_si).at(il,ih),(*gv.c_s).at(il,ih));
                         }else if((*gv.exchange_si).at(il,ih) < 0){
@@ -596,16 +584,17 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                             //-// (*gv.exchange).at(il,ih)  = - std::min(std::abs(exchange),abs(c_m_new_i)); 
                         }
                         //if(ih<gv.upperboundary_cell || ih>gv.wetfront_cell){
-                        //    (*gv.exchange_si).at(il,ih) = 0.0f;
-                        //};
+                        if(ih>gv.wetfront_cell){
+                            (*gv.exchange_si).at(il,ih) = 0.0f;
+                        };
                 }
             };
             (*gv.c_i) =  ( (*gv.c_i) * gv.porosity_i_prev + (*gv.exchange_si) * gv.porosity_s_prev ) / gv.porosity_i; // / porosity_m(t);
             (*gv.c_s) = ( (*gv.c_s) * gv.porosity_s_prev - (*gv.exchange_si) * gv.porosity_s_prev ) / gv.porosity_s;
-            
+
             // Exchange with immobile phase (just exchange)
             (*gv.exchange_im)  = deltt * (gp.alphaIE/gv.porosity_m_prev * ((*gv.c_i) - (*gv.c_m))) ; 
-            
+
             // limit the flux to the available material
             for(il=0;il<gv.nl ;il++){
                 for(ih=0;ih<gv.nh ;ih++){
@@ -617,8 +606,9 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                         print_screen_log(logPULSEfile,&msg);
                     }
                      //if(ih<gv.upperboundary_cell || ih>gv.wetfront_cell){
-                     //   (*gv.exchange_im).at(il,ih) = 0.0f;
-                    //};
+                     if(ih>gv.wetfront_cell){
+                            (*gv.exchange_si).at(il,ih) = 0.0f;
+                        };
                 }
             };
             (*gv.c_m) =  ( (*gv.c_m) * gv.porosity_m_prev + (*gv.exchange_im) * gv.porosity_i_prev ) / gv.porosity_m; // / porosity_m(t);
@@ -638,7 +628,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             //    (*gv.c_s)(arma::span(0,gv.nl-1),0) *= 0;
             //    (*gv.c_i)(arma::span(0,gv.nl-1),0) *= 0;
             //}
-                        
+
         //}
 
         // Print results                
@@ -646,9 +636,9 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 
              end = std::chrono::system_clock::now();
              elapsed_seconds = end-start;
-             
+
               outwritestatus = print_results(gv,gp,std::round(print_next),gp.print_step,elapsed_seconds);
-                
+
             if(outwritestatus == true) 
             {
                 std::cout << "Saved: '" << print_next << ".txt' || time step (min): " << std::to_string(gp.print_step/60) << " || Time elapsed (min): " << elapsed_seconds.count()/60 << std::endl;
@@ -660,13 +650,11 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                 msg = "Problem when saving the results:" + print_next;
                 print_screen_log(logPULSEfile,&msg);
                 abort();
-            }
-             
-         }
+          }
+          }
 
     }
-    
-    
+       
 }
 
 void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
@@ -729,7 +717,7 @@ int main(int argc, char** argv)
     // Assign global parameters
     globalpar gp; 
     
-    try{
+    //try{
     
         msg = "......................................... \n PULSE: multi-phase multi-layer snowpack chemistry model \n......................................... \n";
         print_screen_log(&logPULSEfile,&msg);   
@@ -760,18 +748,18 @@ int main(int argc, char** argv)
         msg = "\n......................................... \n Simulation complete";
         print_screen_log(&logPULSEfile,&msg); 
         
-    } catch(const std::exception& e){
+    //} catch(const std::exception& e){
         
-        try{
-            msg = "\nError: there was a problem in the code that was not expected (please contact diogo.pinhodacosta@canada.ca)";
-            print_screen_log(&logPULSEfile,&msg); 
-            
-        }catch(const std::exception& e){
-        }
+    //    try{
+    //        msg = "\nError: there was a problem in the code that was not expected (please contact diogo.pinhodacosta@canada.ca)";
+    //        print_screen_log(&logPULSEfile,&msg); 
+    //        
+    //    }catch(const std::exception& e){
+    //    }
         
-        logPULSEfile.close(); 
+    //    logPULSEfile.close(); 
         
-    };
+    //};
     
     return 0;
 }
