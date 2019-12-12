@@ -491,23 +491,23 @@ void upbound_calc(globalvar& gv,double* q,double* deltt,std::ofstream* logPULSEf
         //upperboundary_cell = [upperboundary_cell, upperboundary_cell_new];
         
         (*gv.c_m).shed_cols(0,1);
+        (*gv.c_i).shed_cols(0,1);
         (*gv.c_s).shed_cols(0,1);
-        (*gv.c_s).shed_cols(0,1);
-        (*gv.exchange_im).shed_cols(0,1);
+        (*gv.exchange_si).shed_cols(0,1);
         (*gv.exchange_im).shed_cols(0,1);
             
     } else if ((*q)<0.0f && abs(gv.layer_incrmt)>gv.snowh){ // ACCUMULATION - add layer
         gv.nh++; // remove one layer
         gv.wetfront_cell= 0; // assumes refreezing
-        gv.wetfront_cell_prev = 0; // assumes refreezing
+        gv.wetfront_cell_prev = 0;
         gv.snowH += gv.snowh; // snowpack depth
-        gv.wetfront_z += gv.snowh;
+        gv.wetfront_z = gv.snowH;
         gv.layer_incrmt += gv.snowh; 
 
         (*gv.c_m).insert_cols(0,1);
+        (*gv.c_i).insert_cols(0,1);
         (*gv.c_s).insert_cols(0,1);
-        (*gv.c_s).insert_cols(0,1);
-        (*gv.exchange_im).insert_cols(0,1);
+        (*gv.exchange_si).insert_cols(0,1);
         (*gv.exchange_im).insert_cols(0,1);
 
     }
@@ -614,7 +614,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                     for(ih=0;ih<gv.nh ;ih++){
 
                             if ((*gv.exchange_si).at(il,ih) > 0){
-                                (*gv.exchange_si).at(il,ih) = std::min((*gv.exchange_si).at(il,ih),(*gv.c_s).at(il,ih));
+                                (*gv.exchange_si).at(il,ih) = std::fmin((*gv.exchange_si).at(il,ih),(*gv.c_s).at(il,ih));
                             }else if((*gv.exchange_si).at(il,ih) < 0){
                                 msg = "PROBLEM: negative s->i exchange";
                                 print_screen_log(logPULSEfile,&msg);
@@ -638,9 +638,10 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                          if ((*gv.exchange_im).at(il,ih) > 0){
                             (*gv.exchange_im).at(il,ih) = std::min((*gv.exchange_im).at(il,ih),(*gv.c_i).at(il,ih));
                         }else if((*gv.exchange_im).at(il,ih) < 0){
-                            (*gv.exchange_im).at(il,ih) = -(std::min(std::abs((*gv.exchange_im).at(il,ih)),std::abs((*gv.c_m).at(il,ih))));
-                            msg = "PROBLEM: negative i->m exchange";
-                            print_screen_log(logPULSEfile,&msg);
+                            //(*gv.exchange_im).at(il,ih) = -(std::min(std::abs((*gv.exchange_im).at(il,ih)),std::abs((*gv.c_m).at(il,ih))));
+                             (*gv.exchange_im).at(il,ih) = 0;
+                            //msg = "PROBLEM: negative i->m exchange";
+                            //print_screen_log(logPULSEfile,&msg);
                         }
                          //if(ih<gv.upperboundary_cell || ih>gv.wetfront_cell){
                          if(ih>gv.wetfront_cell){
