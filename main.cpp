@@ -70,12 +70,12 @@ public:
             snowh; // grtid l lenght
   
     std::unique_ptr<arma::Mat<double>> c_m,c_i,c_s,qmelt,exchange_si,exchange_im;
-    double porosity_m=0.008,
-            porosity_i=0.001,
-            porosity_s= 1 - porosity_m - porosity_i,
-            porosity_m_prev=porosity_m,
-            porosity_i_prev=porosity_i,
-            porosity_s_prev=porosity_s,
+    double vfrac_m=0.008,
+            vfrac_i=0.001,
+            vfrac_s= 1 - vfrac_m - vfrac_i,
+            vfrac_m_prev=vfrac_m,
+            vfrac_i_prev=vfrac_i,
+            vfrac_s_prev=vfrac_s,
             qtotal,
             timstart,
             //upperboundary_z,
@@ -202,7 +202,7 @@ void checkmesh2(int* H_local,int* L_local,int* h_layer,int* l_layer,int* nh,int*
         std::abort();
     }  
      
-};
+}
 
 
 double findInterpQmelt(globalvar& gv,double *tcum)
@@ -301,23 +301,23 @@ void read_qmelt(globalpar& gp,globalvar& gv,std::string* qmelt_file,std::ofstrea
   
 }
 
-void calc_porosity(globalpar& gp,globalvar& gv,double *q, double *deltt)
+void vol_fract_calc(globalpar& gp,globalvar& gv,double *q, double *deltt)
 {
     
-    double dporosity_s_dt = (*q) / gv.qtotal;
-    double dporosity_i_dt = dporosity_s_dt;
+    double dvfrac_s_dt = (*q) / gv.qtotal;
+    double dvfrac_i_dt = dvfrac_s_dt;
 
-    gv.porosity_m_prev = gv.porosity_m;
-    gv.porosity_i_prev = gv.porosity_i;
-    gv.porosity_s_prev = gv.porosity_s;
+    gv.vfrac_m_prev = gv.vfrac_m;
+    gv.vfrac_i_prev = gv.vfrac_i;
+    gv.vfrac_s_prev = gv.vfrac_s;
     
-    gv.porosity_s = std::fmax(gv.porosity_s - dporosity_s_dt * (*deltt), 0.f);
-    if (gv.porosity_s != 0){
-        gv.porosity_i = std::fmax(gv.porosity_i + dporosity_s_dt * (*deltt) - dporosity_i_dt * (*deltt), 0.f); 
+    gv.vfrac_s = std::fmax(gv.vfrac_s - dvfrac_s_dt * (*deltt), 0.f);
+    if (gv.vfrac_s != 0){
+        gv.vfrac_i = std::fmax(gv.vfrac_i + dvfrac_s_dt * (*deltt) - dvfrac_i_dt * (*deltt), 0.f); 
     }else{
-        gv.porosity_i = std::fmax(gv.porosity_i - dporosity_i_dt * (*deltt) , 0.f);     
+        gv.vfrac_i = std::fmax(gv.vfrac_i - dvfrac_i_dt * (*deltt) , 0.f);     
     };
-    gv.porosity_m = std::fmin(gv.porosity_m + dporosity_i_dt * (*deltt) , 1.f);  
+    gv.vfrac_m = std::fmin(gv.vfrac_m + dvfrac_i_dt * (*deltt) , 1.f);  
        
 }
 
@@ -325,7 +325,7 @@ void wetfront_calc(globalpar& gp,globalvar& gv,double *v, double *deltt)
 {
     int nh_l = gv.nh;
     gv.wetfront_cell_prev = gv.wetfront_cell; // wetting fron cell in the previous time step
-    gv.wetfront_z = std::fmax(gv.wetfront_z - (*v) * (*deltt),0.f);
+    gv.wetfront_z = std::fmax(gv.wetfront_z - (*v) * (*deltt),0.0f);
     int tmp = std::round(nh_l-gv.wetfront_z/gv.snowh);
     gv.wetfront_cell = std::min(tmp,nh_l); // finding the cell when the wetting front is located
     
@@ -442,8 +442,8 @@ bool print_results(globalvar& gv,globalpar& gp, int print_tag, unsigned int prin
             filedataR(a,2) = (*gv.c_m).at(il,ih); 
             filedataR(a,3) = (*gv.c_i).at(il,ih); 
             filedataR(a,4) = (*gv.c_s).at(il,ih); 
-            filedataR(a,5) = (gv.porosity_m); 
-            filedataR(a,6) = (gv.porosity_s); 
+            filedataR(a,5) = (gv.vfrac_m); 
+            filedataR(a,6) = (gv.vfrac_s); 
             filedataR(a,7) = (*gv.exchange_si).at(il,ih); 
             filedataR(a,8) = (*gv.exchange_im).at(il,ih); 
             a = a + 1;
@@ -468,10 +468,10 @@ void upbound_calc(globalvar& gv,double* q,double* deltt,std::ofstream* logPULSEf
     if ((*q)>0.0f && gv.layer_incrmt>=gv.snowh){ // MELT - remove layer
         
          // add all immobile and solid slow that melted from the last cell) 
-        (*gv.c_m)(arma::span(0,gv.nl-1),1) = ( (*gv.c_m)(arma::span(0,gv.nl-1),1) * gv.porosity_m_prev
-            + (*gv.c_m)(arma::span(0,gv.nl-1),0) * gv.porosity_m_prev
-            + (*gv.c_s)(arma::span(0,gv.nl-1),0) * gv.porosity_s_prev
-            + (*gv.c_i)(arma::span(0,gv.nl-1),0) * gv.porosity_i_prev ) / gv.porosity_m; // gv.porosity_m;
+        (*gv.c_m)(arma::span(0,gv.nl-1),1) = ( (*gv.c_m)(arma::span(0,gv.nl-1),1) * gv.vfrac_m_prev
+            + (*gv.c_m)(arma::span(0,gv.nl-1),0) * gv.vfrac_m_prev
+            + (*gv.c_s)(arma::span(0,gv.nl-1),0) * gv.vfrac_s_prev
+            + (*gv.c_i)(arma::span(0,gv.nl-1),0) * gv.vfrac_i_prev ) / gv.vfrac_m; // gv.vfrac_m;
 
         //(*gv.c_m)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell_prev)) *= 0;
         //(*gv.c_s)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell_prev)) *= 0;
@@ -504,7 +504,7 @@ void upbound_calc(globalvar& gv,double* q,double* deltt,std::ofstream* logPULSEf
         gv.wetfront_z = gv.snowH;
         gv.layer_incrmt += gv.snowh; 
 
-        (*gv.c_i) += (*gv.c_m)*gv.porosity_m/gv.porosity_i; 
+        (*gv.c_i) += (*gv.c_m)*gv.vfrac_m/gv.vfrac_i; 
         (*gv.c_m) *= 0;
         (*gv.c_m).insert_cols(0,1);
         (*gv.c_i).insert_cols(0,1);
@@ -527,7 +527,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             q = 0.f, // melt volume/int
             t = 1.f, 
             deltt = 1.0f, // time step calculated from the CFL condition
-            v = 0.f, // interstitial flow velocity [m s-1]
+            velc = 0.f, // interstitial flow velocity [m s-1]
             D = 0.f; // dispersion coefficient [m2/s]
     int flagt = 1, // for saving results
         tmp_int; // min vertical grid size to comply with the Peclet condition
@@ -552,7 +552,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
         t += 1;
                 
         q = findInterpQmelt(gv,&tcum); // if there is increase in SWE, everything will freeze so there will be a stop
-        std::cout << std::to_string((q)) << std::endl;
+       // std::cout << std::to_string((q)) << std::endl;
 
         if(q==0.0f){ // nothing happens
             tcum++; 
@@ -561,10 +561,10 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             tcum++;
         } else {// melt       
                 // Estimate interstitial flow velocity 
-            v = q / (gv.porosity_m); // interstitial flow velocity [m s-1]
-            D = gp.aD * v;       // dispersion coefficient [m2/s]
+            velc = q / (gv.vfrac_m); // interstitial flow velocity [m s-1]
+            D = gp.aD * velc;       // dispersion coefficient [m2/s]
             
-            deltt = std::fmin(gp.Courant * gv.snowh / v,1);
+            deltt = std::fmin(gp.Courant * gv.snowh / velc,1);
             tcum = tcum + deltt; 
             
             upbound_calc(gv,&q,&deltt,logPULSEfile);
@@ -581,10 +581,11 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 
         if (q>0.0f){ // if melt
             // Calculate porosity for next time step
-            calc_porosity(gp,gv,&q,&deltt);
+            vol_fract_calc(gp,gv,&q,&deltt);
 
             // limiting the flux to the wetting front (uses intersticial velocity to determine the wetting front)
-            wetfront_calc(gp,gv,&v,&deltt);
+            wetfront_calc(gp,gv,&velc,&deltt);
+            std::cout << std::to_string(gv.vfrac_m) + ";" + std::to_string(q*10000000000) + "; "  + std::to_string(velc) + "; " + std::to_string(gv.wetfront_cell) << std::endl;
 
             // Melting velocity: last cell
             //upbound_calc(gv,&q,&deltt,logPULSEfile);
@@ -598,10 +599,10 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 
             }
 
-            if (gv.porosity_m < 1-gp.num_stblty_thrshld_prsity && gv.porosity_i > gp.num_stblty_thrshld_prsity && gv.porosity_s > gp.num_stblty_thrshld_prsity){
+            if (gv.vfrac_m < 1-gp.num_stblty_thrshld_prsity && gv.vfrac_i > gp.num_stblty_thrshld_prsity && gv.vfrac_s > gp.num_stblty_thrshld_prsity){
               if (gv.wetfront_cell > 5){
 
-                   Crank_Nicholson(gv,&deltt,&v,&D); // solve advection and dispersion in the mobile zone
+                   Crank_Nicholson(gv,&deltt,&velc,&D); // solve advection and dispersion in the mobile zone
 
                     // Crank Nicolson to limit the fluxes across boundaries
                    //exchange_i = arma::max(v * deltt * ((*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) - (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new))/gv.snowh,(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1));
@@ -628,11 +629,11 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                             };
                     }
                 };
-                (*gv.c_i) =  ( (*gv.c_i) * gv.porosity_i_prev + (*gv.exchange_si) * gv.porosity_s_prev ) / gv.porosity_i; // / porosity_m(t);
-                (*gv.c_s) = ( (*gv.c_s) * gv.porosity_s_prev - (*gv.exchange_si) * gv.porosity_s_prev ) / gv.porosity_s;
+                (*gv.c_i) =  ( (*gv.c_i) * gv.vfrac_i_prev + (*gv.exchange_si) * gv.vfrac_s_prev ) / gv.vfrac_i; // / vfrac_m(t);
+                (*gv.c_s) = ( (*gv.c_s) * gv.vfrac_s_prev - (*gv.exchange_si) * gv.vfrac_s_prev ) / gv.vfrac_s;
 
                 // Exchange with immobile phase (just exchange)
-                (*gv.exchange_im)  = deltt * (gp.alphaIE/gv.porosity_m_prev * ((*gv.c_i) - (*gv.c_m))) ; 
+                (*gv.exchange_im)  = deltt * (gp.alphaIE/gv.vfrac_m_prev * ((*gv.c_i) - (*gv.c_m))) ; 
 
                 // limit the flux to the available material
                 for(il=0;il<gv.nl ;il++){
@@ -651,14 +652,14 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                             };
                     }
                 };
-                (*gv.c_m) =  ( (*gv.c_m) * gv.porosity_m_prev + (*gv.exchange_im) * gv.porosity_i_prev ) / gv.porosity_m; // / porosity_m(t);
-                (*gv.c_i) = ( (*gv.c_i) * gv.porosity_i_prev - (*gv.exchange_im) * gv.porosity_i_prev ) / gv.porosity_i;
+                (*gv.c_m) =  ( (*gv.c_m) * gv.vfrac_m_prev + (*gv.exchange_im) * gv.vfrac_i_prev ) / gv.vfrac_m; // / vfrac_m(t);
+                (*gv.c_i) = ( (*gv.c_i) * gv.vfrac_i_prev - (*gv.exchange_im) * gv.vfrac_i_prev ) / gv.vfrac_i;
 
                 // if porosities are too small, they create instability
             }//else{
-                //gv.porosity_i = 0;
-                //gv.porosity_m = 1;
-                //gv.porosity_s = 0;
+                //gv.vfrac_i = 0;
+                //gv.vfrac_m = 1;
+                //gv.vfrac_s = 0;
                 //if(gv.upperboundary_cell != 0){
                 //    (*gv.c_m)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell)) *= 0;
                 //    (*gv.c_s)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell)) *= 0;
@@ -726,8 +727,8 @@ void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             (*gv.c_m).at(il,ih) = filedata(a,2);
             (*gv.c_i).at(il,ih) = filedata(a,3);
             (*gv.c_s).at(il,ih) = filedata(a,4);
-            (gv.porosity_m) = filedata(a,5);
-            (gv.porosity_s) = filedata(a,6);
+            (gv.vfrac_m) = filedata(a,5);
+            (gv.vfrac_s) = filedata(a,6);
             (*gv.exchange_si).at(il,ih) = filedata(a,7);
             (*gv.exchange_im).at(il,ih) = filedata(a,8);
             if((*gv.c_m).at(il,ih)!=0){

@@ -1,7 +1,7 @@
 ### Batch_1 - SVALBARD SIMULATIONS ### 1) snowpack depth [mm], 2) snowpack horizontal lenght [mm], 3) vertical layer thickness in simulations [mm], 4) horizontal layer thickness in simulation [mm],5) qmelt file, 6) print interval in seconds, 7) alpha, 8) aD
 5
 5
-qmelt_test.pulse
+qmelt.pulse
 500
 0.0005
 0.0011
