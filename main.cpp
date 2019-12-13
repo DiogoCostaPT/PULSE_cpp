@@ -212,7 +212,7 @@ double findInterpQmelt(globalvar& gv,double *tcum)
     
     nqmelt = int((*gv.qmelt).col(0).n_elem);
     
-    for(a=0;a< nqmelt;a++){
+    for(a=0;a<nqmelt;a++){
         qmelt_t_i = (*gv.qmelt).at(a,0);
         qmelt_i = (*gv.qmelt).at(a,1);
         if(qmelt_t_i < *tcum){
@@ -222,7 +222,7 @@ double findInterpQmelt(globalvar& gv,double *tcum)
             qmelt_i_intrp =  qmelt_i;
             break;
         }else if(qmelt_t_i > *tcum){
-            qmelt_i_intrp = qmelt_i_prev + (qmelt_i - qmelt_i_prev) / (qmelt_t_i - qmelt_t_i_prev);
+            qmelt_i_intrp = qmelt_i_prev + (qmelt_i - qmelt_i_prev) * ((*tcum - qmelt_t_i_prev)) / (qmelt_t_i - qmelt_t_i_prev);
             break;
         }
     }
@@ -286,7 +286,7 @@ void read_qmelt(globalpar& gp,globalvar& gv,std::string* qmelt_file,std::ofstrea
             qmelt_i = filedataQ(a,1);  // value of melt
             (*gv.qmelt).at(a,0) = tmelts;  
             (*gv.qmelt).at(a,1) = qmelt_i/3600; // hh-> sec
-            gv.qtotal += (tmelts-tmelts_prev) * (qmelt_i/3600); 
+            gv.qtotal += std::fmax((tmelts-tmelts_prev) * (qmelt_i/3600),0.0f); 
             tmelts_prev = tmelts;
         }
        (gp.Tperd) = tmelts;
@@ -504,6 +504,8 @@ void upbound_calc(globalvar& gv,double* q,double* deltt,std::ofstream* logPULSEf
         gv.wetfront_z = gv.snowH;
         gv.layer_incrmt += gv.snowh; 
 
+        (*gv.c_i) += (*gv.c_m)*gv.porosity_m/gv.porosity_i; 
+        (*gv.c_m) *= 0;
         (*gv.c_m).insert_cols(0,1);
         (*gv.c_i).insert_cols(0,1);
         (*gv.c_s).insert_cols(0,1);
@@ -550,7 +552,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
         t += 1;
                 
         q = findInterpQmelt(gv,&tcum); // if there is increase in SWE, everything will freeze so there will be a stop
-
+        std::cout << std::to_string((q)) << std::endl;
 
         if(q==0.0f){ // nothing happens
             tcum++; 
@@ -597,7 +599,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             }
 
             if (gv.porosity_m < 1-gp.num_stblty_thrshld_prsity && gv.porosity_i > gp.num_stblty_thrshld_prsity && gv.porosity_s > gp.num_stblty_thrshld_prsity){
-                if (gv.wetfront_cell > 5){
+              if (gv.wetfront_cell > 5){
 
                    Crank_Nicholson(gv,&deltt,&v,&D); // solve advection and dispersion in the mobile zone
 
@@ -639,7 +641,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                             (*gv.exchange_im).at(il,ih) = std::min((*gv.exchange_im).at(il,ih),(*gv.c_i).at(il,ih));
                         }else if((*gv.exchange_im).at(il,ih) < 0){
                             //(*gv.exchange_im).at(il,ih) = -(std::min(std::abs((*gv.exchange_im).at(il,ih)),std::abs((*gv.c_m).at(il,ih))));
-                             (*gv.exchange_im).at(il,ih) = 0;
+                             (*gv.exchange_im).at(il,ih) = 0.0f;
                             //msg = "PROBLEM: negative i->m exchange";
                             //print_screen_log(logPULSEfile,&msg);
                         }
