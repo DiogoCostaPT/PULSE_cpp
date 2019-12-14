@@ -524,24 +524,37 @@ void upbound_calc(globalvar& gv,double* deltt,std::ofstream* logPULSEfile){
         (*gv.exchange_si).shed_cols(0,1);
         (*gv.exchange_im).shed_cols(0,1);
             
-    } else if (gv.q_i<0.0f && abs(gv.layer_incrmt)>gv.snowh){ // ACCUMULATION - add layer
-        gv.nh++; // remove one layer
-        gv.wetfront_cell= 0; // assumes refreezing
-        gv.wetfront_cell_prev = 0;
-        gv.snowH += gv.snowh; // snowpack depth
-        gv.wetfront_z = gv.snowH;
-        gv.layer_incrmt += gv.snowh; 
-
+    } else if (gv.q_i<0.0f){ // accumulation period
+        
         (*gv.c_i) += (*gv.c_m)*gv.vfrac_m/gv.vfrac_i; // c_m mass will go to c_i
         (*gv.c_m) *= 0;
-        (*gv.c_m).insert_cols(0,1);
-        (*gv.c_i).insert_cols(0,1);
-        (*gv.c_s).insert_cols(0,1);
-        arma::mat newsnowlayer;
-        newsnowlayer.ones(nl_l,1);
-        (*gv.c_s).col(0) = newsnowlayer * gv.qc_i;
-        (*gv.exchange_si).insert_cols(0,1);
-        (*gv.exchange_im).insert_cols(0,1);
+        gv.wetfront_cell= 0; // assumes refreezing
+        gv.wetfront_cell_prev = 0;
+        gv.wetfront_z = gv.snowH;
+        gv.vfrac_m=0.008;
+        gv.vfrac_i=0.001;
+        gv.vfrac_s= 1 - gv.vfrac_m - gv.vfrac_i;
+        gv.vfrac_m_prev=gv.vfrac_m;
+        gv.vfrac_i_prev=gv.vfrac_i;
+        gv.vfrac_s_prev=gv.vfrac_s;
+        gv.upperboundary_cell_prev = 0;
+        
+        if (abs(gv.layer_incrmt)>gv.snowh){ // adding a new layer
+
+            gv.nh++; // remove one layer
+            gv.snowH += gv.snowh; // snowpack depth 
+            gv.layer_incrmt += gv.snowh; 
+
+            (*gv.c_m).insert_cols(0,1);
+            (*gv.c_i).insert_cols(0,1);
+            (*gv.c_s).insert_cols(0,1);
+            arma::mat newsnowlayer;
+            newsnowlayer.ones(nl_l,1);
+            (*gv.c_s).col(0) = newsnowlayer * gv.qc_i;
+            (*gv.exchange_si).insert_cols(0,1);
+            (*gv.exchange_im).insert_cols(0,1);
+
+        }
 
     }
     
@@ -680,7 +693,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                         }
                          //if(ih<gv.upperboundary_cell || ih>gv.wetfront_cell){
                          if(ih>gv.wetfront_cell){
-                                (*gv.exchange_si).at(il,ih) = 0.0f;
+                                (*gv.exchange_im).at(il,ih) = 0.0f;
                             };
                     }
                 };
