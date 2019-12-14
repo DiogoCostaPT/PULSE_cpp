@@ -306,7 +306,7 @@ void vol_fract_calc(globalpar& gp,globalvar& gv,double *q, double *deltt)
 {
     
     //double dvfrac_s_dt = (*q) / gv.qtotal;
-    double dvfrac_s_dt = (*q) / (gv.snowH * gp.row_frshsnow_init);
+    double dvfrac_s_dt = (*q) / (gv.snowH / 1000 * gp.row_frshsnow_init);
     double dvfrac_i_dt = dvfrac_s_dt;
 
     gv.vfrac_m_prev = gv.vfrac_m;
