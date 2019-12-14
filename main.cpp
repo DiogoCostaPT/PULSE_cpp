@@ -208,7 +208,9 @@ void checkmesh2(int* H_local,int* L_local,int* h_layer,int* l_layer,int* nh,int*
 
 void findInterpQmelt(globalvar& gv,double *tcum)
 {
-    double qcmelt_i,qcmelt_i_prev=0.0f,qcmelt_t_i,qcmelt_t_i_prev = 0.0f;
+    double qcmelt_t_i,qcmelt_t_i_prev = 0.0f, // time
+            qcmelt_i,qcmelt_i_prev=0.0f, // melt rate
+            qcmelt_c_i = 0.0f, qcmelt_c_i_prev = 0.0f; // concentration of added snow
     unsigned a,nqcmelt;
     
     nqcmelt = int((*gv.qcmelt).col(0).n_elem);
@@ -216,9 +218,11 @@ void findInterpQmelt(globalvar& gv,double *tcum)
     for(a=0;a<nqcmelt;a++){
         qcmelt_t_i = (*gv.qcmelt).at(a,0);
         qcmelt_i = (*gv.qcmelt).at(a,1);
+        qcmelt_c_i = (*gv.qcmelt).at(a,2);
         if(qcmelt_t_i < *tcum){
             qcmelt_t_i_prev = qcmelt_t_i;
             qcmelt_i_prev = qcmelt_i;
+            qcmelt_c_i_prev = qcmelt_c_i;
         }else if (qcmelt_t_i == *tcum){
             gv.q_i =  qcmelt_i;
             break;
@@ -229,7 +233,13 @@ void findInterpQmelt(globalvar& gv,double *tcum)
     }
     
     if (gv.q_i<0){ // acumulation -> add concentration of snow
-        gv.qc_i = qcmelt_i = (*gv.qcmelt).at(a,2);        
+        if (qcmelt_i<0 && qcmelt_i_prev<0){ // accumulation
+            gv.qc_i = qcmelt_c_i_prev + (qcmelt_c_i - qcmelt_c_i_prev) * ((*tcum - qcmelt_t_i_prev)) / (qcmelt_t_i - qcmelt_t_i_prev);
+        }else if(qcmelt_i<0 && qcmelt_i_prev>=0){
+            gv.qc_i = qcmelt_c_i;        
+        }else if(qcmelt_i>=0 && qcmelt_i_prev<0){
+            gv.qc_i = qcmelt_c_i_prev;        
+        }
     }
     
     return;
