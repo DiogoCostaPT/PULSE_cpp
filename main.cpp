@@ -35,6 +35,7 @@ public:
     double Courant=0.8,aD,
            rho_s=917.0, // kg.m-3 at 0 degrees
            rho_m=998.8, // kg.m-3 at 0 degrees
+           row_frshsnow_init = 320,
            wetfront_z,num_stblty_thrshld_prsity = 1E-6,alphaIE,Tperd;
     
     int flag_sens,run_id,s,print_step;
@@ -304,7 +305,8 @@ void read_qmelt(globalpar& gp,globalvar& gv,std::string* qmelt_file,std::ofstrea
 void vol_fract_calc(globalpar& gp,globalvar& gv,double *q, double *deltt)
 {
     
-    double dvfrac_s_dt = (*q) / gv.qtotal;
+    //double dvfrac_s_dt = (*q) / gv.qtotal;
+    double dvfrac_s_dt = (*q) / (gv.snowH * gp.row_frshsnow_init);
     double dvfrac_i_dt = dvfrac_s_dt;
 
     gv.vfrac_m_prev = gv.vfrac_m;
@@ -333,7 +335,7 @@ void wetfront_calc(globalpar& gp,globalvar& gv,double *v, double *deltt)
 
 
 // Crank-Nicholson Scheme (implicit)
-void Crank_Nicholson(globalvar& gv,double *deltt,double *v,double *D)
+void crank_nicholson(globalvar& gv,double *deltt,double *v,double *D)
 {
     // calculation - implicit scheme
     unsigned int il,ih;    
@@ -519,7 +521,7 @@ void upbound_calc(globalvar& gv,double* q,double* deltt,std::ofstream* logPULSEf
 }
 
 
-void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
+void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 {
     
     // initiation
@@ -602,7 +604,7 @@ void PULSEmodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             if (gv.vfrac_m < 1-gp.num_stblty_thrshld_prsity && gv.vfrac_i > gp.num_stblty_thrshld_prsity && gv.vfrac_s > gp.num_stblty_thrshld_prsity){
               if (gv.wetfront_cell > 5){
 
-                   Crank_Nicholson(gv,&deltt,&velc,&D); // solve advection and dispersion in the mobile zone
+                   crank_nicholson(gv,&deltt,&velc,&D); // solve advection and dispersion in the mobile zone
 
                     // Crank Nicolson to limit the fluxes across boundaries
                    //exchange_i = arma::max(v * deltt * ((*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) - (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new))/gv.snowh,(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1));
@@ -785,7 +787,7 @@ int main(int argc, char** argv)
         initiate(gp,gv,&logPULSEfile);
 
         // call the main PULSE model
-        PULSEmodel(gp,gv,&logPULSEfile);
+        pulsemodel(gp,gv,&logPULSEfile);
 
         // Simulation completed
         msg = "\n......................................... \n Simulation complete";
