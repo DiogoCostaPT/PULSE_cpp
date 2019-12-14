@@ -392,12 +392,12 @@ void wetfront_calc(globalpar& gp,globalvar& gv,double *v, double *deltt)
 void crank_nicholson(globalvar& gv,double *deltt,double *v,double *D)
 {
     // calculation - implicit scheme
-    unsigned int il;    
+    int il;    
 
     // to solve A.x1=B.x0
-    unsigned int nli = gv.nl;
-    unsigned int nhi = gv.wetfront_cell;//-(gv.upperboundary_cell);                   // the boundaries are knowns, so don't need to be included in matrix A
-    unsigned int nt = nli*nhi;
+    int nli = gv.nl;
+    int nhi = gv.wetfront_cell;//-(gv.upperboundary_cell);                   // the boundaries are knowns, so don't need to be included in matrix A
+    int nt = nli*nhi;
     double k1 = (*v)*(*deltt)/(4*gv.snowh);       // constants for Crank-Nicholson scheme
     double k2 = (*D)*(*deltt)/(2*pow(gv.snowh,2));     // constants for Crank-Nicholson scheme
     double k3 = (*D)*(*deltt)/(2*pow(gv.snowl,2));     // constants for Crank-Nicholson scheme
