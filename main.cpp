@@ -77,7 +77,7 @@ public:
             vfrac_m_prev=vfrac_m,
             vfrac_i_prev=vfrac_i,
             vfrac_s_prev=vfrac_s,
-            qtotal,
+            vtotal_check,
             timstart,
             //upperboundary_z,
             //upperboundary_cell,
@@ -279,6 +279,8 @@ void read_qmelt(globalpar& gp,globalvar& gv,std::string* qmelt_file,std::ofstrea
     double tmelts=0.0f,tmelts_prev=0.0f,qmelt_i;
     std::string msg;
     
+    gv.vtotal_check = gv.snowH / 1000 * gp.row_frshsnow_init; // initial volume
+    
     arma::mat filedataQ; 
     bool flstatusQ =  filedataQ.load((*qmelt_file),arma::csv_ascii);
     if(flstatusQ == true) {
@@ -287,7 +289,7 @@ void read_qmelt(globalpar& gp,globalvar& gv,std::string* qmelt_file,std::ofstrea
             qmelt_i = filedataQ(a,1);  // value of melt
             (*gv.qmelt).at(a,0) = tmelts;  
             (*gv.qmelt).at(a,1) = qmelt_i/3600; // hh-> sec
-            gv.qtotal += std::fmax((tmelts-tmelts_prev) * (qmelt_i/3600),0.0f); 
+            gv.vtotal_check += (tmelts-tmelts_prev) * (qmelt_i/3600); 
             tmelts_prev = tmelts;
         }
        (gp.Tperd) = tmelts;
@@ -298,14 +300,21 @@ void read_qmelt(globalpar& gp,globalvar& gv,std::string* qmelt_file,std::ofstrea
     } 
     print_screen_log(logPULSEfile,&msg);
     
+    if (gv.vtotal_check<0.0f){
+        msg = "Snow mass does not balance (initial+accumulation < melt): check the 0.txt file and " + (*qmelt_file);   
+        print_screen_log(logPULSEfile,&msg);
+        std::abort();
+    }
+        
+    
     return;
-  
+ 
 }
 
 void vol_fract_calc(globalpar& gp,globalvar& gv,double *q, double *deltt)
 {
     
-    //double dvfrac_s_dt = (*q) / gv.qtotal;
+    //double dvfrac_s_dt = (*q) / gv.vtotal_check;
     double dvfrac_s_dt = (*q) / (gv.snowH / 1000 * gp.row_frshsnow_init);
     double dvfrac_i_dt = dvfrac_s_dt;
 
