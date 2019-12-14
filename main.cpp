@@ -27,7 +27,9 @@
 #include <dirent.h>
 #include <sys/types.h>
 
-
+/* ***** 
+ * Global Parameters 
+ ***** */
 class globalpar
 {
 public:
@@ -43,7 +45,9 @@ public:
     
 };
 
-
+/* *****
+ * Global Variables 
+ ***** */
 class globalvar
 {
 public:
@@ -79,8 +83,6 @@ public:
             vfrac_s_prev=vfrac_s,
             vtotal_check,
             timstart,
-            //upperboundary_z,
-            //upperboundary_cell,
             wetfront_z,
             wetfront_cell,
             wetfront_cell_prev,
@@ -90,7 +92,9 @@ public:
 };
 
 
-
+/* *****
+ * Print to console and log.pulse file 
+ ***** */
 void print_screen_log(std::ofstream* logPULSEfile,std::string* msg)
 {
     std::cout << (*msg) << std::endl;
@@ -134,7 +138,9 @@ void print_screen_log(std::ofstream* logPULSEfile,std::string* msg)
 //}
  
 
-// read file names in Results directory
+/* *****
+ * Read file names in Results directory 
+ ***** */
 int findLastStep(const char *path) {
 
    struct dirent *entry;
@@ -166,21 +172,19 @@ int findLastStep(const char *path) {
    return timestart;
 }
 
-
+/* 
+ * Identify the snowpack mesh based on file 0.txt 
+ */
 void checkmesh2(int* H_local,int* L_local,int* h_layer,int* l_layer,int* nh,int* nl,std::ofstream* logPULSEfile)
 {
     unsigned int a, timstart;
-    //int nh_l = gv.nh;
     
     arma::mat filedata; 
     std::string init_file, msg;
     
     timstart = findLastStep("Results/"); // list the results files to get the last time step
-    
-    init_file = "Results/" + std::to_string(int(timstart)) + ".txt";
-    
+    init_file = "Results/" + std::to_string(int(timstart)) + ".txt";   
     bool flstatus = filedata.load(init_file,arma::csv_ascii);
-
     
     if(flstatus == true) 
     {
@@ -189,8 +193,7 @@ void checkmesh2(int* H_local,int* L_local,int* h_layer,int* l_layer,int* nh,int*
             (*nh) = std::max((*nh), int(filedata(a,0)) + 1);  
             (*nl) = std::max((*nl), int(filedata(a,1)) + 1);  
           
-        }
-        
+        } 
         (*H_local) =  (*nh) * (*h_layer);
         (*L_local) =  (*nl) * (*l_layer);
         
@@ -201,11 +204,12 @@ void checkmesh2(int* H_local,int* L_local,int* h_layer,int* l_layer,int* nh,int*
         msg = "Mesh: not identified -> Results/*.txt file(s) missing";
         print_screen_log(logPULSEfile,&msg);  
         std::abort();
-    }  
-     
+    }     
 }
 
-
+/* *****
+ * Determine snowmelt rate and, in the case of accumulation, determine the concentration of the added snow layer 
+ * **** */
 void findInterpQmelt(globalvar& gv,double *tcum)
 {
     double qcmelt_t_i,qcmelt_t_i_prev = 0.0f, // time
@@ -227,14 +231,18 @@ void findInterpQmelt(globalvar& gv,double *tcum)
             gv.q_i =  qcmelt_i;
             break;
         }else if(qcmelt_t_i > *tcum){
-            gv.q_i = qcmelt_i_prev + (qcmelt_i - qcmelt_i_prev) * ((*tcum - qcmelt_t_i_prev)) / (qcmelt_t_i - qcmelt_t_i_prev);
+            gv.q_i = qcmelt_i_prev 
+                    + (qcmelt_i - qcmelt_i_prev) * ((*tcum - qcmelt_t_i_prev)) 
+                    / (qcmelt_t_i - qcmelt_t_i_prev);
             break;
         }
     }
     
     if (gv.q_i<0){ // acumulation -> add concentration of snow
         if (qcmelt_i<0 && qcmelt_i_prev<0){ // accumulation
-            gv.qc_i = qcmelt_c_i_prev + (qcmelt_c_i - qcmelt_c_i_prev) * ((*tcum - qcmelt_t_i_prev)) / (qcmelt_t_i - qcmelt_t_i_prev);
+            gv.qc_i = qcmelt_c_i_prev 
+                    + (qcmelt_c_i - qcmelt_c_i_prev) * ((*tcum - qcmelt_t_i_prev)) 
+                    / (qcmelt_t_i - qcmelt_t_i_prev);
         }else if(qcmelt_i<0 && qcmelt_i_prev>=0){
             gv.qc_i = qcmelt_c_i;        
         }else if(qcmelt_i>=0 && qcmelt_i_prev<0){
@@ -245,12 +253,14 @@ void findInterpQmelt(globalvar& gv,double *tcum)
     return;
 }
 
-
-
+/* *****
+ * Read the simset.pulse file (model set up) 
+ * **** */
 int read_simset(globalpar& gp,std::string* sim_purp, int *H_local,int *L_local, int *h_layer,int *l_layer, std::string* qcmelt_file,std::ofstream* logPULSEfile)
 {
     
     std::string str, modset_flname, msg;
+    int n_qcmelt;
     modset_flname = "simset.pulse";
     
     std::ifstream file(modset_flname);
@@ -280,13 +290,22 @@ int read_simset(globalpar& gp,std::string* sim_purp, int *H_local,int *L_local, 
     
     arma::mat filedataQ; 
     bool flstatusQ =  filedataQ.load((*qcmelt_file),arma::csv_ascii);
-    int n_qcmelt = filedataQ.col(1).n_elem;
+    if(flstatusQ==true){
+        n_qcmelt = filedataQ.col(1).n_elem;
+        
+    }else{
+        msg = "PROBLEM loading the file: " + (*qcmelt_file);   
+        print_screen_log(logPULSEfile,&msg);
+        std::abort();
+    }
    
     return n_qcmelt;
     
 }    
 
-
+/* *****
+ * Read snowmelt and snow-concentration input 
+ * **** */
 void read_qcmelt(globalpar& gp,globalvar& gv,std::string* qcmelt_file,std::ofstream* logPULSEfile)
 {
     unsigned int a; 
@@ -310,11 +329,13 @@ void read_qcmelt(globalpar& gp,globalvar& gv,std::string* qcmelt_file,std::ofstr
         }
        (gp.Tperd) = tmelts;
        msg = "Successful loading the file: " + (*qcmelt_file);
+       print_screen_log(logPULSEfile,&msg);
     } else{
         msg = "PROBLEM loading the file: " + (*qcmelt_file);   
+        print_screen_log(logPULSEfile,&msg);
         std::abort();
     } 
-    print_screen_log(logPULSEfile,&msg);
+    
     
     if (gv.vtotal_check<0.0f){
         msg = "Snow mass does not balance (initial+accumulation < melt): check the 0.txt file and " + (*qcmelt_file);   
@@ -327,6 +348,9 @@ void read_qcmelt(globalpar& gp,globalvar& gv,std::string* qcmelt_file,std::ofstr
  
 }
 
+/* *****
+ * Calculate volume fractions for the different water phases 
+ * **** */
 void vol_fract_calc(globalpar& gp,globalvar& gv,double *deltt)
 {
     
@@ -348,6 +372,10 @@ void vol_fract_calc(globalpar& gp,globalvar& gv,double *deltt)
        
 }
 
+
+/* *****
+ * Calculate the wetting front 
+ * **** */
 void wetfront_calc(globalpar& gp,globalvar& gv,double *v, double *deltt)
 {
     int nh_l = gv.nh;
@@ -358,17 +386,18 @@ void wetfront_calc(globalpar& gp,globalvar& gv,double *v, double *deltt)
     
 }
 
-
-// Crank-Nicholson Scheme (implicit)
+/* *****
+ * ADE Implicit Solver: Crank-Nicholson Scheme  
+ * **** */
 void crank_nicholson(globalvar& gv,double *deltt,double *v,double *D)
 {
     // calculation - implicit scheme
-    unsigned int il,ih;    
+    unsigned int il;    
 
     // to solve A.x1=B.x0
-    int nli = gv.nl;
-    int nhi = gv.wetfront_cell;//-(gv.upperboundary_cell);                   // the boundaries are knowns, so don't need to be included in matrix A
-    int nt = nli*nhi;
+    unsigned int nli = gv.nl;
+    unsigned int nhi = gv.wetfront_cell;//-(gv.upperboundary_cell);                   // the boundaries are knowns, so don't need to be included in matrix A
+    unsigned int nt = nli*nhi;
     double k1 = (*v)*(*deltt)/(4*gv.snowh);       // constants for Crank-Nicholson scheme
     double k2 = (*D)*(*deltt)/(2*pow(gv.snowh,2));     // constants for Crank-Nicholson scheme
     double k3 = (*D)*(*deltt)/(2*pow(gv.snowl,2));     // constants for Crank-Nicholson scheme
@@ -379,10 +408,6 @@ void crank_nicholson(globalvar& gv,double *deltt,double *v,double *D)
     double a1=-(k1+k2);
     double a2=(1+2*k2+2*k3);
     double a3=k1-k2;
-
-    if(k1<0){
-        std::cout << std::to_string(k3) <<std::endl;
-    }
 
     // 1) all domain (diagonals: -9,-1,0,1,9)
     arma::mat A = a3*(arma::diagmat(arma::ones(1,nt-nli),nli))
@@ -445,13 +470,14 @@ void crank_nicholson(globalvar& gv,double *deltt,double *v,double *D)
 
 }
 
-
+/* *****
+ * Print results   
+ * **** */
 bool print_results(globalvar& gv,globalpar& gp, int print_tag, unsigned int print_step, std::chrono::duration<double> elapsed_seconds)
 {
 
     unsigned int il,ih;
     int a = 0;
-    double ux;
     int nh_l = gv.nh;
     
     std::string tprint = "Results/" + std::to_string(print_tag); 
@@ -484,11 +510,11 @@ bool print_results(globalvar& gv,globalpar& gp, int print_tag, unsigned int prin
     return outwritestatus;
 }
 
+/* *****
+ * Determine the addition or removal of upper snow layers  
+ * **** */
 void upbound_calc(globalvar& gv,double* deltt,std::ofstream* logPULSEfile){
 
-    int tmp_int;
-    
-    int nh_l = gv.nh;
     int nl_l = gv.nl;
     
     gv.layer_incrmt += gv.q_i*(*deltt); // cell increment
@@ -553,39 +579,31 @@ void upbound_calc(globalvar& gv,double* deltt,std::ofstream* logPULSEfile){
             (*gv.c_s).col(0) = newsnowlayer * gv.qc_i;
             (*gv.exchange_si).insert_cols(0,1);
             (*gv.exchange_im).insert_cols(0,1);
-
         }
-
-    }
-    
-   return;
-    
+    }  
+   return;  
 }
 
-
+/* *****
+ * Main PULSE model  
+ * **** */
 void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 {
     
     // initiation
     double tcum = 0.f,
             //q = 0.f, // melt volume/int
-            qc_acum = 0.0f, // concentration of snow during accumulation period
             t = 1.f, 
             deltt = 1.0f, // time step calculated from the CFL condition
             velc = 0.f, // interstitial flow velocity [m s-1]
             D = 0.f; // dispersion coefficient [m2/s]
-    int flagt = 1, // for saving results
-        tmp_int; // min vertical grid size to comply with the Peclet condition
     std::string msg;  
-    double Peclet,Peclet_max = 0,snowh_min;
     std::chrono::duration<double> elapsed_seconds;
     auto start = std::chrono::system_clock::now();
     auto end = std::chrono::system_clock::now();
     bool outwritestatus;
     arma::mat exchange_i;
     
-    //gp.wetfront_z = gv.nh*gv.snowh; // starts at the top
-    //double upperboundary_z = gp.wetfront_z;
     unsigned int il,ih,print_next;
       
     tcum = gv.timstart;
@@ -597,7 +615,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
         t += 1;
                 
         findInterpQmelt(gv,&tcum); // if there is increase in SWE, everything will freeze so there will be a stop
-       // std::cout << std::to_string((q)) << std::endl;
+
 
         if(gv.q_i==0.0f){ // nothing happens
             tcum++; 
@@ -613,39 +631,27 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             tcum = tcum + deltt; 
             
             upbound_calc(gv,&deltt,logPULSEfile);
-
-            //if (v > 0){
-            //    Peclet = (v * gv.snowh)/D;
-            //if (Peclet > 2 && Peclet > Peclet_max){
-            //    snowh_min = 2 * D / v;
-                //msg = "Peclet number > 2. Delta y needs to be equal or smaller than " + std::to_string(snowh_min);
-                //print_screen_log(logPULSEfile,&msg);
-            //};
             
         }
 
         if (gv.q_i>0.0f){ // if melt
-            // Calculate porosity for next time step
+            
+            // calculate volume fractions
             vol_fract_calc(gp,gv,&deltt);
 
-            // limiting the flux to the wetting front (uses intersticial velocity to determine the wetting front)
+            // wetting front
             wetfront_calc(gp,gv,&velc,&deltt);
-            //std::cout << std::to_string(gv.vfrac_m) + ";" + std::to_string(gv.q_i*10000000000) + "; "  + std::to_string(velc) + "; " + std::to_string(gv.wetfront_cell) << std::endl;
 
-            // Melting velocity: last cell
-            //upbound_calc(gv,&q,&deltt,logPULSEfile);
-
-            // add a new cell if the wetting front moves to the next cell
+            // check CFC validation
             if((gv.wetfront_cell - gv.wetfront_cell_prev) > 1){
-                msg = "Courant condition violation - check code";
+                msg = "CFC condition violation - check code";
                 print_screen_log(logPULSEfile,&msg);
-
                 abort();
-
             }
 
+            // 
             if (gv.vfrac_m < 1-gp.num_stblty_thrshld_prsity && gv.vfrac_i > gp.num_stblty_thrshld_prsity && gv.vfrac_s > gp.num_stblty_thrshld_prsity){
-              if (gv.wetfront_cell > 5){
+              if (gv.wetfront_cell > 5){ // to have sufficient layers for ADE solver
 
                    crank_nicholson(gv,&deltt,&velc,&D); // solve advection and dispersion in the mobile zone
 
@@ -666,9 +672,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                             }else if((*gv.exchange_si).at(il,ih) < 0){
                                 msg = "PROBLEM: negative s->i exchange";
                                 print_screen_log(logPULSEfile,&msg);
-                                //-// (*gv.exchange).at(il,ih)  = - std::min(std::abs(exchange),abs(c_m_new_i)); 
                             }
-                            //if(ih<gv.upperboundary_cell || ih>gv.wetfront_cell){
                             if(ih>gv.wetfront_cell){
                                 (*gv.exchange_si).at(il,ih) = 0.0f;
                             };
@@ -686,10 +690,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                          if ((*gv.exchange_im).at(il,ih) > 0){
                             (*gv.exchange_im).at(il,ih) = std::min((*gv.exchange_im).at(il,ih),(*gv.c_i).at(il,ih));
                         }else if((*gv.exchange_im).at(il,ih) < 0){
-                            //(*gv.exchange_im).at(il,ih) = -(std::min(std::abs((*gv.exchange_im).at(il,ih)),std::abs((*gv.c_m).at(il,ih))));
                              (*gv.exchange_im).at(il,ih) = 0.0f;
-                            //msg = "PROBLEM: negative i->m exchange";
-                            //print_screen_log(logPULSEfile,&msg);
                         }
                          //if(ih<gv.upperboundary_cell || ih>gv.wetfront_cell){
                          if(ih>gv.wetfront_cell){
@@ -700,22 +701,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                 (*gv.c_m) =  ( (*gv.c_m) * gv.vfrac_m_prev + (*gv.exchange_im) * gv.vfrac_i_prev ) / gv.vfrac_m; // / vfrac_m(t);
                 (*gv.c_i) = ( (*gv.c_i) * gv.vfrac_i_prev - (*gv.exchange_im) * gv.vfrac_i_prev ) / gv.vfrac_i;
 
-                // if porosities are too small, they create instability
-            }//else{
-                //gv.vfrac_i = 0;
-                //gv.vfrac_m = 1;
-                //gv.vfrac_s = 0;
-                //if(gv.upperboundary_cell != 0){
-                //    (*gv.c_m)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell)) *= 0;
-                //    (*gv.c_s)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell)) *= 0;
-                //    (*gv.c_i)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell)) *= 0;
-                //}else{ // if only top layer is wet
-                //    (*gv.c_m)(arma::span(0,gv.nl-1),0) *= 0;
-                //    (*gv.c_s)(arma::span(0,gv.nl-1),0) *= 0;
-                //    (*gv.c_i)(arma::span(0,gv.nl-1),0) *= 0;
-                //}
-
-            //}
+            }
         }
 
         // Print results                
@@ -744,6 +730,9 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
        
 }
 
+/* *****
+ * MAIN  
+ * **** */
 void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 {
     
