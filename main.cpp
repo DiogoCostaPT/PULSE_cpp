@@ -37,7 +37,7 @@ public:
     double Courant=0.8,aD,
            rho_s=917.0, // kg.m-3 at 0 degrees
            rho_m=998.8, // kg.m-3 at 0 degrees
-           row_frshsnow_init = 320,
+           rho_frshsnow_init = 320,
            wetfront_z,num_stblty_thrshld_prsity = 1E-6,alphaIE,Tperd;
     
     int flag_sens,run_id,s,print_step;
@@ -312,7 +312,7 @@ void read_qcmelt(globalpar& gp,globalvar& gv,std::string* qcmelt_file,std::ofstr
     double tmelts=0.0f,tmelts_prev=0.0f,qcmelt_i,cmelt_i;
     std::string msg;
     
-    gv.vtotal_check = gv.snowH / 1000 * gp.row_frshsnow_init; // initial volume
+    gv.vtotal_check = gv.snowH / 1000 * gp.rho_frshsnow_init; // initial volume
     
     arma::mat filedataQ; 
     bool flstatusQ =  filedataQ.load((*qcmelt_file),arma::csv_ascii);
@@ -355,7 +355,7 @@ void vol_fract_calc(globalpar& gp,globalvar& gv,double *deltt)
 {
     
     //double dvfrac_s_dt = (*q) / gv.vtotal_check;
-    double dvfrac_s_dt = gv.q_i / (gv.snowH / 1000 * gp.row_frshsnow_init);
+    double dvfrac_s_dt = gv.q_i / (gv.snowH / 1000 * gp.rho_frshsnow_init);
     double dvfrac_i_dt = dvfrac_s_dt;
 
     gv.vfrac_m_prev = gv.vfrac_m;
@@ -513,11 +513,11 @@ bool print_results(globalvar& gv,globalpar& gp, int print_tag, unsigned int prin
 /* *****
  * Determine the addition or removal of upper snow layers  
  * **** */
-void upbound_calc(globalvar& gv,double* deltt,std::ofstream* logPULSEfile){
+void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPULSEfile){
 
     int nl_l = gv.nl;
     
-    gv.layer_incrmt += gv.q_i*(*deltt); // cell increment
+    gv.layer_incrmt += gv.q_i*(*deltt)*gp.rho_m/gp.rho_frshsnow_init; // cell increment
     
     if (gv.q_i>0.0f && gv.layer_incrmt>=gv.snowh){ // MELT - remove layer
         
@@ -620,7 +620,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
         if(gv.q_i==0.0f){ // nothing happens
             tcum++; 
         }else if (gv.q_i<0.0f){ // accumulation only 
-            upbound_calc(gv,&deltt,logPULSEfile);
+            upbound_calc(gv,gp,&deltt,logPULSEfile);
             tcum++;
         } else {// melt       
                 // Estimate interstitial flow velocity 
@@ -630,7 +630,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             deltt = std::fmin(gp.Courant * gv.snowh / velc,1);
             tcum = tcum + deltt; 
             
-            upbound_calc(gv,&deltt,logPULSEfile);
+            upbound_calc(gv,gp,&deltt,logPULSEfile);
             
         }
 
