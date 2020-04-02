@@ -14,8 +14,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
 include_directories(${AMRADILLO_INCLUDE_DIR})
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
 add_executable(pulse_cpp
-        main.cpp )
+        src/main.cpp )
 
         #declavar.cpp)
 target_link_libraries(

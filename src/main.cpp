@@ -261,7 +261,7 @@ int read_simset(globalpar& gp,std::string* sim_purp, int *H_local,int *L_local, 
     
     std::string str, modset_flname, msg;
     int n_qcmelt;
-    modset_flname = "simset.pulse";
+    modset_flname = "bin/simset.pulse";
     
     std::ifstream file(modset_flname);
     
