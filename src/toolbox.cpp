@@ -58,6 +58,9 @@ void checkmesh2(int* H_local,int* L_local,int* h_layer,int* l_layer,int* nh,int*
     init_file = "Results/" + std::to_string(int(timstart)) + ".txt";   
     bool flstatus = filedata.load(init_file,arma::csv_ascii);
     
+    *nh = 0;
+    *nl = 0;
+
     if(flstatus == true) 
     {
         for(a=0;a<filedata.col(1).n_elem;a++)

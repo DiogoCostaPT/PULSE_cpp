@@ -25,7 +25,8 @@ void crank_nicholson(globalvar& gv,double *deltt,double *v,double *D)
     double a3=k1-k2;
 
     // 1) all domain (diagonals: -9,-1,0,1,9)
-    arma::mat A = a3*(arma::diagmat(arma::ones(1,nt-nli),nli))
+    arma::mat A(nt,nt,arma::fill::zeros);
+    A = a3*(arma::diagmat(arma::ones(1,nt-nli),nli))
                     +a1*arma::diagmat(arma::ones(1,nt-nli),-(nli))
                     +a2*arma::diagmat(arma::ones(1,nt))
                     -k3*arma::diagmat(arma::ones(1,nt-1),1)
@@ -54,7 +55,8 @@ void crank_nicholson(globalvar& gv,double *deltt,double *v,double *D)
     double a4=(1-2*k2-2*k3);
 
     // 1) all domain (diagonals: -9,-1,0,1,9)
-    arma::mat B=-a3*arma::diagmat(arma::ones(1,nt-nli),nli)
+    arma::mat B(nt,nt,arma::fill::zeros);
+    B=-a3*arma::diagmat(arma::ones(1,nt-nli),nli)
             -a1*arma::diagmat(arma::ones(1,nt-nli),-(nli))
             +a4*arma::diagmat(arma::ones(1,nt))
             +k3*arma::diagmat(arma::ones(1,nt-1),1)
@@ -77,9 +79,10 @@ void crank_nicholson(globalvar& gv,double *deltt,double *v,double *D)
     B(arma::span(nt-nli,nt-1),arma::span(nt-nli,nt-1)) =(a4-a3)*arma::diagmat(arma::ones(1,nli)); // diagonal !!!! CHECK IF IT SHOULDN'T BE "+=" (LINE ABOVE) INSTEAD OF "="
     B(nt-1,nt-1)=a4-a3+k3; // right corner
     B(nt-nli,nt-nli)=-a3+a4+k3; // left corner
-   
-    arma::mat c1 = arma::reshape((*gv.c_m)(arma::span(0,nli-1),arma::span(0,(gv.wetfront_cell)-1)),1,nt);  //c1=reshape(c_m_prev(2:end-1,2:end-1),1,[]);
-    arma::mat b=B*trans(c1);    // calculation of [b]
+
+    arma::mat c0 = (*gv.c_m)(arma::span(0,nli-1),arma::span(0,(gv.wetfront_cell)-1));
+    arma::mat c1 = arma::reshape(c0,1,nt);  //c1=reshape(c_m_prev(2:end-1,2:end-1),1,[]);
+    arma::vec b=B*trans(c1);    // calculation of [b]
     arma::mat c2=arma::solve(A,b);     // calculation of c
     (*gv.c_m)(arma::span(0,nli-1),arma::span(0,gv.wetfront_cell-1)) = arma::reshape(c2,nli,nhi);
 
