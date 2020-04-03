@@ -50,10 +50,9 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
     if (gv.q_i>0.0f && gv.layer_incrmt>=gv.snowh){ // MELT - remove layer
         
          // add all immobile and solid slow that melted from the last cell) 
-        (*gv.c_m)(arma::span(0,gv.nl-1),1) = ( (*gv.c_m)(arma::span(0,gv.nl-1),1) * gv.vfrac_m_prev
-            + (*gv.c_m)(arma::span(0,gv.nl-1),0) * gv.vfrac_m_prev
-            + (*gv.c_s)(arma::span(0,gv.nl-1),0) * gv.vfrac_s_prev
-            + (*gv.c_i)(arma::span(0,gv.nl-1),0) * gv.vfrac_i_prev ) / gv.vfrac_m; // gv.vfrac_m;
+        //(*gv.c_m)(arma::span(0,gv.nl-1),1) = ((*gv.c_m)(arma::span(0,gv.nl-1),0) * gv.vfrac_m_prev
+        //    + (*gv.c_s)(arma::span(0,gv.nl-1),0) * gv.vfrac_s_prev
+        //    + (*gv.c_i)(arma::span(0,gv.nl-1),0) * gv.vfrac_i_prev ) / gv.vfrac_m; // gv.vfrac_m;
 
         //(*gv.c_m)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell_prev)) *= 0;
         //(*gv.c_s)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell_prev)) *= 0;
@@ -72,11 +71,11 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
         //gv.upperboundary_cell = std::min(tmp_int,nh_l); // in what cell is the wetting front
         //upperboundary_cell = [upperboundary_cell, upperboundary_cell_new];
         
-        (*gv.c_m).shed_cols(0,1);
-        (*gv.c_i).shed_cols(0,1);
-        (*gv.c_s).shed_cols(0,1);
-        (*gv.exchange_si).shed_cols(0,1);
-        (*gv.exchange_im).shed_cols(0,1);
+        (*gv.c_m).shed_cols(0,0);
+        (*gv.c_i).shed_cols(0,0);
+        (*gv.c_s).shed_cols(0,0);
+        (*gv.exchange_si).shed_cols(0,0);
+        (*gv.exchange_im).shed_cols(0,0);
             
     } else if (gv.q_i<0.0f){ // accumulation period
         
