@@ -6,12 +6,14 @@
 /* *****
  * Read the simset.pulse file (model set up) 
  * **** */
-int read_simset(globalpar& gp,std::string* sim_purp, int *H_local,int *L_local, int *h_layer,int *l_layer, std::string* qcmelt_file,std::ofstream* logPULSEfile)
+int read_simset(globalpar& gp,const std::string& modset_flname, 
+                std::string* sim_purp,int *H_local,int *L_local,
+                int *h_layer,int *l_layer,std::string* qcmelt_file,
+                std::ofstream* logPULSEfile)
 {
     
-    std::string str, modset_flname, msg;
+    std::string str, msg;
     int n_qcmelt;
-    modset_flname = "bin/simset.pulse";
     
     std::ifstream file(modset_flname);
     
@@ -19,15 +21,17 @@ int read_simset(globalpar& gp,std::string* sim_purp, int *H_local,int *L_local, 
     while (std::getline(file, str)) 
     {
         i += 1;
-        if(i==1){(*sim_purp) = str;};
-        //if(i==2){(*H_local) = std::round(std::stoi(str));};
-        //if(i==3){(*L_local) = std::round(std::stoi(str));};
-        if(i==2){(*h_layer) = std::round(std::stoi(str));};
-        if(i==3){(*l_layer) = std::round(std::stoi(str));};
-        if(i==4){(*qcmelt_file) = str;};  
-        if(i==5){gp.print_step = std::stoi(str);};
-        if(i==6){gp.aD = std::stof(str)/3600;}; 
-        if(i==7){gp.alphaIE = std::stof(str)/3600;}; 
+
+        if(str.find("COMMNET") != std::string::npos){*sim_purp = str.substr(8);}; // comment
+        if(str.find("H_LAY") != std::string::npos){(*h_layer) = std::stoi(str.substr(6));};  // average roughness height (m)
+        if(str.find("L_LAY") != std::string::npos){(*l_layer) = std::stoi(str.substr(6));};  // average roughness height (m)
+        if(str.find("QMELT_FILE") != std::string::npos){*qcmelt_file = str.substr(11);}; // snowmelt file
+        if(str.find("PRINT_STEP") != std::string::npos){(gp.print_step) = std::stoi(str.substr(11));}; // print time step
+        if(str.find("A_D") != std::string::npos){(gp.aD) = std::stof(str.substr(4));}; // SWE standard deviation (snow depletion curves, Kevin's paper)
+        if(str.find("ALPHA_IE") != std::string::npos){(gp.alphaIE) = std::stof(str.substr(8));}; // SWE standard deviation (snow depletion curves, Kevin's paper)
+
+        gp.aD /= 3600; // ???
+        gp.alphaIE /=3600; // ??
     }
     file.close();
     

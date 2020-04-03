@@ -1,7 +1,7 @@
-### Batch_1 - SVALBARD SIMULATIONS ### 1) snowpack depth [mm], 2) snowpack horizontal lenght [mm], 3) vertical layer thickness in simulations [mm], 4) horizontal layer thickness in simulation [mm],5) qmelt file, 6) print interval in seconds, 7) alpha, 8) aD
-5
-5
-bin/qcmelt_svalbard.pulse
-3600
-0.0005
-0.0011
+COMMNET Batch_1 - SVALBARD SIMULATIONS ### 1) snowpack depth [mm], 2) snowpack horizontal lenght [mm], 3) vertical layer thickness in simulations [mm], 4) horizontal layer thickness in simulation [mm],5) qmelt file, 6) print interval in seconds, 7) alpha, 8) aD
+H_LAY 5
+L_LAY 5
+QMELT_FILE bin/qcmelt_svalbard.pulse
+PRINT_STEP 3600
+A_D 0.0005
+ALPHA_IE 0.0011
