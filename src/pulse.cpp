@@ -13,8 +13,8 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             //q = 0.f, // melt volume/int
             t = 1.f, 
             deltt = 1.0f, // time step calculated from the CFL condition
-            velc = 0.f, // interstitial flow velocity [m s-1]
-            D = 0.f; // dispersion coefficient [m2/s]
+            velc_max = 0.0f, // interstitial flow velocity [m s-1]
+            D = 0.0f; // dispersion coefficient [m2/s]
     std::string msg;  
     std::chrono::duration<double> elapsed_seconds;
     auto start = std::chrono::system_clock::now();
@@ -42,10 +42,11 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             tcum++;
         } else {// melt       
                 // Estimate interstitial flow velocity 
-            velc = gv.q_i / (gv.vfrac_m); // interstitial flow velocity [m s-1]
-            D = gp.aD * velc;       // dispersion coefficient [m2/s]
+            (*gv.velc) = gv.q_i / (*gv.vfrac_m); // interstitial flow velocity [m s-1]
+            velc_max = arma::max(arma::max(*gv.velc)); 
+            (*gv.disp) = gp.aD * (*gv.velc);       // dispersion coefficient [m2/s]
             
-            deltt = std::fmin(gp.Courant * gv.snowh / velc,1);
+            deltt = std::fmin(gp.Courant * gv.snowh / velc_max,gp.print_step);
             tcum = tcum + deltt; 
             
             upbound_calc(gv,gp,&deltt,logPULSEfile);
@@ -58,7 +59,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             vol_fract_calc(gp,gv,&deltt);
 
             // wetting front
-            wetfront_calc(gp,gv,&velc,&deltt);
+            wetfront_calc(gp,gv,&velc_max,&deltt);
 
             // check CFC validation
             if((gv.wetfront_cell - gv.wetfront_cell_prev) > 1){
@@ -68,10 +69,11 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             }
 
             // 
-            if (gv.vfrac_m < 1-gp.num_stblty_thrshld_prsity && gv.vfrac_i > gp.num_stblty_thrshld_prsity && gv.vfrac_s > gp.num_stblty_thrshld_prsity){
+            if (arma::min(arma::min(*gv.vfrac_m)) < 1-gp.num_stblty_thrshld_prsity 
+                    && arma::min(arma::min(*gv.vfrac_s)) > gp.num_stblty_thrshld_prsity){
               if (gv.wetfront_cell > 5){ // to have sufficient layers for ADE solver
 
-                   crank_nicholson(gv,&deltt,&velc,&D); // solve advection and dispersion in the mobile zone
+                   //crank_nicholson(gv,&deltt); // solve advection and dispersion in the mobile zone
 
                     // Crank Nicolson to limit the fluxes across boundaries
                    //exchange_i = arma::max(v * deltt * ((*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) - (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new))/gv.snowh,(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1));
@@ -96,11 +98,11 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                             };
                     }
                 };
-                (*gv.c_i) =  ( (*gv.c_i) * gv.vfrac_i_prev + (*gv.exchange_si) * gv.vfrac_s_prev ) / gv.vfrac_i; // / vfrac_m(t);
-                (*gv.c_s) = ( (*gv.c_s) * gv.vfrac_s_prev - (*gv.exchange_si) * gv.vfrac_s_prev ) / gv.vfrac_s;
+                (*gv.c_i) =  ( (*gv.c_i) * gv.vfrac_i_prev + (*gv.exchange_si) % (*gv.vfrac_s_prev) ) / gv.vfrac_i; // / vfrac_m(t);
+                (*gv.c_s) = ( (*gv.c_s) % (*gv.vfrac_s_prev) - (*gv.exchange_si) % (*gv.vfrac_s_prev) ) / (*gv.vfrac_s);
 
                 // Exchange with immobile phase (just exchange)
-                (*gv.exchange_im)  = deltt * (gp.alphaIE/gv.vfrac_m_prev * ((*gv.c_i) - (*gv.c_m))) ; 
+                (*gv.exchange_im)  = deltt * (gp.alphaIE/((*gv.vfrac_m_prev)) % ((*gv.c_i) - (*gv.c_m))); 
 
                 // limit the flux to the available material
                 for(il=0;il<gv.nl ;il++){
@@ -116,7 +118,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                             };
                     }
                 };
-                (*gv.c_m) =  ( (*gv.c_m) * gv.vfrac_m_prev + (*gv.exchange_im) * gv.vfrac_i_prev ) / gv.vfrac_m; // / vfrac_m(t);
+                (*gv.c_m) =  ( (*gv.c_m) % (*gv.vfrac_m_prev) + (*gv.exchange_im) * gv.vfrac_i_prev ) / (*gv.vfrac_m); // / vfrac_m(t);
                 (*gv.c_i) = ( (*gv.c_i) * gv.vfrac_i_prev - (*gv.exchange_im) * gv.vfrac_i_prev ) / gv.vfrac_i;
 
             }

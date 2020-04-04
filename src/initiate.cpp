@@ -32,8 +32,8 @@ void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             (*gv.c_m).at(il,ih) = filedata(a,2);
             (*gv.c_i).at(il,ih) = filedata(a,3);
             (*gv.c_s).at(il,ih) = filedata(a,4);
-            (gv.vfrac_m) = filedata(a,5);
-            (gv.vfrac_s) = filedata(a,6);
+            (*gv.vfrac_m).at(il,ih) = filedata(a,5);
+            (*gv.vfrac_s).at(il,ih) = filedata(a,6);
             (*gv.exchange_si).at(il,ih) = filedata(a,7);
             (*gv.exchange_im).at(il,ih) = filedata(a,8);
             if((*gv.c_m).at(il,ih)!=0){

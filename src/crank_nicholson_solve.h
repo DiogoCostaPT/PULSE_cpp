@@ -6,7 +6,7 @@
 
 #include "global.h"
 
-void crank_nicholson(globalvar& gv,double *deltt,double *v,double *D);
+void crank_nicholson(globalvar& gv,double *deltt);
 
 
 #endif

@@ -44,6 +44,14 @@ public:
     exchange_im = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     qcmelt = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_qcmelt,3));
 
+    vfrac_m = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
+    vfrac_m_prev = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
+    vfrac_s = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
+    vfrac_s_prev = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
+
+    velc = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
+    disp = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
+
   }
     
     size_t nh,nl,n_qcmelt,
@@ -52,13 +60,15 @@ public:
             snowl, // grid h lenght
             snowh; // grtid l lenght
   
-    std::unique_ptr<arma::Mat<double>> c_m,c_i,c_s,qcmelt,exchange_si,exchange_im;
-    double vfrac_m=0.008,
+    std::unique_ptr<arma::Mat<double>> c_m,c_i,c_s,qcmelt,exchange_si,
+                        exchange_im,vfrac_m,vfrac_m_prev,vfrac_s,vfrac_s_prev,
+                        velc,disp;
+    double //vfrac_m=0.008,
             vfrac_i=0.001,
-            vfrac_s= 1 - vfrac_m - vfrac_i,
-            vfrac_m_prev=vfrac_m,
+            //vfrac_s= 1 - vfrac_m - vfrac_i,
+            //vfrac_m_prev=vfrac_m,
             vfrac_i_prev=vfrac_i,
-            vfrac_s_prev=vfrac_s,
+            //vfrac_s_prev=vfrac_s,
             vtotal_check,
             timstart,
             wetfront_z,
