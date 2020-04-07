@@ -21,6 +21,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
     auto end = std::chrono::system_clock::now();
     bool outwritestatus;
     arma::mat exchange_i;
+    double layer_incrmt_l;
     
     unsigned int il,ih,print_next;
       
@@ -37,16 +38,23 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 
         if(gv.q_i==0.0f){ // nothing happens
             tcum++; 
+            continue;
         }else if (gv.q_i<0.0f){ // accumulation only 
             upbound_calc(gv,gp,&deltt,logPULSEfile);
             tcum++;
         } else {// melt       
-                // Estimate interstitial flow velocity 
+            
+            // Estimate interstitial flow velocity 
             (*gv.velc) = gv.q_i / (*gv.vfrac_m); // interstitial flow velocity [m s-1]
             velc_max = arma::max(arma::max(*gv.velc)); 
             (*gv.disp) = gp.aD * (*gv.velc);       // dispersion coefficient [m2/s]
             
             deltt = std::fmin(gp.Courant * gv.snowh / velc_max,gp.print_step);
+            
+            // limit step so that if there is melt or accumulation it doesn't go more than one cell
+            deltt = std::fmin(deltt,gv.snowh*gp.rho_frshsnow_init/(gv.q_i*gp.rho_m));
+
+
             tcum = tcum + deltt; 
             
             upbound_calc(gv,gp,&deltt,logPULSEfile);
