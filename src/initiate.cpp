@@ -43,6 +43,10 @@ void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                 //gv.upperboundary_cell = std::min(int(std::round(nh_l-gv.upperboundary_z/gv.snowh)),nh_l);
             }
         }
+
+        (*gv.vfrac_m_prev) = (*gv.vfrac_m);
+        (*gv.vfrac_s_prev) = (*gv.vfrac_s);
+
         msg = "Initial conditions found: " + init_file;
         print_screen_log(logPULSEfile,&msg);  
         

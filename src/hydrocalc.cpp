@@ -65,11 +65,11 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
     if (gv.q_i>0.0f && gv.layer_incrmt>=gv.snowh){ // MELT - remove layer
         
          // add all immobile and solid slow that melted from the last cell) 
-        (*gv.c_m)(arma::span(0,gv.nl-1),1) = ((*gv.c_m)(arma::span(0,gv.nl-1),0) % 
-            (*gv.vfrac_m_prev)(arma::span(0,gv.nl-1),0) +
-            + (*gv.c_s)(arma::span(0,gv.nl-1),0) % (*gv.vfrac_s_prev)(arma::span(0,gv.nl-1),0)
-            + (*gv.c_i)(arma::span(0,gv.nl-1),0) * gv.vfrac_i_prev ) 
-            / (*gv.vfrac_m)(arma::span(0,gv.nl-1),0); // gv.vfrac_m;
+        //(*gv.c_m)(arma::span(0,gv.nl-1),1) = ((*gv.c_m)(arma::span(0,gv.nl-1),0) % 
+        //   (*gv.vfrac_m_prev)(arma::span(0,gv.nl-1),0) +
+        //    + (*gv.c_s)(arma::span(0,gv.nl-1),0) % (*gv.vfrac_s_prev)(arma::span(0,gv.nl-1),0)
+        //    + (*gv.c_i)(arma::span(0,gv.nl-1),0) * gv.vfrac_i_prev ) 
+        //    / (*gv.vfrac_m)(arma::span(0,gv.nl-1),0); // gv.vfrac_m;
 
         //(*gv.c_m)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell_prev)) *= 0;
         //(*gv.c_s)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell_prev)) *= 0;
@@ -127,9 +127,6 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
             (*gv.c_m).insert_cols(0,1);
             (*gv.c_i).insert_cols(0,1);
             (*gv.c_s).insert_cols(0,1);
-            arma::mat newsnowlayer;
-            newsnowlayer.ones(nl_l,1);
-            (*gv.c_s).col(0) = newsnowlayer * gv.qc_i;
             (*gv.exchange_si).insert_cols(0,1);
             (*gv.exchange_im).insert_cols(0,1);
             (*gv.vfrac_m).insert_cols(0,1);
@@ -138,6 +135,13 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
             (*gv.vfrac_s_prev).insert_cols(0,1);
             (*gv.velc).insert_cols(0,1);
             (*gv.disp).insert_cols(0,1);
+
+            arma::mat newsnowlayer;
+            newsnowlayer.ones(nl_l,1);
+            (*gv.c_s).col(0) = newsnowlayer * gv.qc_i;
+            (*gv.vfrac_s).col(0) = newsnowlayer;
+            (*gv.vfrac_s_prev).col(0) = newsnowlayer;
+
         }
 
         gv.wetfront_cell_prev = 0;    //(*gv.vfrac_m) =0.008;

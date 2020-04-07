@@ -81,7 +81,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                     && arma::min(arma::min(*gv.vfrac_s)) > gp.num_stblty_thrshld_prsity){
               if (gv.wetfront_cell > 5){ // to have sufficient layers for ADE solver
 
-                   //crank_nicholson(gv,&deltt); // solve advection and dispersion in the mobile zone
+                   crank_nicholson(gv,&deltt); // solve advection and dispersion in the mobile zone
 
                     // Crank Nicolson to limit the fluxes across boundaries
                    //exchange_i = arma::max(v * deltt * ((*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) - (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new))/gv.snowh,(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1));
@@ -97,7 +97,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 
                             if ((*gv.exchange_si).at(il,ih) > 0){
                                 (*gv.exchange_si).at(il,ih) = std::fmin((*gv.exchange_si).at(il,ih),(*gv.c_s).at(il,ih));
-                            }else if((*gv.exchange_si).at(il,ih) < 0){
+                            }else{
                                 msg = "PROBLEM: negative s->i exchange";
                                 print_screen_log(logPULSEfile,&msg);
                             }
