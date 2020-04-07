@@ -24,7 +24,7 @@ void vol_fract_calc(globalpar& gp,globalvar& gv,double *deltt)
 
     for(il=0;il<gv.nl ;il++){
         for(ih=0;ih<=gv.wetfront_cell;ih++){
-            (*gv.vfrac_m)(il,ih) = std::fmax((*gv.vfrac_s)(il,ih),0.0f);
+            (*gv.vfrac_m)(il,ih) = std::fmax((*gv.vfrac_m)(il,ih),0.0f);
             (*gv.vfrac_s)(il,ih) = std::fmax((*gv.vfrac_s)(il,ih),0.0f);
         }
     }
