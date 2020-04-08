@@ -13,8 +13,8 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             //q = 0.f, // melt volume/int
             t = 1.f, 
             deltt = 1.0f, // time step calculated from the CFL condition
-            velc = 0.f, // interstitial flow velocity [m s-1]
-            D = 0.f; // dispersion coefficient [m2/s]
+            velc = 0.0f, // interstitial flow velocity [m s-1]
+            D = 0.0f; // dispersion coefficient [m2/s]
     std::string msg;  
     std::chrono::duration<double> elapsed_seconds;
     auto start = std::chrono::system_clock::now();
@@ -45,7 +45,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             velc = gv.q_i / (gv.vfrac_m); // interstitial flow velocity [m s-1]
             D = gp.aD * velc;       // dispersion coefficient [m2/s]
             
-            deltt = std::fmin(gp.Courant * gv.snowh / velc,1);
+            deltt = std::fmin(gp.Courant * gv.snowh / velc,gp.print_step);
             tcum = tcum + deltt; 
             
             upbound_calc(gv,gp,&deltt,logPULSEfile);

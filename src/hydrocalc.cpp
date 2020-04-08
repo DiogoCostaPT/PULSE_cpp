@@ -62,7 +62,7 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
         gv.wetfront_cell--;
         gv.wetfront_cell_prev--;
         gv.snowH -= gv.snowh; // snowpack depth
-        gv.wetfront_z -= gv.snowh;
+        //gv.wetfront_z -= gv.snowh; -> it should not decrease because this is counted from the bottom
         gv.layer_incrmt -= gv.snowh;
         
         //gv.upperboundary_cell_prev = gv.upperboundary_cell; // wetting fron cell in the previous time step
