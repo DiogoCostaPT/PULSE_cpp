@@ -16,6 +16,7 @@ public:
            rho_s=917.0, // kg.m-3 at 0 degrees
            rho_m=998.8, // kg.m-3 at 0 degrees
            rho_frshsnow_init = 320,
+           vfrac_m_min = 0.008, vfrac_s_max = 0.991,
            wetfront_z,num_stblty_thrshld_prsity = 1E-6,alphaIE,Tperd;
     
     int flag_sens,run_id,s,print_step;

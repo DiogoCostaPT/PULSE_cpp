@@ -24,8 +24,8 @@ void vol_fract_calc(globalpar& gp,globalvar& gv,double *deltt)
 
     for(il=0;il<gv.nl ;il++){
         for(ih=0;ih<=gv.wetfront_cell;ih++){
-            (*gv.vfrac_m)(il,ih) = std::fmax((*gv.vfrac_m)(il,ih),0.0f);
-            (*gv.vfrac_s)(il,ih) = std::fmax((*gv.vfrac_s)(il,ih),0.0f);
+            (*gv.vfrac_m)(il,ih) = std::fmax((*gv.vfrac_m)(il,ih),gp.vfrac_m_min);
+            (*gv.vfrac_s)(il,ih) = std::fmax((*gv.vfrac_s)(il,ih),gp.vfrac_s_max);
         }
     }
 
@@ -117,6 +117,7 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
         //gv.vfrac_i_prev=gv.vfrac_i;
         //gv.vfrac_s_prev=gv.vfrac_s;
         gv.upperboundary_cell_prev = 0;
+        gv.wetfront_z = gv.snowH;
         
         if (abs(gv.layer_incrmt)>gv.snowh){ // adding a new layer
 
@@ -139,12 +140,11 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
             arma::mat newsnowlayer;
             newsnowlayer.ones(nl_l,1);
             (*gv.c_s).col(0) = newsnowlayer * gv.qc_i;
-            (*gv.vfrac_s).col(0) = newsnowlayer;
+            (*gv.vfrac_s).col(0) = newsnowlayer * gp.vfrac_s_max;
             (*gv.vfrac_s_prev).col(0) = newsnowlayer;
+            (*gv.vfrac_m).col(0) = newsnowlayer * gp.vfrac_m_min;
 
         }
-
-        gv.wetfront_cell_prev = 0;    //(*gv.vfrac_m) =0.008;
 
     }  
    return;  

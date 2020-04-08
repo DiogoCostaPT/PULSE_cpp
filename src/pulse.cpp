@@ -37,7 +37,10 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 
 
         if(gv.q_i==0.0f){ // nothing happens
-            tcum++; 
+            tcum++;
+            (*gv.vfrac_m_prev) = (*gv.vfrac_m);
+            (*gv.vfrac_s_prev) = (*gv.vfrac_s);
+             gv.wetfront_cell_prev = gv.wetfront_cell;
             continue;
         }else if (gv.q_i<0.0f){ // accumulation only 
             upbound_calc(gv,gp,&deltt,logPULSEfile);
@@ -79,7 +82,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             // 
             if (arma::min(arma::min(*gv.vfrac_m)) < 1-gp.num_stblty_thrshld_prsity 
                     && arma::min(arma::min(*gv.vfrac_s)) > gp.num_stblty_thrshld_prsity){
-              if (gv.wetfront_cell > 5){ // to have sufficient layers for ADE solver
+              if (gv.wetfront_cell > 4){ // to have sufficient layers for ADE solver
 
                    crank_nicholson(gv,&deltt); // solve advection and dispersion in the mobile zone
 

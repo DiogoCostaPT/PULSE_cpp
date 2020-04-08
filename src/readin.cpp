@@ -76,7 +76,7 @@ void read_qcmelt(globalpar& gp,globalvar& gv,std::string* qcmelt_file,std::ofstr
             qcmelt_i = filedataQ(a,1);  // value of melt
             cmelt_i = filedataQ(a,2);  // value of melt
             (*gv.qcmelt).at(a,0) = tmelts;  
-            (*gv.qcmelt).at(a,1) = qcmelt_i/3600; // hh-> sec
+            (*gv.qcmelt).at(a,1) = qcmelt_i; // hh-> sec
             (*gv.qcmelt).at(a,2) = cmelt_i; // hh-> sec
             gv.vtotal_check += (tmelts-tmelts_prev) * (qcmelt_i/3600); 
             tmelts_prev = tmelts;
