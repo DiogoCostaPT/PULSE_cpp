@@ -18,7 +18,8 @@ public:
            rho_frshsnow_init = 320,
            wetfront_z,num_stblty_thrshld_prsity = 1E-6,alphaIE,Tperd;
     
-    int flag_sens,run_id,s,print_step;
+    int flag_sens,run_id,s,print_step,
+         hydro_solver; // 0) Crank Nicholson, 1) Forward-time, Central-diff space;
     //std::ofstream logPULSEfile;
     
 };
@@ -56,6 +57,7 @@ public:
   
     std::unique_ptr<arma::Mat<double>> c_m,c_i,c_s,qcmelt,exchange_si,
                   exchange_im,velc_2d,disp_2d;
+    
     double vfrac_m=0.008,
             vfrac_i=0.001,
             vfrac_s= 1 - vfrac_m - vfrac_i,

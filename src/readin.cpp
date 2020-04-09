@@ -1,6 +1,5 @@
 
 
-#include "outwrite.h"
 #include "readin.h"
 
 /* *****
@@ -12,7 +11,7 @@ int read_simset(globalpar& gp,const std::string& modset_flname,
                 std::ofstream* logPULSEfile)
 {
     
-    std::string str, msg;
+    std::string str, msg, str_hydro_solver;
     int n_qcmelt;
     
     std::ifstream file(modset_flname);
@@ -29,19 +28,28 @@ int read_simset(globalpar& gp,const std::string& modset_flname,
         if(str.find("PRINT_STEP") != std::string::npos){(gp.print_step) = std::stoi(str.substr(11));}; // print time step
         if(str.find("A_D") != std::string::npos){(gp.aD) = std::stof(str.substr(4));}; // SWE standard deviation (snow depletion curves, Kevin's paper)
         if(str.find("ALPHA_IE") != std::string::npos){(gp.alphaIE) = std::stof(str.substr(8));}; // SWE standard deviation (snow depletion curves, Kevin's paper)
+        if(str.find("HYDRO_SOLVER") != std::string::npos){str_hydro_solver = str.substr(11);}; // snowmelt file
 
         gp.aD /= 3600; // ???
         gp.alphaIE /=3600; // ??
     }
     file.close();
     
-    if(i==7){
+    if(i==9){
         msg = "Successful loading the file: " + modset_flname;
     } else{
         msg = "PROBLEM loading the file: " + modset_flname;
     } 
     print_screen_log(logPULSEfile,&msg); 
     
+    // Identify the type of hydraulic simulation
+    if(str_hydro_solver.find("simplified") != std::string::npos){
+        gp.hydro_solver = 0;
+        
+    }else if(str_hydro_solver.find("snowpack_model") != std::string::npos){
+        gp.hydro_solver = 1;
+    }
+
     arma::mat filedataQ; 
     bool flstatusQ =  filedataQ.load((*qcmelt_file),arma::csv_ascii);
     if(flstatusQ==true){

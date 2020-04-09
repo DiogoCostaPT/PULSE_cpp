@@ -73,7 +73,9 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             if (gv.vfrac_m < 1-gp.num_stblty_thrshld_prsity && gv.vfrac_i > gp.num_stblty_thrshld_prsity && gv.vfrac_s > gp.num_stblty_thrshld_prsity){
               if (gv.wetfront_cell > 5){ // to have sufficient layers for ADE solver
 
-                   //crank_nicholson(gv,&deltt,&velc,&D); // solve advection and dispersion in the mobile zone
+                if (gp.hydro_solver == 0){
+                   crank_nicholson(gv,&deltt,&velc,&D); // solve advection and dispersion in the mobile zone
+                }else if (gp.hydro_solver == 1){
                    //crank_nicholson_hydr2D(gv,&deltt);
                    FtCs_solve_hydr2D(gv,&deltt);
 
@@ -82,6 +84,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                    //(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) -= exchange_i; // compute onh advection to the wetting front
                    //(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new) += exchange_i; // compute onh advection to the wetting front
                 }
+              }
 
                 (*gv.exchange_si) = (*gv.c_s) * gp.rho_s/gp.rho_m * gv.q_i * deltt / (gv.wetfront_cell+1);
 
