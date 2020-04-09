@@ -1,6 +1,7 @@
 
 
 #include "readin.h"
+#include "outwrite.h"
 
 /* *****
  * Read the simset.pulse file (model set up) 
@@ -27,15 +28,15 @@ int read_simset(globalpar& gp,const std::string& modset_flname,
         if(str.find("QMELT_FILE") != std::string::npos){*qcmelt_file = str.substr(11);}; // snowmelt file
         if(str.find("PRINT_STEP") != std::string::npos){(gp.print_step) = std::stoi(str.substr(11));}; // print time step
         if(str.find("A_D") != std::string::npos){(gp.aD) = std::stof(str.substr(4));}; // SWE standard deviation (snow depletion curves, Kevin's paper)
-        if(str.find("ALPHA_IE") != std::string::npos){(gp.alphaIE) = std::stof(str.substr(8));}; // SWE standard deviation (snow depletion curves, Kevin's paper)
-        if(str.find("HYDRO_SOLVER") != std::string::npos){str_hydro_solver = str.substr(11);}; // snowmelt file
+        if(str.find("ALPHA_IE") != std::string::npos){(gp.alphaIE) = std::stof(str.substr(9));}; // SWE standard deviation (snow depletion curves, Kevin's paper)
+        if(str.find("HYDRO_SOLVER") != std::string::npos){str_hydro_solver = str.substr(13);}; // snowmelt file
 
         gp.aD /= 3600; // ???
         gp.alphaIE /=3600; // ??
     }
     file.close();
     
-    if(i==9){
+    if(i==8){
         msg = "Successful loading the file: " + modset_flname;
     } else{
         msg = "PROBLEM loading the file: " + modset_flname;
