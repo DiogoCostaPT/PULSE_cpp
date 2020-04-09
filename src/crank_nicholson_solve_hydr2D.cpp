@@ -21,23 +21,24 @@ void crank_nicholson_hydr2D(globalvar& gv,double *deltt)
     k3 *= 0;     // to remove lateral dispersion (onh interested in 1D for now)
 
     // Creating matrix A to be solved for Crank-Nicholson implicit scheme
-    arma::mat a1= -(k1+k2);
-    arma::mat a2= 1+2*k2+2*k3;
-    arma::mat a3= k1-k2;
-    arma::mat a4=(1-2*k2-2*k3);
-    arma::mat a1_r= arma::reshape(a1,1,nt);
-    arma::mat a2_r= arma::reshape(a2,1,nt);
-    arma::mat a3_r= arma::reshape(a3,1,nt);
-    arma::mat a4_r= arma::reshape(a4,1,nt);
-    arma::mat k3_r= arma::reshape(k3,1,nt);
+    arma::mat a1 = -(k1+k2);
+    arma::mat a2 = 1+2*k2+2*k3;
+    arma::mat a3 = k1-k2;
+    arma::mat a4 =(1-2*k2-2*k3);
+    arma::mat a1_r = a1.as_row();
+    arma::mat a2_r = a2.as_row();
+    arma::mat a3_r = a3.as_row();
+    arma::mat a4_r = a4.as_row();
+    arma::mat k3_r = k3.as_row();
 
     // 1) all domain (diagonals: -9,-1,0,1,9)
     arma::mat A(nt,nt,arma::fill::zeros);
-    A = arma::diagmat(a3_r(0,arma::span(0,nt-nli-1)),nli)
-            +arma::diagmat(a1_r(0,arma::span(0,nt-nli-1)),-nli)
-            +arma::diagmat(a2_r(0,arma::span(0,nt-1)))
-            -arma::diagmat(k3_r(0,arma::span(0,nt-2)),1);
-            -arma::diagmat(k3_r(0,arma::span(0,nt-2)),-1);
+    A +=  arma::diagmat(a3_r(0,arma::span(nli,nt-1)),nli)
+          +arma::diagmat(a1_r(0,arma::span(0,nt-nli-1)),-nli)
+          +arma::diagmat(a2_r(0,arma::span(0,nt-1)))
+          -arma::diagmat(k3_r(0,arma::span(1,nt-2)),1)
+          //-arma::diagmat(k3_r(0,arma::span(2,nt-1)),-1)
+        ;
 
     //  I think it's creting the higher values in the margins
     //for(il=0;il<(nt/nli)-1 ;il++){ // inner cells - left and right marigns
@@ -49,18 +50,14 @@ void crank_nicholson_hydr2D(globalvar& gv,double *deltt)
 
     // 2) first row (y=1)
     A(arma::span(0,nli-1),arma::span(0,nli-1)) = // check if shoudn't be +=
-        arma::diagmat(reshape(a1(arma::span(0,nli-1),0),1,nli)
-        %arma::ones(1,nli)); //diagonal
+        arma::diagmat(a1_r); //diagonal
     A(0,0)=a1(0,0)+a2(0,0)-k3(0,0); // left corner
     A(nli-1,nli-1)=a2(nli-1,0)+a1(nli-1,0)-k3(nli-1,0); // left corner
 
     
     // 3) last row (y=ny) 
     A(arma::span(nt-nli,nt-1),arma::span(nt-nli,nt-1)) = 
-        arma::diagmat(
-            reshape(a2(arma::span(0,nli-1),nhi-1),1,nli) +
-            reshape(a3(arma::span(0,nli-1),nhi-1),1,nli)
-            %arma::ones(1,nli)); //diagonal 
+        arma::diagmat(a2_r + a3_r); //diagonal 
     A(nt-1,nt-1)=a2(0,nhi-1)+a3(0,nhi-1)-k3(0,nhi-1); // right corner
     A(nt-nli,nt-nli)=a3(nli-1,nhi-1)+a2(nli-1,nhi-1)-k3(nli-1,nhi-1); // left corner
 
@@ -85,17 +82,14 @@ void crank_nicholson_hydr2D(globalvar& gv,double *deltt)
 
     // 2) first row (y=1)
     B(arma::span(0,nli-1),arma::span(0,nli-1)) = 
-        arma::diagmat(reshape(-a1(arma::span(0,nli-1),0),1,nli)); //diagonal
+        arma::diagmat(-a1_r); //diagonal
     B(0,0)=-a1(0,0)+a4(0,0)+k3(0,0); // left corner
     B(nli-1,nli-1)=a4(nli-1,0)-a1(nli-1,0)+k3(nli-1,0); // left corner
 
 
     // 3) last row (y=ny)
     B(arma::span(nt-nli,nt-1),arma::span(nt-nli,nt-1)) = 
-        arma::diagmat(
-            reshape(a4(arma::span(0,nli-1),nhi-1),1,nli) +
-            reshape(-a3(arma::span(0,nli-1),nhi-1),1,nli)
-            %arma::ones(1,nli)); //diagonal   
+        arma::diagmat(a4_r - a3_r); //diagonal   
     B(nt-1,nt-1)=a4(0,nhi-1)-a3(0,nhi-1)+k3(0,nhi-1); // right corner
     B(nt-nli,nt-nli)=-a3(nli-1,nhi-1)+a4(nli-1,nhi-1)+k3(nli-1,nhi-1); // left corner
 

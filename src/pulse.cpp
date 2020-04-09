@@ -44,8 +44,8 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             velc = gv.q_i / (gv.vfrac_m); // interstitial flow velocity [m s-1]
             D = gp.aD * velc;       // dispersion coefficient [m2/s]
 
-            (*gv.velc_2d) += velc;
-            (*gv.disp_2d) += D;
+            (*gv.velc_2d) = (*gv.velc_2d)*0 + velc;
+            (*gv.disp_2d) = (*gv.disp_2d)*0 + D;
             
             deltt = std::fmin(gp.Courant * gv.snowh / velc,gp.print_step);
             tcum = tcum + deltt; 
@@ -74,7 +74,8 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
               if (gv.wetfront_cell > 5){ // to have sufficient layers for ADE solver
 
                    //crank_nicholson(gv,&deltt,&velc,&D); // solve advection and dispersion in the mobile zone
-                   crank_nicholson_hydr2D(gv,&deltt);
+                   //crank_nicholson_hydr2D(gv,&deltt);
+                   FtCs_solve_hydr2D(gv,&deltt);
 
                     // Crank Nicolson to limit the fluxes across boundaries
                    //exchange_i = arma::max(v * deltt * ((*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) - (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new))/gv.snowh,(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1));
