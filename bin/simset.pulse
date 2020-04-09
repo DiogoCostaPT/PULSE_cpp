@@ -1,8 +1,8 @@
 COMMNET Tests: SVALBARD ###  SOLVERs: CN-Crank Nicholson
-H_LAY 5
-L_LAY 5
+H_LAY 2
+L_LAY 2
 PRINT_STEP 3600
 A_D 0.0005
 ALPHA_IE 0.0011
-QMELT_FILE bin/qcmelt_svalbard_4.pulse
-HYDRO_SOLVER snowpack_model
+QMELT_FILE bin/qcmelt_svalbard.pulse
+HYDRO_SOLVER simplified
