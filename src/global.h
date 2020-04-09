@@ -43,6 +43,8 @@ public:
     exchange_si = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     exchange_im = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     qcmelt = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_qcmelt,3));
+    velc_2d = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
+    disp_2d = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
 
   }
     
@@ -52,7 +54,8 @@ public:
             snowl, // grid h lenght
             snowh; // grtid l lenght
   
-    std::unique_ptr<arma::Mat<double>> c_m,c_i,c_s,qcmelt,exchange_si,exchange_im;
+    std::unique_ptr<arma::Mat<double>> c_m,c_i,c_s,qcmelt,exchange_si,
+                  exchange_im,velc_2d,disp_2d;
     double vfrac_m=0.008,
             vfrac_i=0.001,
             vfrac_s= 1 - vfrac_m - vfrac_i,

@@ -9,6 +9,7 @@
 #include "hydroinput.h"
 #include "hydrocalc.h"
 #include "crank_nicholson_solve.h"
+#include "crank_nicholson_solve_hydr2D.h"
 
 void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile);
 

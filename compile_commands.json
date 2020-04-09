@@ -6,6 +6,11 @@
 },
 {
   "directory": "/media/dcosta/data/megasync/ec_main/models/pulse/code/code_pulse_cpp",
+  "command": "/usr/bin/c++    -g3 -Wall -pedantic -fopenmp -g3 -gdwarf-2   -std=gnu++11 -o CMakeFiles/pulse_cpp.dir/src/crank_nicholson_solve_hydr2D.cpp.o -c /media/dcosta/data/megasync/ec_main/models/pulse/code/code_pulse_cpp/src/crank_nicholson_solve_hydr2D.cpp",
+  "file": "/media/dcosta/data/megasync/ec_main/models/pulse/code/code_pulse_cpp/src/crank_nicholson_solve_hydr2D.cpp"
+},
+{
+  "directory": "/media/dcosta/data/megasync/ec_main/models/pulse/code/code_pulse_cpp",
   "command": "/usr/bin/c++    -g3 -Wall -pedantic -fopenmp -g3 -gdwarf-2   -std=gnu++11 -o CMakeFiles/pulse_cpp.dir/src/hydrocalc.cpp.o -c /media/dcosta/data/megasync/ec_main/models/pulse/code/code_pulse_cpp/src/hydrocalc.cpp",
   "file": "/media/dcosta/data/megasync/ec_main/models/pulse/code/code_pulse_cpp/src/hydrocalc.cpp"
 },
