@@ -30,9 +30,6 @@ int read_simset(globalpar& gp,const std::string& modset_flname,
         if(str.find("A_D") != std::string::npos){(gp.aD) = std::stof(str.substr(4));}; // SWE standard deviation (snow depletion curves, Kevin's paper)
         if(str.find("ALPHA_IE") != std::string::npos){(gp.alphaIE) = std::stof(str.substr(9));}; // SWE standard deviation (snow depletion curves, Kevin's paper)
         if(str.find("HYDRO_SOLVER") != std::string::npos){str_hydro_solver = str.substr(13);}; // snowmelt file
-
-        gp.aD /= 3600; // ???
-        gp.alphaIE /=3600; // ??
     }
     file.close();
     
@@ -43,13 +40,14 @@ int read_simset(globalpar& gp,const std::string& modset_flname,
     } 
     print_screen_log(logPULSEfile,&msg); 
     
+    gp.aD /= 3600; // ???
+    gp.alphaIE /=3600; // ??
+
     // Identify the type of hydraulic simulation
-    if(str_hydro_solver.find("simplified") != std::string::npos){
+    if(str_hydro_solver.find("simplified") != std::string::npos)
         gp.hydro_solver = 0;
-        
-    }else if(str_hydro_solver.find("snowpack_model") != std::string::npos){
+    else if(str_hydro_solver.find("snowpack_model") != std::string::npos)
         gp.hydro_solver = 1;
-    }
 
     arma::mat filedataQ; 
     bool flstatusQ =  filedataQ.load((*qcmelt_file),arma::csv_ascii);
