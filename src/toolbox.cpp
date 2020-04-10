@@ -19,7 +19,7 @@ int findLastStep(const char *path) {
    int i, timestart, filenum = 0, simnum;
    std::vector<std::string> filenames; //stringvec filenames, filename_i;
    std::string filename_i;
-   char simnum_str_i;
+   //char simnum_str_i;
    DIR *dir = opendir(path);
    
    if (dir != NULL) {

@@ -37,6 +37,7 @@ public:
     this->nh = nh;
     this->nl = nl;
     this->n_qcmelt = n_qcmelt;
+    this->n_snowfallt = n_snowfallt;
    
     c_m = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     c_i = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
@@ -44,13 +45,13 @@ public:
     exchange_si = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     exchange_im = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     qcmel_ts = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_qcmelt,2));
-    snowfall_ts = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_snowfallt,2));
+    snowfall_ts = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_snowfallt,3));
     velc_2d = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     disp_2d = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
 
   }
     
-    size_t nh,nl,n_qcmelt,
+    size_t nh,nl,n_qcmelt,n_snowfallt,
             snowH, // snowpack depth
             snowL, // snowpack horizontal lenght
             snowl, // grid h lenght

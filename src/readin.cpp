@@ -84,13 +84,13 @@ void read_meteofile(globalpar& gp,globalvar& gv,std::string* meteo_file,
     double tprec=0.0f,prec_i=0.0f,precs_i=0.0f;
     std::string msg;
      
-    arma::mat filedataQ; 
-    bool flstatusQ =  filedataQ.load((*meteo_file),arma::csv_ascii);
-    if(flstatusQ == true) {
-        for(a=0;a<filedataQ.col(1).n_elem;a++){
-            tprec = filedataQ(a,0);  // t melt seconds
-            prec_i = filedataQ(a,1);  // value of melt
-            //cmelt_i = filedataQ(a,2);  // value of melt
+    arma::mat filedataM; 
+    bool flstatusM =  filedataM.load((*meteo_file),arma::csv_ascii);
+    if(flstatusM == true) {
+        for(a=0;a<filedataM.col(1).n_elem;a++){
+            tprec = filedataM(a,0);  // t melt seconds
+            prec_i = filedataM(a,1);  // value of melt
+            precs_i = filedataM(a,2);  // value of melt
             (*gv.snowfall_ts).at(a,0) = tprec;  
             (*gv.snowfall_ts).at(a,1) = prec_i;
             (*gv.snowfall_ts).at(a,2) = precs_i; // hh-> sec
@@ -103,9 +103,7 @@ void read_meteofile(globalpar& gp,globalvar& gv,std::string* meteo_file,
         print_screen_log(logPULSEfile,&msg);
         std::abort();
     } 
-        
-    return;
- 
+     
 }
 
 /* *****
@@ -137,6 +135,5 @@ void read_qmelfile(globalpar& gp,globalvar& gv,std::string* qcmelt_file,
         std::abort();
     } 
         
-    return;
 }
 
