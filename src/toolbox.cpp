@@ -17,9 +17,9 @@ int findLastStep(const char *path) {
 
    struct dirent *entry;
    int i, timestart, filenum = 0, simnum;
-   std::vector<char*> filenames; //stringvec filenames, filename_i;
-   const char *filename_i;
-   char *simnum_str_i;
+   std::vector<std::string> filenames; //stringvec filenames, filename_i;
+   std::string filename_i;
+   char simnum_str_i;
    DIR *dir = opendir(path);
    
    if (dir != NULL) {
@@ -33,11 +33,14 @@ int findLastStep(const char *path) {
    timestart = 0;
    for(i=2;i<filenum;i++){
        filename_i = filenames[i]; //.assign(filenames[i]); //strcpy(filename_i,(char *).at(&filenames[i]));
-        simnum_str_i = (char*) malloc(sizeof(filename_i)-2);
-        strncpy (simnum_str_i, filename_i, sizeof(filename_i)-2);
-        simnum = atoi(simnum_str_i);
-        timestart = std::max(timestart,simnum);
-        free(simnum_str_i);
+        //simnum_str_i = (char*) malloc(sizeof(filename_i)-2);
+        //strncpy (&simnum_str_i, &filename_i, sizeof(&filename_i)-2);
+        try{
+            simnum = std::stoi(filename_i.substr(0,sizeof(filename_i)-4));
+            timestart = std::max(timestart,simnum);
+        } catch(const std::exception& e){
+        }
+        //free(simnum_str_i);
    }
    
    free(entry);
