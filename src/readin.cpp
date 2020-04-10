@@ -83,9 +83,7 @@ void read_meteofile(globalpar& gp,globalvar& gv,std::string* meteo_file,
     unsigned int a; 
     double tprec=0.0f,prec_i=0.0f,precs_i=0.0f;
     std::string msg;
-    
-    gv.vtotal_check = gv.snowH / 1000 * gp.rho_frshsnow_init; // initial volume
-    
+     
     arma::mat filedataQ; 
     bool flstatusQ =  filedataQ.load((*meteo_file),arma::csv_ascii);
     if(flstatusQ == true) {
@@ -119,9 +117,7 @@ void read_qmelfile(globalpar& gp,globalvar& gv,std::string* qcmelt_file,
     unsigned int a; 
     double tmelts=0.0f,qcmelt_i;
     std::string msg;
-    
-    gv.vtotal_check = gv.snowH / 1000 * gp.rho_frshsnow_init; // initial volume
-    
+      
     arma::mat filedataQ; 
     bool flstatusQ =  filedataQ.load((*qcmelt_file),arma::csv_ascii);
     if(flstatusQ == true) {

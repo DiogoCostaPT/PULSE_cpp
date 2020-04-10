@@ -65,7 +65,6 @@ public:
             vfrac_m_prev=vfrac_m,
             vfrac_i_prev=vfrac_i,
             vfrac_s_prev=vfrac_s,
-            vtotal_check,
             timstart,
             wetfront_z,
             wetfront_cell,
