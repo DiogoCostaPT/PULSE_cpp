@@ -7,12 +7,12 @@
  ***** */
 void print_screen_log(std::ofstream* logPULSEfile,std::string* msg)
 {
-    std::cout << (*msg) << std::endl;
-    (*logPULSEfile) << (*msg) + "\n";  
-    try{
+    //try{
+        std::cout << (*msg) << std::endl;
+        (*logPULSEfile) << (*msg) + "\n";   
         
-    } catch(const std::exception& e){
-    }
+    //} catch(const std::exception& e){
+    //}
     
 }
 

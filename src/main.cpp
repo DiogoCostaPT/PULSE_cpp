@@ -42,7 +42,8 @@ int main(int argc, char* argv[])
 {   
     
     int H_local,L_local,h_layer,l_layer,nl,nh;
-    std::string sim_purp,qcmelt_file,msg;
+    int n_qcmelt,n_snowfallt;
+    std::string sim_purp,qcmelt_file,meteo_file,msg;
     std::ofstream logPULSEfile ("log.pulse");
     
     std::string modset_flname (argv[1]);
@@ -56,21 +57,36 @@ int main(int argc, char* argv[])
         print_screen_log(&logPULSEfile,&msg);   
 
         // read simulation setup
-        int n_qcmelt = read_simset(gp,modset_flname,&sim_purp, &H_local,&L_local,&h_layer,&l_layer,&qcmelt_file,&logPULSEfile);   
+        read_simset(gp,modset_flname,&sim_purp,
+            &H_local,&L_local,&h_layer,&l_layer,&qcmelt_file,
+            &meteo_file,&logPULSEfile,&n_qcmelt,&n_snowfallt);  
+
+        // Check if input data is consistent
+        if (n_qcmelt!=n_snowfallt){
+            msg = "Input timeseries need to have the same size: " + (qcmelt_file)
+                + " and " + (meteo_file);   
+            print_screen_log(&logPULSEfile,&msg); 
+            abort();
+        }
 
         // create mesh
         //checkmesh(&H_local,&L_local,&h_layer,&l_layer,&nh,&nl,&logPULSEfile);
         checkmesh2(&H_local,&L_local,&h_layer,&l_layer,&nh,&nl,&logPULSEfile);
 
         // Asign global variables (heap)
-        globalvar gv(nh,nl,n_qcmelt); 
+        globalvar gv(nh,nl,n_qcmelt,n_snowfallt); 
         (gv.snowH) = H_local;
         (gv.snowL) = L_local;
         (gv.snowh) = h_layer;
         (gv.snowl) = l_layer;
 
         // read snowmelt input
-        read_qcmelt(gp,gv,&qcmelt_file,&logPULSEfile);
+        read_qmelfile(gp,gv,&qcmelt_file,&logPULSEfile);
+
+        // read meteo file
+        read_meteofile(gp,gv,&meteo_file,&logPULSEfile);
+
+        //read_meteo(gp,gv,&qcmelt_file,&logPULSEfile);
 
         // initial conditions
         initiate(gp,gv,&logPULSEfile);

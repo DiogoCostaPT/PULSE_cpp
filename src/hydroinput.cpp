@@ -11,12 +11,12 @@ void findInterpQmelt(globalvar& gv,double *tcum)
             qcmelt_c_i = 0.0f, qcmelt_c_i_prev = 0.0f; // concentration of added snow
     unsigned a,nqcmelt;
     
-    nqcmelt = int((*gv.qcmelt).col(0).n_elem);
+    nqcmelt = int((*gv.qcmel_ts).col(0).n_elem);
     
     for(a=0;a<nqcmelt;a++){
-        qcmelt_t_i = (*gv.qcmelt).at(a,0);
-        qcmelt_i = (*gv.qcmelt).at(a,1);
-        qcmelt_c_i = (*gv.qcmelt).at(a,2);
+        qcmelt_t_i = (*gv.qcmel_ts).at(a,0);
+        qcmelt_i = (*gv.qcmel_ts).at(a,1);
+        qcmelt_c_i = (*gv.qcmel_ts).at(a,2);
         if(qcmelt_t_i < *tcum){
             qcmelt_t_i_prev = qcmelt_t_i;
             qcmelt_i_prev = qcmelt_i;

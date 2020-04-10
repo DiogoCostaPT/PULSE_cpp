@@ -6,14 +6,14 @@
 /* *****
  * Read the simset.pulse file (model set up) 
  * **** */
-int read_simset(globalpar& gp,const std::string& modset_flname, 
+void read_simset(globalpar& gp,const std::string& modset_flname, 
                 std::string* sim_purp,int *H_local,int *L_local,
                 int *h_layer,int *l_layer,std::string* qcmelt_file,
-                std::ofstream* logPULSEfile)
+                std::string* meteo_file ,std::ofstream* logPULSEfile,
+                int* n_qcmelt, int* n_snowfallt)
 {
     
     std::string str, msg, str_hydro_solver;
-    int n_qcmelt;
     
     std::ifstream file(modset_flname);
     
@@ -26,6 +26,7 @@ int read_simset(globalpar& gp,const std::string& modset_flname,
         if(str.find("H_LAY") != std::string::npos){(*h_layer) = std::stoi(str.substr(6));};  // average roughness height (m)
         if(str.find("L_LAY") != std::string::npos){(*l_layer) = std::stoi(str.substr(6));};  // average roughness height (m)
         if(str.find("QMELT_FILE") != std::string::npos){*qcmelt_file = str.substr(11);}; // snowmelt file
+        if(str.find("METEO_FILE") != std::string::npos){*meteo_file = str.substr(11);}; // snowmelt file
         if(str.find("PRINT_STEP") != std::string::npos){(gp.print_step) = std::stoi(str.substr(11));}; // print time step
         if(str.find("A_D") != std::string::npos){(gp.aD) = std::stof(str.substr(4));}; // SWE standard deviation (snow depletion curves, Kevin's paper)
         if(str.find("ALPHA_IE") != std::string::npos){(gp.alphaIE) = std::stof(str.substr(9));}; // SWE standard deviation (snow depletion curves, Kevin's paper)
@@ -33,7 +34,7 @@ int read_simset(globalpar& gp,const std::string& modset_flname,
     }
     file.close();
     
-    if(i==8){
+    if(i==9){
         msg = "Successful loading the file: " + modset_flname;
     } else{
         msg = "PROBLEM loading the file: " + modset_flname;
@@ -49,28 +50,74 @@ int read_simset(globalpar& gp,const std::string& modset_flname,
     else if(str_hydro_solver.find("snowpack_model") != std::string::npos)
         gp.hydro_solver = 1;
 
-    arma::mat filedataQ; 
-    bool flstatusQ =  filedataQ.load((*qcmelt_file),arma::csv_ascii);
-    if(flstatusQ==true){
-        n_qcmelt = filedataQ.col(1).n_elem;
-        
+    // Get qmelt file size
+    arma::mat filedata; 
+    bool flstatus =  filedata.load((*qcmelt_file),arma::csv_ascii);
+    if(flstatus==true){
+        *n_qcmelt = filedata.col(1).n_elem;
     }else{
         msg = "PROBLEM loading the file: " + (*qcmelt_file);   
         print_screen_log(logPULSEfile,&msg);
         std::abort();
     }
-   
-    return n_qcmelt;
-    
+
+    // Get meteo file size
+    flstatus =  filedata.load((*meteo_file),arma::csv_ascii);
+    if(flstatus==true){
+        *n_snowfallt = filedata.col(1).n_elem;
+    }else{
+        msg = "PROBLEM loading the file: " + (*qcmelt_file);   
+        print_screen_log(logPULSEfile,&msg);
+        std::abort();
+    }
+
+    return;
 }    
 
 /* *****
- * Read snowmelt and snow-concentration input 
+ * Read meteo file
  * **** */
-void read_qcmelt(globalpar& gp,globalvar& gv,std::string* qcmelt_file,std::ofstream* logPULSEfile)
+void read_meteofile(globalpar& gp,globalvar& gv,std::string* meteo_file,
+                    std::ofstream* logPULSEfile)
 {
     unsigned int a; 
-    double tmelts=0.0f,tmelts_prev=0.0f,qcmelt_i,cmelt_i;
+    double tprec=0.0f,prec_i=0.0f,precs_i=0.0f;
+    std::string msg;
+    
+    gv.vtotal_check = gv.snowH / 1000 * gp.rho_frshsnow_init; // initial volume
+    
+    arma::mat filedataQ; 
+    bool flstatusQ =  filedataQ.load((*meteo_file),arma::csv_ascii);
+    if(flstatusQ == true) {
+        for(a=0;a<filedataQ.col(1).n_elem;a++){
+            tprec = filedataQ(a,0);  // t melt seconds
+            prec_i = filedataQ(a,1);  // value of melt
+            //cmelt_i = filedataQ(a,2);  // value of melt
+            (*gv.snowfall_ts).at(a,0) = tprec;  
+            (*gv.snowfall_ts).at(a,1) = prec_i;
+            (*gv.snowfall_ts).at(a,2) = precs_i; // hh-> sec
+        }
+       (gp.Tperd) = tprec;
+       //msg = "Successful loading the file: " + (*meteo_file);
+       //print_screen_log(logPULSEfile,&msg);
+    } else{
+        msg = "PROBLEM loading the file: " + (*meteo_file);   
+        print_screen_log(logPULSEfile,&msg);
+        std::abort();
+    } 
+        
+    return;
+ 
+}
+
+/* *****
+ * Read snowmelt file
+ * **** */
+void read_qmelfile(globalpar& gp,globalvar& gv,std::string* qcmelt_file,
+    std::ofstream* logPULSEfile)
+{
+    unsigned int a; 
+    double tmelts=0.0f,qcmelt_i;
     std::string msg;
     
     gv.vtotal_check = gv.snowH / 1000 * gp.rho_frshsnow_init; // initial volume
@@ -81,14 +128,11 @@ void read_qcmelt(globalpar& gp,globalvar& gv,std::string* qcmelt_file,std::ofstr
         for(a=0;a<filedataQ.col(1).n_elem;a++){
             tmelts = filedataQ(a,0);  // t melt seconds
             qcmelt_i = filedataQ(a,1);  // value of melt
-            cmelt_i = filedataQ(a,2);  // value of melt
-            (*gv.qcmelt).at(a,0) = tmelts;  
-            (*gv.qcmelt).at(a,1) = qcmelt_i/3600; // hh-> sec
-            (*gv.qcmelt).at(a,2) = cmelt_i; // hh-> sec
-            gv.vtotal_check += (tmelts-tmelts_prev) * (qcmelt_i/3600); 
-            tmelts_prev = tmelts;
+            //cmelt_i = filedataQ(a,2);  // value of melt
+            (*gv.qcmel_ts).at(a,0) = tmelts;  
+            (*gv.qcmel_ts).at(a,1) = qcmelt_i/3600; // hh-> sec
+            //(*gv.qcmel_ts).at(a,2) = cmelt_i; // hh-> sec
         }
-       (gp.Tperd) = tmelts;
        msg = "Successful loading the file: " + (*qcmelt_file);
        print_screen_log(logPULSEfile,&msg);
     } else{
@@ -96,15 +140,7 @@ void read_qcmelt(globalpar& gp,globalvar& gv,std::string* qcmelt_file,std::ofstr
         print_screen_log(logPULSEfile,&msg);
         std::abort();
     } 
-    
-    
-    if (gv.vtotal_check<0.0f){
-        msg = "Snow mass does not balance (initial+accumulation < melt): check the 0.txt file and " + (*qcmelt_file);   
-        print_screen_log(logPULSEfile,&msg);
-        std::abort();
-    }
         
-    
     return;
- 
 }
+

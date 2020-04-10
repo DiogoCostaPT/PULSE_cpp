@@ -4,5 +4,6 @@ L_LAY 2
 PRINT_STEP 3600
 A_D 0.0005
 ALPHA_IE 0.0011
-QMELT_FILE bin/qcmelt_svalbard.pulse
+QMELT_FILE bin/qcmelt_svalbard
+METEO_FILE bin/meteo_svalbard
 HYDRO_SOLVER simplified
