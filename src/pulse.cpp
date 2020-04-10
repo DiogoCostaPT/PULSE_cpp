@@ -48,6 +48,10 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             (*gv.disp_2d) = (*gv.disp_2d)*0 + D;
             
             deltt = std::fmin(gp.Courant * gv.snowh / velc,gp.print_step);
+
+            // limit step so that if there is melt or accumulation it doesn't go more than one cell
+            deltt = std::fmin(deltt,gv.snowh*gp.rho_frshsnow_init/(gv.q_i*gp.rho_m));
+
             tcum = tcum + deltt; 
             
             upbound_calc(gv,gp,&deltt,logPULSEfile);
