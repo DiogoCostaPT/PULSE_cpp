@@ -66,7 +66,7 @@ void read_simset(globalpar& gp,const std::string& modset_flname,
     if(flstatus==true){
         *n_snowfallt = filedata.col(1).n_elem;
     }else{
-        msg = "PROBLEM loading the file: " + (*qcmelt_file);   
+        msg = "PROBLEM loading the file: " + (*meteo_file);   
         print_screen_log(logPULSEfile,&msg);
         std::abort();
     }

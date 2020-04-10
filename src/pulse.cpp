@@ -32,16 +32,17 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 
         t += 1;
                 
+        findInterpPrec(gv,&tcum); // if there is increase in SWE, everything will freeze so there will be a stop
         findInterpQmelt(gv,&tcum); // if there is increase in SWE, everything will freeze so there will be a stop
 
-        if(gv.q_i==0.0f){ // nothing happens
+        if(gv.qmelt_i==0.0f){ // nothing happens
             tcum++; 
-        }else if (gv.q_i<0.0f){ // accumulation only 
+        }else if (gv.qmelt_i<0.0f){ // accumulation only 
             upbound_calc(gv,gp,&deltt,logPULSEfile);
             tcum++;
         } else {// melt       
                 // Estimate interstitial flow velocity 
-            velc = gv.q_i / (gv.vfrac_m); // interstitial flow velocity [m s-1]
+            velc = gv.qmelt_i / (gv.vfrac_m); // interstitial flow velocity [m s-1]
             D = gp.aD * velc;       // dispersion coefficient [m2/s]
 
             (*gv.velc_2d) = (*gv.velc_2d)*0 + velc;
@@ -50,7 +51,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             deltt = std::fmin(gp.Courant * gv.snowh / velc,gp.print_step);
 
             // limit step so that if there is melt or accumulation it doesn't go more than one cell
-            deltt = std::fmin(deltt,gv.snowh*gp.rho_frshsnow_init/(gv.q_i*gp.rho_m));
+            deltt = std::fmin(deltt,gv.snowh*gp.rho_frshsnow_init/(gv.qmelt_i*gp.rho_m));
 
             tcum = tcum + deltt; 
             
@@ -58,7 +59,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             
         }
 
-        if (gv.q_i>0.0f){ // if melt
+        if (gv.qmelt_i>0.0f){ // if melt
             
             // calculate volume fractions
             vol_fract_calc(gp,gv,&deltt);
@@ -90,7 +91,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                 }
               }
 
-                (*gv.exchange_si) = (*gv.c_s) * gp.rho_s/gp.rho_m * gv.q_i * deltt / (gv.wetfront_cell+1);
+                (*gv.exchange_si) = (*gv.c_s) * gp.rho_s/gp.rho_m * gv.qmelt_i * deltt / (gv.wetfront_cell+1);
 
                 // limit the flux to the available material
                 for(il=0;il<gv.nl ;il++){

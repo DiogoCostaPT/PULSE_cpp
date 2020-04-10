@@ -71,7 +71,7 @@ public:
             wetfront_cell,
             wetfront_cell_prev,
             upperboundary_cell_prev,
-            layer_incrmt,q_i,qc_i;
+            nh_incrm,nh_remove,qmelt_i,precip_i, precipc_i;
                  
 };
 
