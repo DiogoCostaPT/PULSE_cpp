@@ -66,12 +66,16 @@ public:
             vfrac_m_prev=vfrac_m,
             vfrac_i_prev=vfrac_i,
             vfrac_s_prev=vfrac_s,
-            timstart,
-            wetfront_z,
-            wetfront_cell,
-            wetfront_cell_prev,
-            upperboundary_cell_prev,
-            nh_incrm,nh_remove,qmelt_i,precip_i, precipc_i;
+            timstart = 0.0f,
+            wetfront_z = 0.0f,
+            nh_change = 0.0f,
+            qmelt_i = 0.0f,
+            precip_i = 0.0f, 
+            precipc_i = 0.0f;
+
+    int wetfront_cell = 0,
+        wetfront_cell_prev = 0,
+        upperboundary_cell_prev = 0;
                  
 };
 

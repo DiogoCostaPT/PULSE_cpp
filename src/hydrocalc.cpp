@@ -45,11 +45,11 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
 
     int nl_l = gv.nl;
     
-    gv.nh_incrm += (std::abs(gv.precip_i)-std::abs(gv.qmelt_i))*(*deltt)
+    gv.nh_change += (std::abs(gv.precip_i)-std::abs(gv.qmelt_i))*(*deltt)
                     *gp.rho_m/gp.rho_frshsnow_init; // cell increment
 
     // Refreezing
-    if (gv.qmelt_i!=0.0f){ 
+    if (gv.qmelt_i==0.0f){ 
         
         (*gv.c_i) += (*gv.c_m)*gv.vfrac_m/gv.vfrac_i; // c_m mass will go to c_i
         (*gv.c_m) *= 0;
@@ -66,7 +66,7 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
     }
     
     // layer add or remove
-    if (gv.nh_incrm>=gv.snowh){ // MELT - remove layer
+    if (gv.nh_change<0 && std::abs(gv.nh_change)>=gv.snowh){ // MELT - remove layer
         
          // add all immobile and solid slow that melted from the last cell) 
         //(*gv.c_m)(arma::span(0,gv.nl-1),1) = ((*gv.c_m)(arma::span(0,gv.nl-1),0) * gv.vfrac_m_prev
@@ -77,12 +77,12 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
         //(*gv.c_s)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell_prev)) *= 0;
         //(*gv.c_i)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell_prev)) *= 0;
         
-        gv.nh--; // remove one layer
-        gv.wetfront_cell--;
-        gv.wetfront_cell_prev--;
-        gv.snowH -= gv.snowh; // snowpack depth
+        gv.nh = std::fmax(gv.nh - 1,0);
+        gv.wetfront_cell = std::max(gv.wetfront_cell - 1,0);
+        gv.wetfront_cell_prev = std::max(gv.wetfront_cell_prev - 1,0);
+        gv.snowH = std::fmax(gv.snowH - gv.snowh,0); // snowpack depth
         //gv.wetfront_z -= gv.snowh; -> it should not decrease because this is counted from the bottom
-        gv.nh_incrm -= gv.snowh;
+        gv.nh_change += gv.snowh;
         
         //gv.upperboundary_cell_prev = gv.upperboundary_cell; // wetting fron cell in the previous time step
         //gv.upperboundary_z =  std::fmax(gv.upperboundary_z - (*q) * (*deltt),0.0f);
@@ -96,11 +96,11 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
         (*gv.exchange_si).shed_cols(0,0);
         (*gv.exchange_im).shed_cols(0,0);
             
-    } else if (gv.nh_incrm <= -gv.snowh){ // adding a new layer
+    } else if (gv.nh_change>0 && std::abs(gv.nh_change)>=gv.snowh){ // adding a new layer
 
             gv.nh++; // remove one layer
             gv.snowH += gv.snowh; // snowpack depth 
-            gv.nh_incrm += gv.snowh; 
+            gv.nh_change -= gv.snowh; 
 
             (*gv.c_m).insert_cols(0,1);
             (*gv.c_i).insert_cols(0,1);

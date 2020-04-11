@@ -32,14 +32,14 @@ void findInterpPrec(globalvar& gv,double *tcum)
         }
     }
     
-    if (gv.precip_i<0){ // acumulation -> add concentration of snow
-        if (prec_i<0 && prec_i_prev<0){ // accumulation
+    if (gv.precip_i>0){ // acumulation -> add concentration of snow
+        if (prec_i>0 && prec_i_prev>0){ // accumulation
             gv.precipc_i = prec_c_i_prev 
                     + (prec_c_i - prec_c_i_prev) * ((*tcum - prec_t_i_prev)) 
                     / (prec_t_i - prec_t_i_prev);
-        }else if(prec_i<0 && prec_i_prev>=0){
+        }else if(prec_i>0 && prec_i_prev<=0){
             gv.precipc_i = prec_c_i;        
-        }else if(prec_i>=0 && prec_i_prev<0){
+        }else if(prec_i<=0 && prec_i_prev>0){
             gv.precipc_i = prec_c_i_prev;        
         }
     }
