@@ -41,7 +41,8 @@
 int main(int argc, char* argv[]) 
 {   
     
-    int H_local,L_local,h_layer,l_layer,nl,nh;
+    double H_local,L_local,h_layer,l_layer;
+    int nl,nh;
     int n_qcmelt,n_snowfallt;
     std::string sim_purp,qcmelt_file,meteo_file,msg;
     std::ofstream logPULSEfile ("log.pulse");
@@ -58,7 +59,7 @@ int main(int argc, char* argv[])
 
         // read simulation setup
         read_simset(gp,modset_flname,&sim_purp,
-            &H_local,&L_local,&h_layer,&l_layer,&qcmelt_file,
+            &h_layer,&l_layer,&qcmelt_file,
             &meteo_file,&logPULSEfile,&n_qcmelt,&n_snowfallt);  
 
         // Check if input data is consistent
@@ -86,7 +87,6 @@ int main(int argc, char* argv[])
         // read meteo file
         read_meteofile(gp,gv,&meteo_file,&logPULSEfile);
 
-        //read_meteo(gp,gv,&qcmelt_file,&logPULSEfile);
 
         // initial conditions
         initiate(gp,gv,&logPULSEfile);

@@ -7,10 +7,10 @@
  * Read the simset.pulse file (model set up) 
  * **** */
 void read_simset(globalpar& gp,const std::string& modset_flname, 
-                std::string* sim_purp,int *H_local,int *L_local,
-                int *h_layer,int *l_layer,std::string* qcmelt_file,
-                std::string* meteo_file ,std::ofstream* logPULSEfile,
-                int* n_qcmelt, int* n_snowfallt)
+                std::string* sim_purp,double *h_layer,double *l_layer,
+                std::string* qcmelt_file,std::string* meteo_file ,
+                std::ofstream* logPULSEfile,int* n_qcmelt, 
+                int* n_snowfallt)
 {
     
     std::string str, msg, str_hydro_solver;
@@ -23,8 +23,8 @@ void read_simset(globalpar& gp,const std::string& modset_flname,
         i += 1;
 
         if(str.find("COMMNET") != std::string::npos){*sim_purp = str.substr(8);}; // comment
-        if(str.find("H_LAY") != std::string::npos){(*h_layer) = std::stoi(str.substr(6));};  // average roughness height (m)
-        if(str.find("L_LAY") != std::string::npos){(*l_layer) = std::stoi(str.substr(6));};  // average roughness height (m)
+        if(str.find("H_LAY") != std::string::npos){(*h_layer) = std::stof(str.substr(6))/1000;};  // average roughness height (m)
+        if(str.find("L_LAY") != std::string::npos){(*l_layer) = std::stof(str.substr(6))/1000;};  // average roughness height (m)
         if(str.find("QMELT_FILE") != std::string::npos){*qcmelt_file = str.substr(11);}; // snowmelt file
         if(str.find("METEO_FILE") != std::string::npos){*meteo_file = str.substr(11);}; // snowmelt file
         if(str.find("PRINT_STEP") != std::string::npos){(gp.print_step) = std::stoi(str.substr(11));}; // print time step
@@ -89,7 +89,7 @@ void read_meteofile(globalpar& gp,globalvar& gv,std::string* meteo_file,
     if(flstatusM == true) {
         for(a=0;a<filedataM.col(1).n_elem;a++){
             tprec = filedataM(a,0);  // t melt seconds
-            prec_i = filedataM(a,1);  // value of melt
+            prec_i = filedataM(a,1)/1000;  // value of melt
             precs_i = filedataM(a,2);  // value of melt
             (*gv.snowfall_ts).at(a,0) = std::fabs(tprec);  
             (*gv.snowfall_ts).at(a,1) = std::fabs(prec_i);
@@ -121,7 +121,7 @@ void read_qmelfile(globalpar& gp,globalvar& gv,std::string* qcmelt_file,
     if(flstatusQ == true) {
         for(a=0;a<filedataQ.col(1).n_elem;a++){
             tmelts = filedataQ(a,0);  // t melt seconds
-            qcmelt_i = filedataQ(a,1);  // value of melt
+            qcmelt_i = filedataQ(a,1)/1000;  // value of melt
             //cmelt_i = filedataQ(a,2);  // value of melt
             (*gv.qcmel_ts).at(a,0) = std::fabs(tmelts);  
             (*gv.qcmel_ts).at(a,1) = std::fabs(qcmelt_i);

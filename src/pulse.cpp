@@ -101,6 +101,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                                 (*gv.exchange_si).at(il,ih) = std::fmin((*gv.exchange_si).at(il,ih),(*gv.c_s).at(il,ih));
                             }else if((*gv.exchange_si).at(il,ih) < 0){
                                 msg = "PROBLEM: negative s->i exchange";
+                                std::cout << msg << std::endl;
                                 print_screen_log(logPULSEfile,&msg);
                             }
                             if(ih>gv.wetfront_cell){

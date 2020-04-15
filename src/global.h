@@ -51,16 +51,16 @@ public:
 
   }
     
-    size_t nh,nl,n_qcmelt,n_snowfallt,
-            snowH, // snowpack depth
-            snowL, // snowpack horizontal lenght
-            snowl, // grid h lenght
-            snowh; // grtid l lenght
+    size_t nh,nl,n_qcmelt,n_snowfallt;
   
     std::unique_ptr<arma::Mat<double>> c_m,c_i,c_s,qcmel_ts,snowfall_ts,exchange_si,
                   exchange_im,velc_2d,disp_2d;
     
-    double vfrac_m=0.008,
+    double snowH = 0.0f, // snowpack depth
+            snowL = 0.0f, // snowpack horizontal lenght
+            snowl = 0.0f, // grid h lenght
+            snowh = 0.0f, // grid l lenght
+            vfrac_m=0.008,
             vfrac_i=0.001,
             vfrac_s= 1 - vfrac_m - vfrac_i,
             vfrac_m_prev=vfrac_m,
