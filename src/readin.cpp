@@ -41,8 +41,8 @@ void read_simset(globalpar& gp,const std::string& modset_flname,
     } 
     print_screen_log(logPULSEfile,&msg); 
     
-    gp.aD /= 3600; // ???
-    gp.alphaIE /=3600; // ??
+    //gp.aD /= 3600; // ???
+    //gp.alphaIE /=3600; // ??
 
     // Identify the type of hydraulic simulation
     if(str_hydro_solver.find("simplified") != std::string::npos)
@@ -91,9 +91,9 @@ void read_meteofile(globalpar& gp,globalvar& gv,std::string* meteo_file,
             tprec = filedataM(a,0);  // t melt seconds
             prec_i = filedataM(a,1);  // value of melt
             precs_i = filedataM(a,2);  // value of melt
-            (*gv.snowfall_ts).at(a,0) = tprec;  
-            (*gv.snowfall_ts).at(a,1) = prec_i;
-            (*gv.snowfall_ts).at(a,2) = precs_i; // hh-> sec
+            (*gv.snowfall_ts).at(a,0) = std::fabs(tprec);  
+            (*gv.snowfall_ts).at(a,1) = std::fabs(prec_i);
+            (*gv.snowfall_ts).at(a,2) = std::fabs(precs_i); // hh-> sec
         }
        (gp.Tperd) = tprec;
        //msg = "Successful loading the file: " + (*meteo_file);
@@ -123,8 +123,8 @@ void read_qmelfile(globalpar& gp,globalvar& gv,std::string* qcmelt_file,
             tmelts = filedataQ(a,0);  // t melt seconds
             qcmelt_i = filedataQ(a,1);  // value of melt
             //cmelt_i = filedataQ(a,2);  // value of melt
-            (*gv.qcmel_ts).at(a,0) = tmelts;  
-            (*gv.qcmel_ts).at(a,1) = qcmelt_i;
+            (*gv.qcmel_ts).at(a,0) = std::fabs(tmelts);  
+            (*gv.qcmel_ts).at(a,1) = std::fabs(qcmelt_i);
             //(*gv.qcmel_ts).at(a,2) = cmelt_i; // hh-> sec
         }
        msg = "Successful loading the file: " + (*qcmelt_file);

@@ -32,8 +32,8 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 
         t += 1;
                 
-        findInterpPrec(gv,&tcum); // if there is increase in SWE, everything will freeze so there will be a stop
-        findInterpQmelt(gv,&tcum); // if there is increase in SWE, everything will freeze so there will be a stop
+        findInterpPrec(gv,&tcum);
+        findInterpQmelt(gv,&tcum);
 
         if (gv.qmelt_i==0.0f){ // accumulation only 
             deltt = std::fmin(gp.print_step,
@@ -41,7 +41,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             upbound_calc(gv,gp,&deltt,logPULSEfile);
         } else {// melt       
                 // Estimate interstitial flow velocity 
-            velc = gv.qmelt_i / (gv.vfrac_m); // interstitial flow velocity [m s-1]
+            velc = gv.qmelt_i / gv.vfrac_m; // interstitial flow velocity [m s-1]
             D = gp.aD * velc;       // dispersion coefficient [m2/s]
 
             (*gv.velc_2d) = (*gv.velc_2d)*0 + velc;
@@ -50,8 +50,6 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             deltt = std::fmin(gp.Courant * gv.snowh / velc,gp.print_step);
 
             // limit step so that if there is melt or accumulation it doesn't go more than one cell
-            deltt = std::fmin(deltt,gv.snowh*gp.rho_frshsnow_init/(gv.qmelt_i*gp.rho_m));
-
             deltt = std::fmin(deltt,
                     gv.snowh * gp.rho_frshsnow_init / (std::abs((std::abs(gv.precip_i)-std::abs(gv.qmelt_i)))*gp.rho_m));
             
@@ -136,27 +134,27 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             }
         }
 
-        // Print results                
-          if (tcum>=print_next){
+    // Print results                
+        if (tcum>=print_next){
 
-             end = std::chrono::system_clock::now();
-             elapsed_seconds = end-start;
+            end = std::chrono::system_clock::now();
+            elapsed_seconds = end-start;
 
-              outwritestatus = print_results(gv,gp,std::round(print_next),gp.print_step,elapsed_seconds);
+            outwritestatus = print_results(gv,gp,std::round(print_next),gp.print_step,elapsed_seconds);
 
-            if(outwritestatus == true) 
-            {
-                std::cout << "Saved: '" << print_next << ".txt' || time step (min): " << std::to_string(gp.print_step/60) << " || Time elapsed (min): " << elapsed_seconds.count()/60 << std::endl;
-                (*logPULSEfile) << "Saved: '" << print_next << ".txt' || time step (min): " << std::to_string(gp.print_step/60) << " || Time elapsed (min): " << std::to_string(elapsed_seconds.count()/60) + "\n";
-                print_next += gp.print_step;
-                start = std::chrono::system_clock::now();
-            } else
-            {
-                msg = "Problem when saving the results:" + print_next;
-                print_screen_log(logPULSEfile,&msg);
-                abort();
-          }
-          }
+        if(outwritestatus == true) 
+        {
+            std::cout << "Saved: '" << print_next << ".txt' || time step (min): " << std::to_string(gp.print_step/60) << " || Time elapsed (min): " << elapsed_seconds.count()/60 << std::endl;
+            (*logPULSEfile) << "Saved: '" << print_next << ".txt' || time step (min): " << std::to_string(gp.print_step/60) << " || Time elapsed (min): " << std::to_string(elapsed_seconds.count()/60) + "\n";
+            print_next += gp.print_step;
+            start = std::chrono::system_clock::now();
+        } else
+        {
+            msg = "Problem when saving the results:" + print_next;
+            print_screen_log(logPULSEfile,&msg);
+            abort();
+        }
+        }
 
     }
        

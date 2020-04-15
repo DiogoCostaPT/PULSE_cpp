@@ -78,8 +78,8 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
         //(*gv.c_i)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell_prev)) *= 0;
         
         gv.nh = std::fmax(gv.nh - 1,0);
+        gv.wetfront_cell_prev = gv.wetfront_cell;
         gv.wetfront_cell = std::max(gv.wetfront_cell - 1,0);
-        gv.wetfront_cell_prev = std::max(gv.wetfront_cell_prev - 1,0);
         gv.snowH = std::fmax(gv.snowH - gv.snowh,0); // snowpack depth
         //gv.wetfront_z -= gv.snowh; -> it should not decrease because this is counted from the bottom
         gv.nh_change += gv.snowh;
@@ -101,6 +101,8 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
             gv.nh++; // remove one layer
             gv.snowH += gv.snowh; // snowpack depth 
             gv.nh_change -= gv.snowh; 
+            gv.wetfront_cell_prev = gv.wetfront_cell;
+            gv.wetfront_cell = std::max(gv.wetfront_cell + 1,0);
 
             (*gv.c_m).insert_cols(0,1);
             (*gv.c_i).insert_cols(0,1);
