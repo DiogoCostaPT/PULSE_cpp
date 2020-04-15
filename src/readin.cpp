@@ -124,7 +124,7 @@ void read_qmelfile(globalpar& gp,globalvar& gv,std::string* qcmelt_file,
             qcmelt_i = filedataQ(a,1);  // value of melt
             //cmelt_i = filedataQ(a,2);  // value of melt
             (*gv.qcmel_ts).at(a,0) = tmelts;  
-            (*gv.qcmel_ts).at(a,1) = qcmelt_i/3600; // hh-> sec
+            (*gv.qcmel_ts).at(a,1) = qcmelt_i;
             //(*gv.qcmel_ts).at(a,2) = cmelt_i; // hh-> sec
         }
        msg = "Successful loading the file: " + (*qcmelt_file);

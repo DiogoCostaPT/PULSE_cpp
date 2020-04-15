@@ -7,7 +7,7 @@ void vol_fract_calc(globalpar& gp,globalvar& gv,double *deltt)
 {
     
     //double dvfrac_s_dt = (*q) / gv.vtotal_check;
-    double dvfrac_s_dt = gv.qmelt_i / (gv.snowH / 1000 * gp.rho_frshsnow_init);
+    double dvfrac_s_dt = gv.qmelt_i / (gv.snowH * gp.rho_frshsnow_init);
     double dvfrac_i_dt = dvfrac_s_dt;
 
     gv.vfrac_m_prev = gv.vfrac_m;
@@ -51,7 +51,7 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
     // Refreezing
     if (gv.qmelt_i==0.0f){ 
         
-        (*gv.c_i) += (*gv.c_m)*gv.vfrac_m/gv.vfrac_i; // c_m mass will go to c_i
+        (*gv.c_s) += (*gv.c_m)*gv.vfrac_m/gv.vfrac_s; // c_m mass will go to c_i
         (*gv.c_m) *= 0;
         gv.wetfront_cell= 0; // assumes refreezing
         gv.wetfront_cell_prev = 0;

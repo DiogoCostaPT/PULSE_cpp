@@ -36,8 +36,9 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
         findInterpQmelt(gv,&tcum); // if there is increase in SWE, everything will freeze so there will be a stop
 
         if (gv.qmelt_i==0.0f){ // accumulation only 
+            deltt = std::fmin(gp.print_step,
+                    gv.snowh * gp.rho_frshsnow_init / (std::abs(std::abs(gv.precip_i))*gp.rho_m)); 
             upbound_calc(gv,gp,&deltt,logPULSEfile);
-            tcum++;
         } else {// melt       
                 // Estimate interstitial flow velocity 
             velc = gv.qmelt_i / (gv.vfrac_m); // interstitial flow velocity [m s-1]
@@ -53,12 +54,12 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 
             deltt = std::fmin(deltt,
                     gv.snowh * gp.rho_frshsnow_init / (std::abs((std::abs(gv.precip_i)-std::abs(gv.qmelt_i)))*gp.rho_m));
-
-            tcum = tcum + deltt; 
             
             upbound_calc(gv,gp,&deltt,logPULSEfile);
             
         }
+
+        tcum = tcum + deltt; 
 
         if (gv.qmelt_i>0.0f){ // if melt
             
@@ -80,7 +81,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
               if (gv.wetfront_cell > 5){ // to have sufficient layers for ADE solver
 
                 if (gp.hydro_solver == 0){
-                   //crank_nicholson(gv,&deltt,&velc,&D); // solve advection and dispersion in the mobile zone
+                   crank_nicholson(gv,&deltt,&velc,&D); // solve advection and dispersion in the mobile zone
                 }else if (gp.hydro_solver == 1){
                    //crank_nicholson_hydr2D(gv,&deltt);
                    FtCs_solve_hydr2D(gv,&deltt);
