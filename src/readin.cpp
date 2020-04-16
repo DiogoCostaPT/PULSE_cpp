@@ -23,6 +23,7 @@ void read_simset(globalpar& gp,const std::string& modset_flname,
         i += 1;
 
         if(str.find("COMMNET") != std::string::npos){*sim_purp = str.substr(8);}; // comment
+        if(str.find("START_TIME") != std::string::npos){(*gp.start_time) = str.substr(11);}; // comment
         if(str.find("H_LAY") != std::string::npos){(*h_layer) = std::stof(str.substr(6))/1000;};  // average roughness height (m)
         if(str.find("L_LAY") != std::string::npos){(*l_layer) = std::stof(str.substr(6))/1000;};  // average roughness height (m)
         if(str.find("QMELT_FILE") != std::string::npos){*qcmelt_file = str.substr(11);}; // snowmelt file
@@ -34,7 +35,7 @@ void read_simset(globalpar& gp,const std::string& modset_flname,
     }
     file.close();
     
-    if(i==9){
+    if(i==10){
         msg = "Successful loading the file: " + modset_flname;
     } else{
         msg = "PROBLEM loading the file: " + modset_flname;
@@ -86,8 +87,10 @@ void read_meteofile(globalpar& gp,globalvar& gv,std::string* meteo_file,
      
     arma::mat filedataM; 
     bool flstatusM =  filedataM.load((*meteo_file),arma::csv_ascii);
+    int num_cols = filedataM.col(1).n_elem;
+
     if(flstatusM == true) {
-        for(a=0;a<filedataM.col(1).n_elem;a++){
+        for(a=0;a<num_cols;a++){
             tprec = filedataM(a,0);  // t melt seconds
             prec_i = filedataM(a,1)/1000;  // value of melt
             precs_i = filedataM(a,2);  // value of melt

@@ -21,6 +21,8 @@ public:
     int flag_sens,run_id,s,print_step,
          hydro_solver; // 0) Crank Nicholson, 1) Forward-time, Central-diff space;
     //std::ofstream logPULSEfile;
+
+    std::string start_time[16];
     
 };
 
