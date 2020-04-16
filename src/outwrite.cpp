@@ -44,7 +44,7 @@ bool print_results(globalvar& gv,globalpar& gp, int print_tag, unsigned int prin
             filedataR(a,5) = (gv.vfrac_m); 
             filedataR(a,6) = (gv.vfrac_s); 
             filedataR(a,7) = (*gv.exchange_si).at(il,ih); 
-            filedataR(a,8) = (*gv.exchange_im).at(il,ih); 
+            filedataR(a,8) = (*gv.exchange_is).at(il,ih); 
             a = a + 1;
         }
     }

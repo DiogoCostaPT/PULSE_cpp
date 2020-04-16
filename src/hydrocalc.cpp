@@ -15,11 +15,11 @@ void vol_fract_calc(globalpar& gp,globalvar& gv,double *deltt)
     gv.vfrac_s_prev = gv.vfrac_s;
     
     gv.vfrac_s = std::fmax(gv.vfrac_s - dvfrac_s_dt * (*deltt), 0.f);
-    if (gv.vfrac_s != 0){
-        gv.vfrac_i = std::fmax(gv.vfrac_i + dvfrac_s_dt * (*deltt) - dvfrac_i_dt * (*deltt), 0.f); 
-    }else{
-        gv.vfrac_i = std::fmax(gv.vfrac_i - dvfrac_i_dt * (*deltt) , 0.f);     
-    };
+    //if (gv.vfrac_s != 0){
+    //    gv.vfrac_i = std::fmax(gv.vfrac_i + dvfrac_s_dt * (*deltt) - dvfrac_i_dt * (*deltt), 0.f); 
+    //}else{
+    //    gv.vfrac_i = std::fmax(gv.vfrac_i - dvfrac_i_dt * (*deltt) , 0.f);     
+    //};
     gv.vfrac_m = std::fmin(gv.vfrac_m + dvfrac_i_dt * (*deltt) , 1.f);  
        
 }
@@ -94,7 +94,7 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
         (*gv.c_i).shed_cols(0,0);
         (*gv.c_s).shed_cols(0,0);
         (*gv.exchange_si).shed_cols(0,0);
-        (*gv.exchange_im).shed_cols(0,0);
+        (*gv.exchange_is).shed_cols(0,0);
             
     } else if (gv.nh_change>0 && std::abs(gv.nh_change)>=gv.snowh){ // adding a new layer
 
@@ -111,7 +111,7 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
             newsnowlayer.ones(nl_l,1);
             (*gv.c_s).col(0) = newsnowlayer * gv.precipc_i;
             (*gv.exchange_si).insert_cols(0,1);
-            (*gv.exchange_im).insert_cols(0,1);
+            (*gv.exchange_is).insert_cols(0,1);
     }
    return;  
 }

@@ -35,7 +35,7 @@ void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             (gv.vfrac_m) = filedata(a,5);
             (gv.vfrac_s) = filedata(a,6);
             (*gv.exchange_si).at(il,ih) = filedata(a,7);
-            (*gv.exchange_im).at(il,ih) = filedata(a,8);
+            (*gv.exchange_is).at(il,ih) = filedata(a,8);
             if((*gv.c_m).at(il,ih)!=0){
                 gv.wetfront_z = std::fmin((gv.nh - (ih+1)) * gv.snowh,gv.wetfront_z);
                 gv.wetfront_cell = std::min(int(std::round(nh_l-gv.wetfront_z/gv.snowh)),nh_l); // finding the cell when the wetting front is located

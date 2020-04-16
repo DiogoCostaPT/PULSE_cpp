@@ -91,6 +91,31 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                 }
               }
 
+
+            if (gv.qmelt_i > 0.0f){
+
+                 // Ion exclusion: Exchange with immobile phase (just exchange)
+                (*gv.exchange_is)  = deltt * (gp.alphaIE/gv.vfrac_m_prev * (*gv.c_s)) ; 
+
+                // limit the flux to the available material
+                for(il=0;il<gv.nl ;il++){
+                    for(ih=0;ih<gv.nh ;ih++){
+                         if ((*gv.exchange_is).at(il,ih) > 0){
+                            (*gv.exchange_is).at(il,ih) = std::min((*gv.exchange_is).at(il,ih),(*gv.c_s).at(il,ih));
+                        }else if((*gv.exchange_is).at(il,ih) < 0){
+                             (*gv.exchange_is).at(il,ih) = 0.0f;
+                        }
+                         //if(ih<gv.upperboundary_cell || ih>gv.wetfront_cell){
+                         if(ih>gv.wetfront_cell){
+                                (*gv.exchange_is).at(il,ih) = 0.0f;
+                            };
+                    }
+                };
+                (*gv.c_s) =  ( (*gv.c_s) * gv.vfrac_s_prev - (*gv.exchange_is) * gv.vfrac_i_prev ) / gv.vfrac_s; // / vfrac_m(t);
+                (*gv.c_m) = ( (*gv.c_m) * gv.vfrac_m_prev + (*gv.exchange_is) * gv.vfrac_i_prev ) / gv.vfrac_m;
+
+
+                // Snowmelt
                 (*gv.exchange_si) = (*gv.c_s) * gp.rho_s/gp.rho_m * gv.qmelt_i * deltt / (gv.wetfront_cell+1);
 
                 // limit the flux to the available material
@@ -109,31 +134,12 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
                             };
                     }
                 };
-                (*gv.c_i) =  ( (*gv.c_i) * gv.vfrac_i_prev + (*gv.exchange_si) * gv.vfrac_s_prev ) / gv.vfrac_i; // / vfrac_m(t);
+                (*gv.c_m) =  ( (*gv.c_m) * gv.vfrac_m_prev + (*gv.exchange_si) * gv.vfrac_s_prev ) / gv.vfrac_m; // / vfrac_m(t);
                 (*gv.c_s) = ( (*gv.c_s) * gv.vfrac_s_prev - (*gv.exchange_si) * gv.vfrac_s_prev ) / gv.vfrac_s;
-
-                // Exchange with immobile phase (just exchange)
-                (*gv.exchange_im)  = deltt * (gp.alphaIE/gv.vfrac_m_prev * ((*gv.c_i) - (*gv.c_m))) ; 
-
-                // limit the flux to the available material
-                for(il=0;il<gv.nl ;il++){
-                    for(ih=0;ih<gv.nh ;ih++){
-                         if ((*gv.exchange_im).at(il,ih) > 0){
-                            (*gv.exchange_im).at(il,ih) = std::min((*gv.exchange_im).at(il,ih),(*gv.c_i).at(il,ih));
-                        }else if((*gv.exchange_im).at(il,ih) < 0){
-                             (*gv.exchange_im).at(il,ih) = 0.0f;
-                        }
-                         //if(ih<gv.upperboundary_cell || ih>gv.wetfront_cell){
-                         if(ih>gv.wetfront_cell){
-                                (*gv.exchange_im).at(il,ih) = 0.0f;
-                            };
-                    }
-                };
-                (*gv.c_m) =  ( (*gv.c_m) * gv.vfrac_m_prev + (*gv.exchange_im) * gv.vfrac_i_prev ) / gv.vfrac_m; // / vfrac_m(t);
-                (*gv.c_i) = ( (*gv.c_i) * gv.vfrac_i_prev - (*gv.exchange_im) * gv.vfrac_i_prev ) / gv.vfrac_i;
 
             }
         }
+    }
 
     // Print results                
         if (tcum>=print_next){
