@@ -37,7 +37,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
 
         if (gv.qmelt_i==0.0f){ // accumulation only 
             deltt = std::fmin(gp.print_step,
-                    gv.snowh * gp.rho_frshsnow_init / (std::abs(std::abs(gv.precip_i))*gp.rho_m)); 
+                    gv.snowh * gp.rho_frshsnow_init / (std::abs(gv.precip_i)*gp.rho_m)); 
             upbound_calc(gv,gp,&deltt,logPULSEfile);
         } else {// melt       
                 // Estimate interstitial flow velocity 

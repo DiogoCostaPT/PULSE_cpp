@@ -33,12 +33,12 @@ void crank_nicholson(globalvar& gv,double *deltt,double *v,double *D)
                     -k3*arma::diagmat(arma::ones(1,nt-1),-1);
 
 
-    //for(il=0;il<(nt/nli)-1 ;il++){ // inner cells - left and right marigns
-    //    A(il*nli+1,il*nli)=0;
-    //    A(il*nli+1,il*nli+1)=A(il*nli+1,il*nli+1)-k3;
-    //    A(il*nli+nli,il*nli+nli+1)=0;
-    //    A(il*nli+nli,il*nli+nli)=A(il*nli+nli,il*nli+nli)-k3;
-    //}
+    for(il=0;il<(nt/nli)-1 ;il++){ // inner cells - left and right marigns
+        A(il*nli+1,il*nli)=0;
+        A(il*nli+1,il*nli+1)=A(il*nli+1,il*nli+1)-k3;
+        A(il*nli+nli,il*nli+nli+1)=0;
+        A(il*nli+nli,il*nli+nli)=A(il*nli+nli,il*nli+nli)-k3;
+    }
 
     // 2) first row (y=1)
     A(arma::span(0,nli-1),arma::span(0,nli-1)) = a1*arma::diagmat(arma::ones(1,nli)); //diagonal
@@ -63,12 +63,12 @@ void crank_nicholson(globalvar& gv,double *deltt,double *v,double *D)
             +k3*arma::diagmat(arma::ones(1,nt-1),-1);
 
 
-    //for(il=0;il<(nt/nli)-1 ;il++){         // inner cells - left and right marigns
-    //    B(il*nli+1,il*nli)=0;
-    //    B(il*nli+1,il*nli+1)=A(il*nli+1,il*nli+1)-k3;
-    //    B(il*nli+nli,il*nli+nli+1)=0;
-    //    B(il*nli+nli,il*nli+nli)=A(il*nli+nli,il*nli+nli)-k3;
-    //}
+    for(il=0;il<(nt/nli)-1 ;il++){         // inner cells - left and right marigns
+        B(il*nli+1,il*nli)=0;
+        B(il*nli+1,il*nli+1)=B(il*nli+1,il*nli+1)-k3;
+        B(il*nli+nli,il*nli+nli+1)=0;
+        B(il*nli+nli,il*nli+nli)=B(il*nli+nli,il*nli+nli)-k3;
+    }
 
     // 2) first row (y=1)
     B(arma::span(0,nli-1),arma::span(0,nli-1)) = (-a1)*arma::diagmat(arma::ones(1,nli)); //diagonal
