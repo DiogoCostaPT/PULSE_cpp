@@ -12,6 +12,8 @@
 #include "crank_nicholson_solve_hydr2D.h"
 #include "FEM_solver.h"
 
-void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile);
+void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
+        std::string* results_flname)
+;
 
 #endif

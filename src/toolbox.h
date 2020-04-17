@@ -15,6 +15,6 @@ std::string SplitFilename (const std::string& str);
 int findLastStep(const char *path);
 
 void checkmesh2(double* H_local,double* L_local,double* h_layer,double* l_layer,
-                int* nh,int* nl,std::ofstream* logPULSEfile);
+                int* nh,int* nl,std::ofstream* logPULSEfile,std::string* results_flname);
 
 #endif

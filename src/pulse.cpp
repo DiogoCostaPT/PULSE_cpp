@@ -5,7 +5,8 @@
 /* *****
  * Main PULSE model  
  * **** */
-void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
+void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
+        std::string* results_flname)
 {
     
     // initiation
@@ -147,7 +148,8 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
             end = std::chrono::system_clock::now();
             elapsed_seconds = end-start;
 
-            outwritestatus = print_results(gv,gp,std::round(print_next),gp.print_step,elapsed_seconds);
+            outwritestatus = print_results(gv,gp,std::round(print_next),gp.print_step,elapsed_seconds,
+                    results_flname);
 
         if(outwritestatus == true) 
         {

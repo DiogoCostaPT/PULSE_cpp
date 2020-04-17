@@ -51,15 +51,18 @@ int findLastStep(const char *path) {
  * Identify the snowpack mesh based on file 0.txt 
  */
 void checkmesh2(double* H_local,double* L_local,double* h_layer,double* l_layer,
-                int* nh,int* nl,std::ofstream* logPULSEfile)
+                int* nh,int* nl,std::ofstream* logPULSEfile,std::string* results_flname)
 {
     unsigned int a, timstart;
     
     arma::mat filedata; 
     std::string init_file, msg;
     
-    timstart = findLastStep("Results/"); // list the results files to get the last time step
-    init_file = "Results/" + std::to_string(int(timstart)) + ".txt";   
+    char results_flname_char[(*results_flname).size()+1];
+    strcpy(results_flname_char,(*results_flname).c_str());
+
+    timstart = findLastStep(results_flname_char); // list the results files to get the last time step
+    init_file = *results_flname + std::to_string(int(timstart)) + ".txt";   
     bool flstatus = filedata.load(init_file,arma::csv_ascii);
     
     *nh = 0;

@@ -48,6 +48,7 @@ int main(int argc, char* argv[])
     std::ofstream logPULSEfile ("log.pulse");
     
     std::string modset_flname (argv[1]);
+    std::string results_flname (argv[2]);
 
     // Assign global parameters
     globalpar gp; 
@@ -72,7 +73,7 @@ int main(int argc, char* argv[])
 
         // create mesh
         //checkmesh(&H_local,&L_local,&h_layer,&l_layer,&nh,&nl,&logPULSEfile);
-        checkmesh2(&H_local,&L_local,&h_layer,&l_layer,&nh,&nl,&logPULSEfile);
+        checkmesh2(&H_local,&L_local,&h_layer,&l_layer,&nh,&nl,&logPULSEfile,&results_flname);
 
         // Asign global variables (heap)
         globalvar gv(nh,nl,n_qcmelt,n_snowfallt); 
@@ -92,7 +93,7 @@ int main(int argc, char* argv[])
         initiate(gp,gv,&logPULSEfile);
 
         // call the main PULSE model
-        pulsemodel(gp,gv,&logPULSEfile);
+        pulsemodel(gp,gv,&logPULSEfile,&results_flname);
 
         // Simulation completed
         msg = "\n......................................... \n Simulation complete";

@@ -19,14 +19,15 @@ void print_screen_log(std::ofstream* logPULSEfile,std::string* msg)
 /* *****
  * Print results   
  * **** */
-bool print_results(globalvar& gv,globalpar& gp, int print_tag, unsigned int print_step, std::chrono::duration<double> elapsed_seconds)
+bool print_results(globalvar& gv,globalpar& gp, int print_tag, unsigned int print_step, 
+        std::chrono::duration<double> elapsed_seconds,std::string* results_flname)
 {
 
     unsigned int il,ih;
     int a = 0;
     int nh_l = gv.nh;
     
-    std::string tprint = "Results/" + std::to_string(print_tag); 
+    std::string tprint = *results_flname + "/" + std::to_string(print_tag); 
     std::string filext(".txt");
     tprint += filext;
 
