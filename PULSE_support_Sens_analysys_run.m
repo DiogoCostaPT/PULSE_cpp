@@ -41,7 +41,7 @@ ALPHA_IE_all = rand(num_samples,1) * ALPHA_IE_max;
 
 hbar = parfor_progressbar(num_samples, 'Sensiivity_test running...');
     
-for i=1:num_samples
+parfor i=1:num_samples
     
     A_D_all_i = A_D_all(i);
     ALPHA_IE_all_i = ALPHA_IE_all(i);
