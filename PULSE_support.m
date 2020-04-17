@@ -66,52 +66,9 @@ if Plot_results
     % generate mesh grid for plot surf
     [Hmesh,Tmesh] = meshgrid(ih,time_sim);
     
-    % Obs
-    BRG_data = importdata(Obs_file);
-    datafields = fieldnames(BRG_data.data);
-    depth = BRG_data.data.(genvarname(datafields{1}))(:,2:end-1); % last column is the accumulation average
-
-    depth_temporar_increment = 20; % needed to make sure that the interpolation method will work
-    depth_corr = depth + depth_temporar_increment;
-
-    depth_corr_max = max(max(depth_corr));
-    depth_corr_min = min(min(depth_corr));
-
-    depth_fixed_int = [depth_corr_min:0.1:depth_corr_max];
-
-    iloc = find(strcmp(datafields,chemical_species));
-
-    depths_str_baseline = BRG_data.textdata.(genvarname(datafields{iloc}));
-    depths_raw = getnums(depths_str_baseline);   
-    depths_cols_noNaN = find(~isnan(depths_raw)==1);
-
-
-    % Get matrix data    
-    data_raw = BRG_data.data.(genvarname(datafields{iloc}));
-    time = data_raw(:,1) + 693960;
-    data = data_raw(:,depths_cols_noNaN+1); % ONLY THE DEPTHS
-    depths = depths_raw(depths_cols_noNaN); 
-    [X,Y] = meshgrid(depth_fixed_int,time);
-    Z = data;
-    C = data;
-
-    hour1 = datenum(now + seconds(3600))
-    depth_corr_onecolmn = reshape(depth_corr,[],1);
-    Y_onecolmn = reshape(Y,[],1);
-    Z_onecolmn = reshape(Z,[],1);
-    C_onecolmn = reshape(C,[],1);
-
-    %ilocnan = find(isnan(C_onecolmn));
-    %Y_onecolmn(ilocnan) = [];
-    %Z_onecolmn(ilocnan) = [];
-    %C_onecolmn(ilocnan) = [];
-
-    cmax = max(C_onecolmn);
-    hotbar = jet;
-    hotbar = [[0,0,0];hotbar];
-    C_onecolmn(isnan(C_onecolmn)) = 0;
-    colorc = round(C_onecolmn/cmax * 63)+1;
-    colvec = hotbar(colorc+1,:);
+    % Retrieve Obs data for c_total
+    [X_obs_mesh,Y_obs_mesh,Z_obs_mesh,Marsize_obs_mesh,colvec] = Get_obs_data(Obs_file,c_total,chemical_species); 
+   
 
     figure('name',comment)
     for i = 1:5
@@ -126,16 +83,21 @@ if Plot_results
         surf(Tmesh,Hmesh,var_print)
         if i == 3
             hold on
-            h1 = scatter3(repmat(time,numel(depths),1),...
-                            depth_corr_onecolmn,...
-                            Z_onecolmn + 20,...
-                            10*ones(numel(Z_onecolmn),1),...
+            h1 = scatter3(X_obs_mesh,...
+                          Y_obs_mesh,...
+                          Z_obs_mesh,...
+                          Marsize_obs_mesh,...
                             colvec,...
-                            'filled','markeredgecolor','b');
+                            'filled','markeredgecolor','w');
+            cmax_i = cmax_ctotal;          
+        else
+            cmax_i = max(max(var_print));
         end
         xlim([min(Tmesh(:,1)) max(Tmesh(:,1))])
         datetick('x','mm-dd','keepticks','keeplimits')
         ylim([0 max(Hmesh(1,:))])
+        caxis([0 cmax_i])
+        colormap(jet)
         colorbar
         view(0,90)
         title(var_print_name)
@@ -259,5 +221,58 @@ end
             time_sim = datenum(start_time_num + seconds(time_sim_elapsec));
         end  
     end
+    
+ end
+ 
+ % Get obs data
+ function [X_obs_mesh,Y_obs_mesh,Z_obs_mesh,Marsize_obs_mesh,colvec] = Get_obs_data(Obs_file,c_total,chemical_species)
+   
+    BRG_data = importdata(Obs_file);
+    datafields = fieldnames(BRG_data.data);
+    depth = BRG_data.data.(genvarname(datafields{1}))(:,2:end-1); % last column is the accumulation average
+
+    depth_temporar_increment = 20; % needed to make sure that the interpolation method will work
+    depth_corr = -depth + max(100);
+
+    depth_corr_max = max(max(depth_corr));
+    depth_corr_min = min(min(depth_corr));
+
+    depth_fixed_int = [depth_corr_min:0.1:depth_corr_max];
+
+    iloc = find(strcmp(datafields,chemical_species));
+
+    depths_str_baseline = BRG_data.textdata.(genvarname(datafields{iloc}));
+    depths_raw = getnums(depths_str_baseline);   
+    depths_cols_noNaN = find(~isnan(depths_raw)==1);
+
+
+    % Get matrix data    
+    data_raw = BRG_data.data.(genvarname(datafields{iloc}));
+    time = data_raw(:,1) + 693960;
+    data = data_raw(:,depths_cols_noNaN+1)/1000; %ppb to mg/l
+    depths = depths_raw(depths_cols_noNaN);
+    elev_meas = max(depths) - depths;
+    [X,Y] = meshgrid(depth_fixed_int,time);
+    Z = data;
+    C = data;
+
+    depth_corr_onecolmn = reshape(depth_corr,[],1);
+    Y_onecolmn = reshape(Y,[],1);
+    Z_onecolmn = reshape(Z,[],1);
+    C_onecolmn = reshape(C,[],1);
+    
+    X_obs_mesh = repmat(time,numel(elev_meas),1);
+    Y_obs_mesh = depth_corr_onecolmn;
+    Z_obs_mesh = Z_onecolmn + 20;
+    Marsize_obs_mesh = 30*ones(numel(Z_onecolmn),1);
+    
+    cmax_obs = max(C_onecolmn);
+    cmax_mod = max(max(c_total));
+    cmax_ctotal = max(cmax_obs,cmax_mod);
+    hotbar = jet;
+    %hotbar = [hotbar];
+    C_onecolmn(isnan(C_onecolmn)) = 0;
+    colorc = round(C_onecolmn/cmax_ctotal * (numel(hotbar(:,1))-1))+1;
+    colvec = hotbar(colorc,:);
     
  end
