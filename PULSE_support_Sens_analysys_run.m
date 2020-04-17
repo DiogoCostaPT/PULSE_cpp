@@ -41,7 +41,7 @@ ALPHA_IE_all = rand(num_samples,1) * ALPHA_IE_max;
 
 hbar = parfor_progressbar(num_samples, 'Sensiivity_test running...');
     
-parfor i=1:num_samples
+for i=1:num_samples
     
     A_D_all_i = A_D_all(i);
     ALPHA_IE_all_i = ALPHA_IE_all(i);
@@ -70,6 +70,11 @@ parfor i=1:num_samples
     % copy 0.txt file (IC conditions)
     file_0txt_fullpath = [pulse_dir,'/Results/0.txt'];
     copyfile(file_0txt_fullpath,res_subfold)
+    
+    % save sensitivity analysis info
+    sens_info = {['A_D ', num2str(A_D_all_i)];
+                ['ALPHA_IE ', num2str(ALPHA_IE_all_i)]};
+    writecell(sens_info,[sim_subfold,'/Sens_info']);
     
     % run scenario
     PULSE_support_run_pulse(0,sim_subfold(numel(pwd)+2:end),...

@@ -15,7 +15,7 @@ chemical_species = 'NO3';
 col_li = 5; % vertical cell to print results
 Obs_file = 'BRG_data.xlsx';
 
-% Sensitivity analysys?
+% Sensitivity analysys run?
 Sens_analysys__run_flag = 1;
 num_samples = 200;
 A_D_max = 0.3;           
@@ -33,6 +33,8 @@ if Plot_results_flag; PULSE_support_plot_results(pulse_dir,results_dir,...
 %% Sensitivity analysis (multiple runs)
 if Sens_analysys__run_flag; PULSE_support_Sens_analysys_run(masterfile,pulse_dir,num_samples,...
         A_D_max,ALPHA_IE_max); end
+
+
 
 
 
