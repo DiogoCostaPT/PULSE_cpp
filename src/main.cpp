@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
 
 
         // initial conditions
-        initiate(gp,gv,&logPULSEfile);
+        initiate(gp,gv,&logPULSEfile,&results_flname);
 
         // call the main PULSE model
         pulsemodel(gp,gv,&logPULSEfile,&results_flname);

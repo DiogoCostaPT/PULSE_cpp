@@ -6,6 +6,7 @@
 #include "toolbox.h"
 #include "outwrite.h"
 
-void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile);
+void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
+    std::string* results_flname);
 
 #endif

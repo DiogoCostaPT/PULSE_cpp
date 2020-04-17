@@ -4,7 +4,8 @@
 /* *****
  * MAIN  
  * **** */
-void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
+void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
+    std::string* results_flname)
 {
     
     unsigned int a, ih, il;
@@ -12,10 +13,13 @@ void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile)
     
     arma::mat filedata; 
     std::string init_file, msg;
+
+    char results_flname_char[(*results_flname).size()+1];
+    strcpy(results_flname_char,(*results_flname).c_str());
     
-    gv.timstart = findLastStep("Results/"); // list the results files to get the last time step
+    gv.timstart = findLastStep(results_flname_char); // list the results files to get the last time step
     
-    init_file = "Results/" + std::to_string(int(gv.timstart)) + ".txt";
+    init_file = *results_flname + '/' + std::to_string(int(gv.timstart)) + ".txt";
     
     bool flstatus = filedata.load(init_file,arma::csv_ascii);
     //gv.upperboundary_z = gv.nh*gv.snowh;
