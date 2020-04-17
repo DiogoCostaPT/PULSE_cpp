@@ -5,7 +5,7 @@ pulse_dir = 'bin';
 results_dir = 'bin/Results';
 
 % Run pulse once?
-Run_pulse_flag = 1;
+Run_pulse_flag = 0;
 Clean_results_folder_except_IC_flag = 1;
 IC_file = '0.txt';
 
@@ -16,7 +16,7 @@ col_li = 5; % vertical cell to print results
 Obs_file = 'BRG_data.xlsx';
 
 % Sensitivity analysys?
-Sens_analysys__run_flag = 0;
+Sens_analysys__run_flag = 1;
 num_samples = 200;
 A_D_max = 0.3;           
 ALPHA_IE_max = 0.3;

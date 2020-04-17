@@ -73,7 +73,7 @@ parfor i=1:num_samples
     
     % run scenario
     PULSE_support_run_pulse(0,sim_subfold(numel(pwd)+2:end),...
-        [],[],masterfile)
+        res_subfold,[],masterfile)
     
     hbar.iterate(1);   % update progress by one iteration
 end
