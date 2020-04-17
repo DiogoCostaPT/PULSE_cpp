@@ -24,3 +24,4 @@ function deleted_results(results_dir,IC_file)
       delete([results_dir,'/',f{k}])
     end
 end
+
