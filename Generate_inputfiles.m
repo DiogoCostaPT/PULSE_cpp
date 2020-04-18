@@ -12,7 +12,7 @@ dataraw_chem = xlsread([folder_loc,chemistry_file],species);
 
 time_obs_chem = dataraw_chem(:,1) + 693960;
 
-depths_obs = [10,20,30,40,50,60,70,80,90,100];		
+depths_obs = [10,20,30,40,50,60,70,80,90,100]; % cm		
 
 NO3_conc_ppb = dataraw_chem(1,2:end); % ppb
 %NO3_conc_ppb = [281.766753953895,112.96520293409,162.480671212122,102.504849889069,116.591016244802,...
@@ -20,9 +20,9 @@ NO3_conc_ppb = dataraw_chem(1,2:end); % ppb
 
 NO3_conc_mgl = NO3_conc_ppb / 1000;
 
-snow_L = 2;
-snow_h = 0.2; % 5 mm
-snow_l = 0.2; % 1 mm
+snow_L = 10;
+snow_h = 1; % 5 mm
+snow_l = 1; % 1 mm
 
 % calc
 
