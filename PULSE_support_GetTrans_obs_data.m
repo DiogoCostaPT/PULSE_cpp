@@ -16,7 +16,7 @@
     
     X_obs_mesh = repmat(time,numel(elev_meas),1);
     Y_obs_mesh = depth_corr_onecolmn;
-    Z_obs_mesh = Z_onecolmn + 20;
+    Z_obs_mesh = Z_onecolmn;
     Marsize_obs_mesh = 30*ones(numel(Z_onecolmn),1);
     
     cmax_obs = max(C_onecolmn);

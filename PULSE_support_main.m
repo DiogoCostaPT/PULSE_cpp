@@ -2,7 +2,7 @@
 % General info
 masterfile = 'simset';
 pulse_dir = 'bin';
-results_dir = '/media/dcosta/data/megasync/ec_main/models/pulse/code/code_pulse_cpp/Sensitivity_analysis/Sens_4/Run_87/Results';
+results_dir = 'bin/Results';
 Obs_file = 'BRG_data.xlsx';
 chemical_species = 'NO3';
 col_li = 5; % vertical cell to print results

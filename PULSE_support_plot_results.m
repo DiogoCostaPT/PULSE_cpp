@@ -40,6 +40,8 @@ function PULSE_support_plot_results(pulse_dir,results_dir,chemical_species,...
                             colvec,...
                             'filled','markeredgecolor','b');
             cmax_i = cmax_ctotal;          
+        elseif i == 4 || i == 5
+            cmax_i = 1;
         else
             cmax_i = max(max(var_print));
         end
