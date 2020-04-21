@@ -7,20 +7,20 @@ void vol_fract_calc(globalpar& gp,globalvar& gv,double *deltt)
 {
     
     //double dvfrac_s_dt = (*q) / gv.vtotal_check;
-    double dvfrac_s_dt = gv.qmelt_i / (gv.snowH * gp.rho_frshsnow_init);
+    double dvfrac_s_dt = gv.qmelt_i * (*deltt) / (gv.snowH * gp.rho_frshsnow_init);
     double dvfrac_i_dt = dvfrac_s_dt;
 
     gv.vfrac_m_prev = gv.vfrac_m;
     gv.vfrac_i_prev = gv.vfrac_i;
     gv.vfrac_s_prev = gv.vfrac_s;
     
-    gv.vfrac_s = std::fmax(gv.vfrac_s - dvfrac_s_dt * (*deltt), 0.f);
+    gv.vfrac_s = std::fmax(gv.vfrac_s - dvfrac_s_dt, 0.f);
     //if (gv.vfrac_s != 0){
     //    gv.vfrac_i = std::fmax(gv.vfrac_i + dvfrac_s_dt * (*deltt) - dvfrac_i_dt * (*deltt), 0.f); 
     //}else{
     //    gv.vfrac_i = std::fmax(gv.vfrac_i - dvfrac_i_dt * (*deltt) , 0.f);     
     //};
-    gv.vfrac_m = std::fmin(gv.vfrac_m + dvfrac_i_dt * (*deltt) , 1.f);  
+    gv.vfrac_m = std::fmin(gv.vfrac_m + dvfrac_i_dt, 1.f);  
        
 }
 
