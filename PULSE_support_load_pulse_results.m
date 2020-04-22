@@ -40,9 +40,13 @@ end
         try
             file_2_read = [results_dir,'/',num2str(filename_no_sort(i)),'.txt'];
             dataraw = readtable(file_2_read);
-            i_rel = dataraw.Var2==col_li;
-            data = dataraw(i_rel,:);
-            h_layers(i) = numel(data(:,1));
+            if ~isempty(dataraw)
+                i_rel = dataraw.Var2==col_li;
+                data = dataraw(i_rel,:);
+                h_layers(i) = numel(data(:,1));
+            else
+                h_layers(i) = 0;
+            end
         catch
             disp(['Error: problem reading file ',file_2_read])
         end
@@ -76,27 +80,34 @@ end
             data_raw = readtable([results_dir,'/',num2str(filename_no_sort(i)),'.txt']);
 
             time_i = file_i; % in seconds
+            
+            if ~isempty(data_raw)
+                i_rel = find(data_raw.Var2==col_li);
 
-            i_rel = find(data_raw.Var2==col_li);
+                data = data_raw(i_rel,:);
+                h_layers_i = numel(data(:,1));
 
-            data = data_raw(i_rel,:);
-            h_layers_i = numel(data(:,1));
+                time(i) = time_i;
 
-            time(i) = time_i;
-            
-            cm_i = flipud(data.Var3)';
-            nh_i = numel(cm_i);
-            extra_h = nh_l-nh_i;
-            c_m(i,:) = [cm_i,zeros(1,extra_h)];
-            
-            cs_i = flipud(data.Var5)'; 
-            c_s(i,:) =  [cs_i,zeros(1,extra_h)];
-            
-            poros_m_i = flipud(data.Var6)'; 
-            poros_m(i,:) =  [poros_m_i,zeros(1,extra_h)];
-            
-            poros_s_i = flipud(data.Var7)'; 
-            poros_s(i,:) =  [poros_s_i,zeros(1,extra_h)];
+                cm_i = flipud(data.Var3)';
+                nh_i = numel(cm_i);
+                extra_h = nh_l-nh_i;
+                c_m(i,:) = [cm_i,zeros(1,extra_h)];
+
+                cs_i = flipud(data.Var5)'; 
+                c_s(i,:) =  [cs_i,zeros(1,extra_h)];
+
+                poros_m_i = flipud(data.Var6)'; 
+                poros_m(i,:) =  [poros_m_i,zeros(1,extra_h)];
+
+                poros_s_i = flipud(data.Var7)'; 
+                poros_s(i,:) =  [poros_s_i,zeros(1,extra_h)];
+            else
+                 c_m(i,:) = NaN;
+                 c_s(i,:) = NaN;
+                 poros_m(i,:) = NaN;
+                 poros_s(i,:) = NaN;
+            end
 
         catch
             disp(['problem with results file ',num2str(file_i)])

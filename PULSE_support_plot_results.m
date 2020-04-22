@@ -24,11 +24,15 @@ function PULSE_support_plot_results(pulse_dir,results_dir,chemical_species,...
     for i = 1:5
         
         if i==1; var_print = c_m; var_print_name = 'c_m'; end
-        if i==2; var_print = c_s; var_print_name = 'c_s'; end
+        if i==2; var_print = c_s; inanloc = find(c_s==0); var_print_name = 'c_s'; end
         if i==3; var_print = c_total; var_print_name = 'c_total'; end
         if i==4; var_print = poros_m; var_print_name = 'poros_m'; end
         if i==5; var_print = poros_s; var_print_name = 'poros_s'; end
-            
+        
+        if i > 1
+           var_print(inanloc) = NaN;
+        end
+        
         subplot(2,3,i)
         surf(Tmesh,Hmesh,var_print)
         if i == 3
@@ -60,7 +64,7 @@ function PULSE_support_plot_results(pulse_dir,results_dir,chemical_species,...
     %Model_data_interc = interp1(Data_time(1:end-1),Data(1:end-1),T_WQsort);
     Model_data_interc = interp2(Hmesh,Tmesh,c_total,Y_obs_mesh,X_obs_mesh);
     
-    figure('name',comment)
+    figure('name',[comment,' obsVSmodel'])
     scatter(Z_obs_mesh,Model_data_interc,'k')
     %limmin = min(min(Model_data_interc));
     limmax = max(max(Model_data_interc));

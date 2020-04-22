@@ -25,7 +25,7 @@ RMSE = zeros(num_runs,1)*NaN;
 
 hbar = parfor_progressbar(num_runs, 'Calculating Nash, RMSE and Bias...');
 %run_no = str2num(char(run_no));
-parfor run_i = 1:num_runs
+for run_i = 1:num_runs
     hbar.iterate(1)
     
     sim_i = folder_content{run_i};
