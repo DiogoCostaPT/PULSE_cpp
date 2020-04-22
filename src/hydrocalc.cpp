@@ -68,7 +68,7 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
     }
     
     // layer add or remove
-    if (gv.nh_change<0 && std::abs(gv.nh_change)>=gv.snowh){ // MELT - remove layer
+    if (gv.nh_change<0 && std::abs(gv.nh_change)>=gv.snowh && gv.nh>0){ // MELT - remove layer
         
          // add all immobile and solid slow that melted from the last cell) 
         //(*gv.c_m)(arma::span(0,gv.nl-1),1) = ((*gv.c_m)(arma::span(0,gv.nl-1),0) * gv.vfrac_m_prev

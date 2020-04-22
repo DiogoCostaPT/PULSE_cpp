@@ -51,7 +51,9 @@ bool print_results(globalvar& gv,globalpar& gp, int print_tag, unsigned int prin
     }
    
     arma::mat filedata(std::max(0,a-1),8); 
-    filedata = filedataR(arma::span(0,std::max(0,a-1)),arma::span(0,8));
+    if (a>0){
+        filedata = filedataR(arma::span(0,std::max(0,a-1)),arma::span(0,8));
+    }
     
     bool outwritestatus =  filedata.save(tprint,arma::csv_ascii);
     return outwritestatus;

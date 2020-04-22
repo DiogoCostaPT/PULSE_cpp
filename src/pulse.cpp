@@ -60,7 +60,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
 
         tcum = tcum + deltt; 
 
-        if (gv.qmelt_i>0.0f){ // if melt
+        if (gv.qmelt_i>0.0f && gv.nh>0){ // if melt
             
             // calculate volume fractions
             vol_fract_calc(gp,gv,&deltt);
