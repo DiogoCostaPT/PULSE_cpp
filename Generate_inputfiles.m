@@ -4,9 +4,10 @@ folder_loc = '/media/dcosta/data/megasync/ec_main/models/pulse/code/code_matlab_
 meteo_file = 'Meteo_2014-2015.xlsx';
 chemistry_file = 'BRG_data.xlsx';
 species = 'NO3';
+T_index_coef = 0.0002;
     
 gen_0txtfile_flag = 0;    
-gen_prec_file_flag = 1;
+gen_prec_and_qmelt_T_index_files_flag = 1;
 
 %% Generate 0.txt file 
 if gen_0txtfile_flag == 1
@@ -59,7 +60,7 @@ if gen_0txtfile_flag == 1
 
 end
 %% Generate Qmelt data
-if gen_prec_file_flag == 1
+if gen_prec_and_qmelt_T_index_files_flag == 1
     
     % meteo data
     dataraw_meteo = importdata([folder_loc,meteo_file]);
@@ -132,14 +133,14 @@ if gen_prec_file_flag == 1
     title('PREC_type_ts')
     grid on
 
-    % PREC_type_ts: 2 is liquid, 3 is snow, 30 and 32 a kind of slush snow
+    %% PREC_type_ts: 2 is liquid, 3 is snow, 30 and 32 a kind of slush snow
     RAIN_ts = PREC_ts;
     RAIN_ts.Data(PREC_type_ts.Data~=2) = 0;
 
     SNOWfall_ts = PREC_ts;
     SNOWfall_ts.Data(PREC_type_ts.Data==2) = 0; % daily
     
-    % plot precipitation
+    % plot
     figure
     plot(RAIN_ts)
     hold on
@@ -147,7 +148,6 @@ if gen_prec_file_flag == 1
     legend('RAIN_tc','SNOWfall_tc')
     grid on
     ylabel('mm')
-
 
     % data to copy past to model's meteo file (time and prec vol)
     time_pulse = SNOWfall_ts.Time(1:end);
@@ -160,5 +160,10 @@ if gen_prec_file_flag == 1
     % join
     time_pulse_sec = [0; cumsum(etime(datevec(SNOWfall_ts.Time(2:end)),datevec(SNOWfall_ts.Time(1:end-1))))];
     Snowfall_file = [time_pulse_sec,snowaccum_2pulse,snowprec_chem];
+    
+    %% QMELT
+    qmelt_estim_ts = max(TEMP_ts.data * T_index_coef,0);
+    qmelt_file = [time_pulse_sec,qmelt_estim_ts];
 
 end
+
