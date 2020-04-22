@@ -59,15 +59,17 @@ end
     
     % create matrixes
     time = ones(timesteps_num,1) * NaN;
-    ih = ones(timesteps_num,1) * NaN;
+    %ih = ones(timesteps_num,1) * NaN;
     c_m = ones(timesteps_num,h_layers_max) * NaN;
     c_s = ones(timesteps_num,h_layers_max) * NaN;
     poros_m = ones(timesteps_num,h_layers_max) * NaN;
     poros_s = ones(timesteps_num,h_layers_max) * NaN;
+    
+    nh_l = numel(c_m(1,:));
 
     % load data and process it
     hbar = parfor_progressbar(numel(filename_no_sort), 'Loading results...');
-    for i = 1:numel(filename_no_sort)
+    parfor i = 1:numel(filename_no_sort)
         hbar.iterate(1)
         file_i = filename_no_sort(i);
         try
@@ -82,10 +84,19 @@ end
 
             time(i) = time_i;
             
-            c_m(i,1:h_layers_i) = flipud(data.Var3)';
-            c_s(i,1:h_layers_i) = flipud(data.Var5)';
-            poros_m(i,1:h_layers_i) = flipud(data.Var6)';
-            poros_s(i,1:h_layers_i) = flipud(data.Var7)';
+            cm_i = flipud(data.Var3)';
+            nh_i = numel(cm_i);
+            extra_h = nh_l-nh_i;
+            c_m(i,:) = [cm_i,zeros(1,extra_h)];
+            
+            cs_i = flipud(data.Var5)'; 
+            c_s(i,:) =  [cs_i,zeros(1,extra_h)];
+            
+            poros_m_i = flipud(data.Var6)'; 
+            poros_m(i,:) =  [poros_m_i,zeros(1,extra_h)];
+            
+            poros_s_i = flipud(data.Var7)'; 
+            poros_s(i,:) =  [poros_s_i,zeros(1,extra_h)];
 
         catch
             disp(['problem with results file ',num2str(file_i)])
