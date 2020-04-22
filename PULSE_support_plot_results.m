@@ -61,12 +61,13 @@ function PULSE_support_plot_results(pulse_dir,results_dir,chemical_species,...
     Model_data_interc = interp2(Hmesh,Tmesh,c_total,Y_obs_mesh,X_obs_mesh);
     
     figure('name',comment)
-    scatter(Z_obs_mesh,Model_data_interc)
-    limmin = min(min(Model_data_interc));
+    scatter(Z_obs_mesh,Model_data_interc,'k')
+    %limmin = min(min(Model_data_interc));
     limmax = max(max(Model_data_interc));
     hold on
-    plot([limmin limmin],[limmax limmax],'k')
-    xlim([limmin limmax])
+    plot([0 limmax],[0 limmax],'k')
+    xlim([0 limmax])
+    ylim([0 limmax])
     grid on
     xlabel('Obs (mg/l)')
     ylabel('Model (mg/l)')
