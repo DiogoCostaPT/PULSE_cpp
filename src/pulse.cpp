@@ -92,32 +92,45 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
                 }
               }
 
-
             if (gv.qmelt_i > 0.0f){
 
                  // Ion exclusion: Exchange with immobile phase (just exchange)
-                (*gv.exchange_is)  = deltt * (gp.alphaIE/gv.vfrac_m_prev * (*gv.c_s)) ; 
+                (*gv.exchange_is)  = deltt * (gp.alphaIE * (*gv.c_s) * gv.vfrac_s) ; 
 
                 // limit the flux to the available material
                 for(il=0;il<gv.nl ;il++){
                     for(ih=0;ih<gv.nh ;ih++){
                          if ((*gv.exchange_is).at(il,ih) > 0){
-                            (*gv.exchange_is).at(il,ih) = std::min((*gv.exchange_is).at(il,ih),(*gv.c_s).at(il,ih));
-                        }else if((*gv.exchange_is).at(il,ih) < 0){
-                             (*gv.exchange_is).at(il,ih) = 0.0f;
+                            (*gv.exchange_is).at(il,ih) = std::fmin((*gv.exchange_is).at(il,ih),
+                                (*gv.c_s).at(il,ih) * gv.vfrac_s);
+
+                            (*gv.c_s).at(il,ih) = ((*gv.c_s).at(il,ih) * gv.vfrac_s 
+                                    - (*gv.exchange_is).at(il,ih)) / gv.vfrac_s;
+                            (*gv.c_m).at(il,ih) = ((*gv.c_m).at(il,ih) * gv.vfrac_m 
+                                    + (*gv.exchange_is).at(il,ih)) / gv.vfrac_m;
+                            (*gv.c_s).at(il,ih) = std::fmax((*gv.c_s).at(il,ih),0.0f);
+                            (*gv.c_m).at(il,ih) = std::fmax((*gv.c_m).at(il,ih),0.0f);
+
+                        //}else if((*gv.exchange_is).at(il,ih) < 0){
+                        //     (*gv.exchange_is).at(il,ih) = 0.0f;
+                             //msg = "PROBLEM: negative s->i exchange" + std::to_string((*gv.c_s).at(il,ih));
+                             //std::cout << msg << std::endl;
+                             //print_screen_log(logPULSEfile,&msg);
                         }
                          //if(ih<gv.upperboundary_cell || ih>gv.wetfront_cell){
-                         if(ih>gv.wetfront_cell){
+                        if(ih>gv.wetfront_cell){
                                 (*gv.exchange_is).at(il,ih) = 0.0f;
-                            };
+                        };
                     }
                 };
-                (*gv.c_s) =  ( (*gv.c_s) * gv.vfrac_s_prev - (*gv.exchange_is) * gv.vfrac_i_prev ) / gv.vfrac_s; // / vfrac_m(t);
-                (*gv.c_m) = ( (*gv.c_m) * gv.vfrac_m_prev + (*gv.exchange_is) * gv.vfrac_i_prev ) / gv.vfrac_m;
+                
+                //(*gv.c_s) =  ( (*gv.c_s) * gv.vfrac_s - (*gv.exchange_is)) / gv.vfrac_s; // / vfrac_m(t);
+                //(*gv.c_m) = ( (*gv.c_m) * gv.vfrac_m + (*gv.exchange_is)) / gv.vfrac_m;
+  
 
-
+                
                 // Snowmelt
-                (*gv.exchange_si) = (*gv.c_s) * gp.rho_s/gp.rho_m * gv.qmelt_i * deltt / (gv.wetfront_cell+1);
+                (*gv.exchange_si) = (*gv.c_s) * gv.qmelt_i * deltt / (gv.wetfront_cell+1);
 
                 // limit the flux to the available material
                 for(il=0;il<gv.nl ;il++){
@@ -125,19 +138,27 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
 
                             if ((*gv.exchange_si).at(il,ih) > 0){
                                 (*gv.exchange_si).at(il,ih) = std::fmin((*gv.exchange_si).at(il,ih),(*gv.c_s).at(il,ih));
+                            
+                                (*gv.c_s).at(il,ih) = ((*gv.c_s).at(il,ih) * gv.vfrac_s 
+                                    - (*gv.exchange_si).at(il,ih)) / gv.vfrac_s;
+                                (*gv.c_m).at(il,ih) = ((*gv.c_m).at(il,ih) * gv.vfrac_m 
+                                        + (*gv.exchange_si).at(il,ih)) / gv.vfrac_m;
+                                (*gv.c_s).at(il,ih) = std::fmax((*gv.c_s).at(il,ih),0.0f);
+                                (*gv.c_m).at(il,ih) = std::fmax((*gv.c_m).at(il,ih),0.0f);
+                            
                             }else if((*gv.exchange_si).at(il,ih) < 0){
-                                msg = "PROBLEM: negative s->i exchange";
-                                std::cout << msg << std::endl;
-                                print_screen_log(logPULSEfile,&msg);
+                                //msg = "PROBLEM: negative s->i exchange";
+                                //std::cout << msg << std::endl;
+                                //print_screen_log(logPULSEfile,&msg);
                             }
                             if(ih>gv.wetfront_cell){
                                 (*gv.exchange_si).at(il,ih) = 0.0f;
                             };
                     }
                 };
-                (*gv.c_m) =  ( (*gv.c_m) * gv.vfrac_m_prev + (*gv.exchange_si) * gv.vfrac_s_prev ) / gv.vfrac_m; // / vfrac_m(t);
-                (*gv.c_s) = ( (*gv.c_s) * gv.vfrac_s_prev - (*gv.exchange_si) * gv.vfrac_s_prev ) / gv.vfrac_s;
-
+                //(*gv.c_m) =  ( (*gv.c_m) * gv.vfrac_m_prev + (*gv.exchange_si) * gv.vfrac_s_prev ) / gv.vfrac_m; // / vfrac_m(t);
+                //(*gv.c_s) = ( (*gv.c_s) * gv.vfrac_s_prev - (*gv.exchange_si) * gv.vfrac_s_prev ) / gv.vfrac_s;
+                
             }
         }
     }
