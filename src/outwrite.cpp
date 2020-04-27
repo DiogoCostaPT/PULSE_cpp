@@ -42,8 +42,8 @@ bool print_results(globalvar& gv,globalpar& gp, int print_tag, unsigned int prin
             filedataR(a,2) = (*gv.c_m).at(il,ih); 
             filedataR(a,3) = (*gv.c_i).at(il,ih); 
             filedataR(a,4) = (*gv.c_s).at(il,ih); 
-            filedataR(a,5) = (gv.vfrac_m); 
-            filedataR(a,6) = (gv.vfrac_s); 
+            filedataR(a,5) = (*gv. vfrac2d_m).at(il,ih);
+            filedataR(a,6) = (*gv. vfrac2d_s).at(il,ih);
             filedataR(a,7) = (*gv.exchange_si).at(il,ih); 
             filedataR(a,8) = (*gv.exchange_is).at(il,ih); 
             a = a + 1;

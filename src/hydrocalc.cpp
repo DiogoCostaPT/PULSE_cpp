@@ -22,7 +22,11 @@ void vol_fract_calc(globalpar& gp,globalvar& gv,double *deltt)
     //}else{
     //    gv.vfrac_i = std::fmax(gv.vfrac_i - dvfrac_i_dt * (*deltt) , 0.f);     
     //};
-    
+
+    if(gv.wetfront_cell>0){
+        (*gv. vfrac2d_m)(arma::span(0,gv.nl-1),arma::span(0,gv.wetfront_cell-1)) =  arma::ones(gv.nl,gv.wetfront_cell) * gv.vfrac_m;
+        (*gv.vfrac2d_s)(arma::span(0,gv.nl-1),arma::span(0,gv.wetfront_cell-1)) = arma::ones(gv.nl,gv.wetfront_cell) * gv.vfrac_s;
+    }
        
 }
 
@@ -97,23 +101,27 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
         (*gv.c_s).shed_cols(0,0);
         (*gv.exchange_si).shed_cols(0,0);
         (*gv.exchange_is).shed_cols(0,0);
+        (*gv. vfrac2d_m).shed_cols(0,0);
+        (*gv. vfrac2d_s).shed_cols(0,0);
             
     } else if (gv.nh_change>0 && std::abs(gv.nh_change)>=gv.snowh){ // adding a new layer
 
-            gv.nh++; // remove one layer
-            gv.snowH += gv.snowh; // snowpack depth 
-            gv.nh_change -= gv.snowh; 
-            gv.wetfront_cell_prev = gv.wetfront_cell;
-            gv.wetfront_cell = std::max(gv.wetfront_cell + 1,0);
+        gv.nh++; // remove one layer
+        gv.snowH += gv.snowh; // snowpack depth 
+        gv.nh_change -= gv.snowh; 
+        gv.wetfront_cell_prev = gv.wetfront_cell;
+        gv.wetfront_cell = std::max(gv.wetfront_cell + 1,0);
 
-            (*gv.c_m).insert_cols(0,1);
-            (*gv.c_i).insert_cols(0,1);
-            (*gv.c_s).insert_cols(0,1);
-            arma::mat newsnowlayer;
-            newsnowlayer.ones(nl_l,1);
-            (*gv.c_s).col(0) = newsnowlayer * gv.precipc_i;
-            (*gv.exchange_si).insert_cols(0,1);
-            (*gv.exchange_is).insert_cols(0,1);
+        (*gv.c_m).insert_cols(0,1);
+        (*gv.c_i).insert_cols(0,1);
+        (*gv.c_s).insert_cols(0,1);
+        arma::mat newsnowlayer;
+        newsnowlayer.ones(nl_l,1);
+        (*gv.c_s).col(0) = newsnowlayer * gv.precipc_i;
+        (*gv.exchange_si).insert_cols(0,1);
+        (*gv.exchange_is).insert_cols(0,1);
+        (*gv. vfrac2d_m).insert_cols(0,1);
+        (*gv. vfrac2d_s).insert_cols(0,1);
     }
    return;  
 }
