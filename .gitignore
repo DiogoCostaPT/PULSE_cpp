@@ -5,3 +5,7 @@ cmake_install.cmake
 compile_commands.json
 pulse_cpp
 CMakeCache.txt
+Results/
+Results_backup/
+Results_backup2/
+bin/
