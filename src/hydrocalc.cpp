@@ -25,7 +25,7 @@ void vol_fract_calc(globalpar& gp,globalvar& gv,double *deltt)
     //double dvfrac_i_dt = dvfrac_s_dt;
 
     gv.vfrac_m_prev = gv.vfrac_m;
-    gv.vfrac_i_prev = gv.vfrac_i;
+    //gv.vfrac_i_prev = gv.vfrac_i;
     gv.vfrac_s_prev = gv.vfrac_s;
     
     gv.vfrac_s = std::fmax(gv.vfrac_s - dvfrac_s_dt/gv.snowh, 0.0f);
@@ -63,10 +63,10 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
         gv.wetfront_cell_prev = 0;
         gv.wetfront_z = gv.snowH;
         gv.vfrac_m=0.008;
-        gv.vfrac_i=0.001;
+        //gv.vfrac_i=0.001;
         gv.vfrac_s= 1 - gv.vfrac_m - gv.vfrac_i;
         gv.vfrac_m_prev=gv.vfrac_m;
-        gv.vfrac_i_prev=gv.vfrac_i;
+        //gv.vfrac_i_prev=gv.vfrac_i;
         gv.vfrac_s_prev=gv.vfrac_s;
         gv.upperboundary_cell_prev = 0;
     }
