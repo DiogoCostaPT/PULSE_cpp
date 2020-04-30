@@ -62,11 +62,11 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
 
         if (gv.qmelt_i>0.0f && gv.nh>0){ // if melt
             
-            // calculate volume fractions
-            vol_fract_calc(gp,gv,&deltt);
-
             // wetting front
             wetfront_calc(gp,gv,&velc,&deltt);
+            
+            // calculate volume fractions
+            vol_fract_calc(gp,gv,&deltt);
 
             // check CFC validation
             if((gv.wetfront_cell - gv.wetfront_cell_prev) > 1){
