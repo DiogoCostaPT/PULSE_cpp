@@ -14,8 +14,8 @@ void vol_fract_calc(globalpar& gp,globalvar& gv,double *deltt)
     gv.vfrac_i_prev = gv.vfrac_i;
     gv.vfrac_s_prev = gv.vfrac_s;
     
-    gv.vfrac_s = std::fmax(gv.vfrac_s - dvfrac_s_dt/gv.snowh, 0.f);
-    gv.vfrac_m = std::fmin(gv.vfrac_m + dvfrac_s_dt/gv.snowh, 1.f);  
+    gv.vfrac_s = std::fmax(gv.vfrac_s - dvfrac_s_dt/gv.snowh, 0.0f);
+    gv.vfrac_m = std::fmin(gv.vfrac_m + dvfrac_s_dt/gv.snowh, 1.0f);  
 
     //if (gv.vfrac_s != 0){
     //    gv.vfrac_i = std::fmax(gv.vfrac_i + dvfrac_s_dt * (*deltt) - dvfrac_i_dt * (*deltt), 0.f); 
