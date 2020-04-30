@@ -1,5 +1,19 @@
 #include "hydrocalc.h"
 
+
+/* *****
+ * Calculate the wetting front 
+ * **** */
+void wetfront_calc(globalpar& gp,globalvar& gv,double *v, double *deltt)
+{
+    int nh_l = gv.nh;
+    gv.wetfront_cell_prev = gv.wetfront_cell; // wetting fron cell in the previous time step
+    gv.wetfront_z = std::fmax(gv.wetfront_z - (*v) * (*deltt),0.0f);
+    int tmp = std::round(nh_l-gv.wetfront_z/gv.snowh);
+    gv.wetfront_cell = std::min(tmp,nh_l); // finding the cell when the wetting front is located
+    
+}
+
 /* *****
  * Calculate volume fractions for the different water phases 
  * **** */
@@ -29,20 +43,6 @@ void vol_fract_calc(globalpar& gp,globalvar& gv,double *deltt)
     }
        
 }
-
-/* *****
- * Calculate the wetting front 
- * **** */
-void wetfront_calc(globalpar& gp,globalvar& gv,double *v, double *deltt)
-{
-    int nh_l = gv.nh;
-    gv.wetfront_cell_prev = gv.wetfront_cell; // wetting fron cell in the previous time step
-    gv.wetfront_z = std::fmax(gv.wetfront_z - (*v) * (*deltt),0.0f);
-    int tmp = std::round(nh_l-gv.wetfront_z/gv.snowh);
-    gv.wetfront_cell = std::min(tmp,nh_l); // finding the cell when the wetting front is located
-    
-}
-
 
 /* *****
  * Determine the addition or removal of upper snow layers  
