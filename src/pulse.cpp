@@ -100,7 +100,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
                 // limit the flux to the available material
                 for(il=0;il<gv.nl ;il++){
                     for(ih=0;ih<gv.nh ;ih++){
-                         if ((*gv.exchange_is).at(il,ih) > 0){
+                         if ((*gv.exchange_is).at(il,ih) > 0 && ih<gv.wetfront_cell){
                             (*gv.exchange_is).at(il,ih) = std::fmin((*gv.exchange_is).at(il,ih),
                                 (*gv.c_s).at(il,ih) * gv.vfrac_s);
 
@@ -118,9 +118,9 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
                              //print_screen_log(logPULSEfile,&msg);
                         }
                          //if(ih<gv.upperboundary_cell || ih>gv.wetfront_cell){
-                        if(ih>gv.wetfront_cell){
-                                (*gv.exchange_is).at(il,ih) = 0.0f;
-                        };
+                        //if(ih>gv.wetfront_cell){
+                        //    (*gv.exchange_is).at(il,ih) = 0.0f;
+                        //};
                     }
                 };
                 
@@ -136,7 +136,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
                 for(il=0;il<gv.nl ;il++){
                     for(ih=0;ih<gv.nh ;ih++){
 
-                            if ((*gv.exchange_si).at(il,ih) > 0){
+                            if ((*gv.exchange_si).at(il,ih) > 0 && ih<gv.wetfront_cell){
                                 (*gv.exchange_si).at(il,ih) = std::fmin((*gv.exchange_si).at(il,ih),(*gv.c_s).at(il,ih));
                             
                                 (*gv.c_s).at(il,ih) = ((*gv.c_s).at(il,ih) * gv.vfrac_s 
@@ -151,9 +151,9 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
                                 //std::cout << msg << std::endl;
                                 //print_screen_log(logPULSEfile,&msg);
                             }
-                            if(ih>gv.wetfront_cell){
-                                (*gv.exchange_si).at(il,ih) = 0.0f;
-                            };
+                            //if(ih>gv.wetfront_cell){
+                            //    (*gv.exchange_si).at(il,ih) = 0.0f;
+                            //};
                     }
                 };
                 //(*gv.c_m) =  ( (*gv.c_m) * gv.vfrac_m_prev + (*gv.exchange_si) * gv.vfrac_s_prev ) / gv.vfrac_m; // / vfrac_m(t);
