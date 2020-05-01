@@ -69,6 +69,10 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
         //gv.vfrac_i_prev=gv.vfrac_i;
         gv.vfrac_s_prev=gv.vfrac_s;
         gv.upperboundary_cell_prev = 0;
+
+        (*gv.v_swe) += (*gv.v_liqwater);
+        (*gv.v_liqwater) *= 0;
+        
     }
     
     // layer add or remove
@@ -103,6 +107,9 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
         (*gv.exchange_is).shed_cols(0,0);
         (*gv. vfrac2d_m).shed_cols(0,0);
         (*gv. vfrac2d_s).shed_cols(0,0);
+        (*gv.v_liqwater).shed_cols(0,0);
+        (*gv.v_swe).shed_cols(0,0);
+        (*gv.v_air).shed_cols(0,0);
             
     } else if (gv.nh_change>0 && std::abs(gv.nh_change)>=gv.snowh){ // adding a new layer
 
@@ -122,6 +129,9 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
         (*gv.exchange_is).insert_cols(0,1);
         (*gv. vfrac2d_m).insert_cols(0,1);
         (*gv. vfrac2d_s).insert_cols(0,1);
+        (*gv.v_liqwater).insert_cols(0,1);
+        (*gv.v_swe).insert_cols(0,1);
+        (*gv.v_air).insert_cols(0,1);
     }
    return;  
 }
