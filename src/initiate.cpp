@@ -38,8 +38,12 @@ void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
             (*gv.c_s).at(il,ih) = filedata(a,4);
             (*gv. vfrac2d_m).at(il,ih) = filedata(a,5);
             (*gv. vfrac2d_s).at(il,ih) = filedata(a,6);
-            (*gv.exchange_si).at(il,ih) = filedata(a,7);
-            (*gv.exchange_is).at(il,ih) = filedata(a,8);
+            (*gv.v_liqwater).at(il,ih) = filedata(a,7);
+            (*gv.v_swe).at(il,ih) = filedata(a,8);
+            (*gv.v_air).at(il,ih) = filedata(a,9);
+            (*gv.exchange_si).at(il,ih) = filedata(a,10);
+            (*gv.exchange_is).at(il,ih) = filedata(a,11);
+
             if((*gv.c_m).at(il,ih)!=0){
                 gv.wetfront_z = std::fmin((gv.nh - (ih+1)) * gv.snowh,gv.wetfront_z);
                 gv.wetfront_cell = std::min(int(std::round(nh_l-gv.wetfront_z/gv.snowh)),nh_l); // finding the cell when the wetting front is located
@@ -47,6 +51,7 @@ void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
                 //gv.upperboundary_cell = std::min(int(std::round(nh_l-gv.upperboundary_z/gv.snowh)),nh_l);
             }
         }
+
         msg = "Initial conditions found: " + init_file;
         print_screen_log(logPULSEfile,&msg);  
         

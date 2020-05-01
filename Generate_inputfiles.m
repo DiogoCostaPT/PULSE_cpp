@@ -1,22 +1,32 @@
 
-
 folder_loc = '/media/dcosta/data/megasync/ec_main/models/pulse/code/code_matlab_original/Svalbard_Snownet/';
 meteo_file = 'Meteo_2014-2015.xlsx';
 chemistry_file = 'BRG_data.xlsx';
 species = 'NO3';
-T_index_coef = 0.00005;
+T_index_coef = 0.00002;
     
-gen_0txtfile_flag = 0;    
-gen_prec_and_qmelt_T_index_files_flag = 1;
+gen_0txtfile_flag = 1;   
+snow_L = 100/1000; % 1000 mm -> m
+snow_H = 1000/1000; % 100 mm -> m
+snow_h = 10/1000; % 10 mm - m
+snow_l = 10/1000; % 10 mm -> m
+    
+    
+gen_prec_and_qmelt_T_index_files_flag = 0;
 
 %% Generate 0.txt file 
 if gen_0txtfile_flag == 1
+    
+    % Densities (as in PULSE)
+    rho_s = 917.;  % kg.m-3 at 0 degrees
+    rho_m=998.8; % kg.m-3 at 0 degrees
+    rho_frshsnow_init = 320;
 
     dataraw_chem = xlsread([folder_loc,chemistry_file],species);
 
     time_obs_chem = dataraw_chem(:,1) + 693960;
 
-    depths_obs = [10,20,30,40,50,60,70,80,90,100]; % cm		
+    depths_obs = [10,20,30,40,50,60,70,80,90,100]/100; % cm	-> m	
 
     NO3_conc_ppb = dataraw_chem(1,2:end); % ppb
     %NO3_conc_ppb = [281.766753953895,112.96520293409,162.480671212122,102.504849889069,116.591016244802,...
@@ -24,13 +34,9 @@ if gen_0txtfile_flag == 1
 
     NO3_conc_mgl = NO3_conc_ppb / 1000;
 
-    snow_L = 10;
-    snow_h = 1; % 5 mm
-    snow_l = 1; % 1 mm
-
     % calc
 
-    snow_H = depths_obs(end);
+    %snow_H = depths_obs(end);
 
     cell_h_num = snow_H/snow_h;
     cell_l_num = snow_L/snow_l;
@@ -40,8 +46,9 @@ if gen_0txtfile_flag == 1
     file_0txt = [];
 
     cm_0 = 0;
-    poros_m = 0.008;
-    poros_s = 0.991;
+    v_liqwater = 0.008 * snow_h * snow_l; % m3
+    v_swe = 0.991 * snow_h * snow_l; % m3
+    v_air = 0.001 * snow_h * snow_l;
 
     for hci = 0:cell_h_num-1
         for lci = 0:cell_l_num-1
@@ -52,7 +59,7 @@ if gen_0txtfile_flag == 1
 
         cs_0 = NO3_conc_mgl(iloc_max(end));
 
-        file_0txt = [file_0txt;[hci,lci,cm_0,0,cs_0,poros_m,poros_s,0,0]];
+        file_0txt = [file_0txt;[hci,lci,cm_0,0,cs_0,v_liqwater,v_swe,v_air,0,0]];
 
         end
 

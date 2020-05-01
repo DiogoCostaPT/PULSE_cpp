@@ -88,7 +88,6 @@ int main(int argc, char* argv[])
         // read meteo file
         read_meteofile(gp,gv,&meteo_file,&logPULSEfile);
 
-
         // initial conditions
         initiate(gp,gv,&logPULSEfile,&results_flname);
 

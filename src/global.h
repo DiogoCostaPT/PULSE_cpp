@@ -56,13 +56,14 @@ public:
 
     v_liqwater = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     v_swe = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
+    v_air = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
 
   }
     
     size_t nh,nl,n_qcmelt,n_snowfallt;
   
     std::unique_ptr<arma::Mat<double>> c_m,c_i,c_s,qcmel_ts,snowfall_ts,exchange_si,
-                  exchange_is,velc_2d,disp_2d,vfrac2d_m,vfrac2d_s,v_liqwater,v_swe;
+                  exchange_is,velc_2d,disp_2d,vfrac2d_m,vfrac2d_s,v_liqwater,v_swe,v_air;
     
     double snowH = 0.0f, // snowpack depth
             snowL = 0.0f, // snowpack horizontal lenght
