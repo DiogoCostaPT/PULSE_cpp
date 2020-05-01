@@ -10,14 +10,11 @@ void vol_fract_calc(globalpar& gp,globalvar& gv,double *v,double *deltt)
     //int nt = nli*nhi;
     int ih,il;
 
+    // Effect of melt at the top layer (change of mass and fraction_of_mass)
     double dv_snow2liqwater = gv.qmelt_i * (*deltt); // in top layer
-
-    //double dvfrac_s_dt = (*q) / gv.vtotal_check;
     double dvfrac_s_dt = gv.qmelt_i * (*deltt) / gv.nh; // top layer
-    //double dvfrac_i_dt = dvfrac_s_dt;
 
     gv.vfrac_m_prev = gv.vfrac_m;
-    //gv.vfrac_i_prev = gv.vfrac_i;
     gv.vfrac_s_prev = gv.vfrac_s;
     
     gv.vfrac_s = std::fmax(gv.vfrac_s - dvfrac_s_dt/gv.snowh, 0.0f);
