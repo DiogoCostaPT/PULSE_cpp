@@ -4,8 +4,8 @@ function PULSE_support_plot_results(pulse_dir,results_dir,chemical_species,...
                     col_li,masterfile,Obs_file)
 
     % load pulse results
-     [time_sim_elapsec,h_layers_max,c_m,c_s,c_total,poros_m,poros_s] = ...
-         PULSE_support_load_pulse_results(results_dir,col_li);
+     [time_sim_elapsec,h_layers_max,c_m,c_s,c_total,poros_m,poros_s,...
+         v_liqwater,v_swe,v_air] = PULSE_support_load_pulse_results(results_dir,col_li);
                                         
     % get comment and timenum from masterfile
     [comment,time_sim,H_LAY] = PULSE_support_Getinfo_masterfile(time_sim_elapsec,pulse_dir,masterfile);
@@ -21,19 +21,22 @@ function PULSE_support_plot_results(pulse_dir,results_dir,chemical_species,...
    
 
     figure('name',comment)
-    for i = 1:5
+    for i = 1:8
         
         if i==1; var_print = c_m; var_print_name = 'c_m'; end
         if i==2; var_print = c_s; inanloc = find(c_s==0); var_print_name = 'c_s'; end
         if i==3; var_print = c_total; var_print_name = 'c_total'; end
         if i==4; var_print = poros_m; var_print_name = 'poros_m'; end
         if i==5; var_print = poros_s; var_print_name = 'poros_s'; end
+        if i==6; var_print = v_liqwater; var_print_name = 'v_liqwater'; end
+        if i==7; var_print = v_swe; var_print_name = 'v_swe'; end
+        if i==8; var_print = v_air; var_print_name = 'v_air'; end
         
         if i > 1
            var_print(inanloc) = NaN;
         end
         
-        subplot(2,3,i)
+        subplot(3,3,i)
         surf(Tmesh,Hmesh,var_print)
         if i == 3
             hold on

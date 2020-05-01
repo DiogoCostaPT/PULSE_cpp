@@ -1,6 +1,6 @@
 
-function [time_sim_elapsec,h_layers_max,c_m,c_s,c_total,poros_m,poros_s] = ...
-    PULSE_support_load_pulse_results(results_dir,col_li)
+function [time_sim_elapsec,h_layers_max,c_m,c_s,c_total,poros_m,poros_s,...
+    v_liqwater,v_swe,v_air] = PULSE_support_load_pulse_results(results_dir,col_li)
 
 filenames_raw = dir(results_dir);
 
@@ -25,7 +25,8 @@ filenames_raw = dir(results_dir);
     h_layers_max = Get_max_snow_depth(results_dir,filename_no_sort,col_li);
       
     % load results
-    [time_sim_elapsec,c_m,c_s,c_total,poros_m,poros_s] = read_results(results_dir,filename_no_sort,...
+    [time_sim_elapsec,c_m,c_s,c_total,poros_m,poros_s,...
+        v_liqwater,v_swe,v_air] = read_results(results_dir,filename_no_sort,...
                                             timesteps_num,h_layers_max,col_li);
                                         
 end
@@ -58,7 +59,7 @@ end
 
 
  % Load results
- function [time,c_m,c_s,c_total,poros_m,poros_s] = read_results(results_dir,filename_no_sort,...
+ function [time,c_m,c_s,c_total,poros_m,poros_s,v_liqwater,v_swe,v_air] = read_results(results_dir,filename_no_sort,...
                                                     timesteps_num,h_layers_max,col_li)
     
     % create matrixes
@@ -68,12 +69,15 @@ end
     c_s = ones(timesteps_num,h_layers_max) * NaN;
     poros_m = ones(timesteps_num,h_layers_max) * NaN;
     poros_s = ones(timesteps_num,h_layers_max) * NaN;
+    v_liqwater = ones(timesteps_num,h_layers_max) * NaN;
+    v_swe = ones(timesteps_num,h_layers_max) * NaN;
+    v_air = ones(timesteps_num,h_layers_max) * NaN;
     
     nh_l = numel(c_m(1,:));
 
     % load data and process it
     hbar = parfor_progressbar(numel(filename_no_sort), 'Loading results...');
-    parfor i = 1:numel(filename_no_sort)
+    for i = 1:numel(filename_no_sort)
         hbar.iterate(1)
         file_i = filename_no_sort(i);
         try
@@ -102,11 +106,25 @@ end
 
                 poros_s_i = flipud(data.Var7)'; 
                 poros_s(i,:) =  [poros_s_i,zeros(1,extra_h)];
+                
+                v_liqwater_i = flipud(data.Var8)'; 
+                v_liqwater(i,:) = [v_liqwater_i,zeros(1,extra_h)];
+                
+                v_swe_i = flipud(data.Var9)'; 
+                v_swe(i,:) = [v_swe_i,zeros(1,extra_h)];
+                
+                v_air_i = flipud(data.Var10)'; 
+                v_air(i,:) = [v_air_i,zeros(1,extra_h)];
+                
             else
                  c_m(i,:) = NaN;
                  c_s(i,:) = NaN;
                  poros_m(i,:) = NaN;
                  poros_s(i,:) = NaN;
+                 v_liqwater(i,:) = NaN;
+                 v_swe(i,:) = NaN;
+                 v_air(i,:) = NaN;
+                 
             end
 
         catch
@@ -122,4 +140,6 @@ end
     c_m(c_m==0) = NaN;
     c_s(c_s==0) = NaN;
     c_total(c_total==0) = NaN;
+    
+    
  end
