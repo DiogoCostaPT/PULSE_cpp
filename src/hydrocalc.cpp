@@ -17,11 +17,16 @@ void wetfront_calc(globalpar& gp,globalvar& gv,double *v, double *deltt)
 /* *****
  * Calculate volume fractions for the different water phases 
  * **** */
-void vol_fract_calc(globalpar& gp,globalvar& gv,double *deltt)
+void vol_fract_calc(globalpar& gp,globalvar& gv,double *v, double *deltt)
 {
-    
+    int nli = gv.nl;
+    int nhi = gv.wetfront_cell;//-(gv.upperboundary_cell);                   // the boundaries are knowns, so don't need to be included in matrix A
+    //int nt = nli*nhi;
+    int ih,il;
+
     //double dvfrac_s_dt = (*q) / gv.vtotal_check;
     double dvfrac_s_dt = gv.qmelt_i * (*deltt) / gv.nh;
+    double mobVolWat; 
     //double dvfrac_i_dt = dvfrac_s_dt;
 
     gv.vfrac_m_prev = gv.vfrac_m;
@@ -37,10 +42,29 @@ void vol_fract_calc(globalpar& gp,globalvar& gv,double *deltt)
     //    gv.vfrac_i = std::fmax(gv.vfrac_i - dvfrac_i_dt * (*deltt) , 0.f);     
     //};
 
-    if(gv.wetfront_cell>0){
-        (*gv. vfrac2d_m)(arma::span(0,gv.nl-1),arma::span(0,gv.wetfront_cell-1)) =  arma::ones(gv.nl,gv.wetfront_cell) * gv.vfrac_m;
-        (*gv.vfrac2d_s)(arma::span(0,gv.nl-1),arma::span(0,gv.wetfront_cell-1)) = arma::ones(gv.nl,gv.wetfront_cell) * gv.vfrac_s;
+    mobVolWat = (std::abs(gv.qmelt_i))*(*deltt); // m
+
+    (*gv.vfrac2d_s)(arma::span(0,gv.nl-1),0) -= mobVolWat;
+    (*gv.vfrac2d_m)(arma::span(0,gv.nl-1),0) += mobVolWat;
+
+    for (ih=1;ih<nhi-1;ih++){
+        for (il=1;il<nli-1;il++){
+            
+            if ((*v) > 0.0f && ih<gv.wetfront_cell-1){
+                //dtcm = ((c1(il,ih-1) * gv.vfrac_m) * (*gv.velc_2d)(il,ih-1) * (*deltt))/gv.vfrac_m;
+                //dtcm = std::max(dtcm,c1(il,ih-1));
+                //c1(il,ih-1) -= dtcm;
+                //c1(il,ih) += dtcm;
+                
+                dvfrac_s_dt = (*v) * (*deltt) * (*gv. vfrac2d_m)(il,ih);
+
+                (*gv. vfrac2d_m)(il,ih) -= dvfrac_s_dt;
+                (*gv. vfrac2d_m)(il,ih+1) += dvfrac_s_dt;
+                //(*gv.vfrac2d_s)(il,ih) = ;
+
+        }
     }
+}
        
 }
 
@@ -57,18 +81,22 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
     // Refreezing
     if (gv.qmelt_i==0.0f){ 
         
-        (*gv.c_s) += (*gv.c_m)*gv.vfrac_m/gv.vfrac_s; // c_m mass will go to c_i
+        (*gv.c_s) = ((*gv.c_s) % (*gv.vfrac2d_s) + (*gv.c_m) % (*gv.vfrac2d_m)) 
+                    /( (*gv.vfrac2d_s) + (*gv.vfrac2d_m)); // c_m mass will go to c_i
         (*gv.c_m) *= 0;
         gv.wetfront_cell= 0; // assumes refreezing
         gv.wetfront_cell_prev = 0;
         gv.wetfront_z = gv.snowH;
-        gv.vfrac_m=0.008;
+        gv.vfrac_m= 0.0f;
         //gv.vfrac_i=0.001;
-        gv.vfrac_s= 1 - gv.vfrac_m - gv.vfrac_i;
+        gv.vfrac_s += gv.vfrac_m;
         gv.vfrac_m_prev=gv.vfrac_m;
         //gv.vfrac_i_prev=gv.vfrac_i;
         gv.vfrac_s_prev=gv.vfrac_s;
         gv.upperboundary_cell_prev = 0;
+
+        (*gv.vfrac2d_m) *= 0.0f;
+        (*gv.vfrac2d_s) +=(*gv.vfrac2d_m);
     }
     
     // layer add or remove
@@ -120,8 +148,10 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
         (*gv.c_s).col(0) = newsnowlayer * gv.precipc_i;
         (*gv.exchange_si).insert_cols(0,1);
         (*gv.exchange_is).insert_cols(0,1);
-        (*gv. vfrac2d_m).insert_cols(0,1);
-        (*gv. vfrac2d_s).insert_cols(0,1);
+        (*gv.vfrac2d_m).insert_cols(0,1);
+        (*gv.vfrac2d_s).insert_cols(0,1);
+        (*gv.vfrac2d_s).col(0) = newsnowlayer * gp.rho_frshsnow_init/gp.rho_m
+                                *gv.snowh * gv.snowl;
     }
    return;  
 }

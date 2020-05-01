@@ -52,7 +52,11 @@ function PULSE_support_plot_results(pulse_dir,results_dir,chemical_species,...
         xlim([min(Tmesh(:,1)) max(Tmesh(:,1))])
         datetick('x','mm-dd','keepticks','keeplimits')
         ylim([0 max(Hmesh(1,:))])
-        caxis([0 cmax_i])
+        try
+            caxis([0 cmax_i])
+        catch
+            disp('caxis failed: NaN value')
+        end
         colormap(jet)
         colorbar
         view(0,90)

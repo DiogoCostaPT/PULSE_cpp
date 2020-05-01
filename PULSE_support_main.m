@@ -8,24 +8,24 @@ chemical_species = 'NO3';
 col_li = 5; % vertical cell to print results
 
 % Run pulse once?
-Run_pulse_flag = 0;
+Run_pulse_flag =0;
 Clean_results_folder_except_IC_flag = 1;
 IC_file = '0.txt';
 
 % Plot results in "Results" directory?
-Plot_results_flag = 0;
+Plot_results_flag = 1;
 
 % Sensitivity analysys run?
-Sens_run_flag = 1;
+Sens_run_flag = 0;
 num_samples = 200;
 A_D_max = 0.0003;           
 ALPHA_IE_max = 0.000003;
 
 % Analyse the runs in Sensitivity_analysis folder
-Sens_analysis_flag = 1;
+Sens_analysis_flag = 0;
 
 % Plot Sens results
-Sens_plot_results_flag = 1;
+Sens_plot_results_flag = 0;
 
 
 

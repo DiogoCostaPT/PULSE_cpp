@@ -22,6 +22,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
     auto end = std::chrono::system_clock::now();
     bool outwritestatus;
     arma::mat exchange_i;
+    double min_vfrac_m;
     
     unsigned int il,ih,print_next;
       
@@ -36,13 +37,19 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
         findInterpPrec(gv,&tcum);
         findInterpQmelt(gv,&tcum);
 
+        //min_vfrac_m = arma::min(arma::min((*gv. vfrac2d_m)(arma::span(0,gv.nl-1),
+        //                arma::span(0,std::max(gv.wetfront_cell-1,0)))));
+
+        min_vfrac_m = gv.vfrac_m;            
+
         if (gv.qmelt_i==0.0f){ // accumulation only 
             deltt = std::fmin(gp.print_step,
                     gv.snowh * gp.rho_frshsnow_init / (std::abs(gv.precip_i)*gp.rho_m)); 
             upbound_calc(gv,gp,&deltt,logPULSEfile);
-        } else {// melt       
-                // Estimate interstitial flow velocity 
-            velc = gv.qmelt_i / gv.vfrac_m; // interstitial flow velocity [m s-1]
+        } else if (gv.qmelt_i > 0.0f && min_vfrac_m>gp.minVolTensForc) {// melt       
+                // Estimate interstitial flow velocity
+            
+            velc = gv.qmelt_i/ min_vfrac_m; // interstitial flow velocity [m s-1]
             D = gp.aD * velc;       // dispersion coefficient [m2/s]
 
             (*gv.velc_2d) = (*gv.velc_2d)*0 + velc;
@@ -66,7 +73,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
             wetfront_calc(gp,gv,&velc,&deltt);
             
             // calculate volume fractions
-            vol_fract_calc(gp,gv,&deltt);
+            vol_fract_calc(gp,gv,&velc,&deltt);
 
             // check CFC validation
             if((gv.wetfront_cell - gv.wetfront_cell_prev) > 1){
@@ -95,19 +102,19 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
             if (gv.qmelt_i > 0.0f){
 
                  // Ion exclusion: Exchange with immobile phase (just exchange)
-                (*gv.exchange_is)  = deltt * (gp.alphaIE * (*gv.c_s) * gv.vfrac_s) ; 
+                (*gv.exchange_is)  = deltt * (gp.alphaIE * (*gv.c_s) % (*gv.vfrac2d_s)) ; 
 
                 // limit the flux to the available material
                 for(il=0;il<gv.nl ;il++){
                     for(ih=0;ih<gv.nh ;ih++){
                          if ((*gv.exchange_is).at(il,ih) > 0 && ih<gv.wetfront_cell){
                             (*gv.exchange_is).at(il,ih) = std::fmin((*gv.exchange_is).at(il,ih),
-                                (*gv.c_s).at(il,ih) * gv.vfrac_s);
+                                (*gv.c_s).at(il,ih) * (*gv.vfrac2d_s).at(il,ih));
 
-                            (*gv.c_s).at(il,ih) = ((*gv.c_s).at(il,ih) * gv.vfrac_s 
-                                    - (*gv.exchange_is).at(il,ih)) / gv.vfrac_s;
-                            (*gv.c_m).at(il,ih) = ((*gv.c_m).at(il,ih) * gv.vfrac_m 
-                                    + (*gv.exchange_is).at(il,ih)) / gv.vfrac_m;
+                            (*gv.c_s).at(il,ih) = ((*gv.c_s).at(il,ih) * (*gv.vfrac2d_s).at(il,ih) 
+                                    - (*gv.exchange_is).at(il,ih)) / (*gv.vfrac2d_s).at(il,ih);
+                            (*gv.c_m).at(il,ih) = ((*gv.c_m).at(il,ih) * (*gv.vfrac2d_m).at(il,ih) 
+                                    + (*gv.exchange_is).at(il,ih)) / (*gv.vfrac2d_m).at(il,ih);
                             (*gv.c_s).at(il,ih) = std::fmax((*gv.c_s).at(il,ih),0.0f);
                             (*gv.c_m).at(il,ih) = std::fmax((*gv.c_m).at(il,ih),0.0f);
 
@@ -139,10 +146,10 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
                             if ((*gv.exchange_si).at(il,ih) > 0 && ih<gv.wetfront_cell){
                                 (*gv.exchange_si).at(il,ih) = std::fmin((*gv.exchange_si).at(il,ih),(*gv.c_s).at(il,ih));
                             
-                                (*gv.c_s).at(il,ih) = ((*gv.c_s).at(il,ih) * gv.vfrac_s 
-                                    - (*gv.exchange_si).at(il,ih)) / gv.vfrac_s;
-                                (*gv.c_m).at(il,ih) = ((*gv.c_m).at(il,ih) * gv.vfrac_m 
-                                        + (*gv.exchange_si).at(il,ih)) / gv.vfrac_m;
+                                (*gv.c_s).at(il,ih) = ((*gv.c_s).at(il,ih) * (*gv.vfrac2d_s).at(il,ih) 
+                                    - (*gv.exchange_si).at(il,ih)) / (*gv.vfrac2d_s).at(il,ih);
+                                (*gv.c_m).at(il,ih) = ((*gv.c_m).at(il,ih) * (*gv.vfrac2d_m).at(il,ih) 
+                                        + (*gv.exchange_si).at(il,ih)) / (*gv.vfrac2d_m).at(il,ih);
                                 (*gv.c_s).at(il,ih) = std::fmax((*gv.c_s).at(il,ih),0.0f);
                                 (*gv.c_m).at(il,ih) = std::fmax((*gv.c_m).at(il,ih),0.0f);
                             

@@ -16,6 +16,7 @@ public:
            rho_s=917.0, // kg.m-3 at 0 degrees
            rho_m=998.8, // kg.m-3 at 0 degrees
            rho_frshsnow_init = 320,
+           minVolTensForc = 0.0f,
            wetfront_z,num_stblty_thrshld_prsity = 1E-6,alphaIE,Tperd;
     
     int flag_sens,run_id,s,print_step,
@@ -65,7 +66,7 @@ public:
             snowL = 0.0f, // snowpack horizontal lenght
             snowl = 0.0f, // grid h lenght
             snowh = 0.0f, // grid l lenght
-            vfrac_m= 0.0f,
+            vfrac_m= 0.008,
             //vfrac_i= 0.0f,
             vfrac_s= 1 - vfrac_m,
             vfrac_m_prev=vfrac_m,
