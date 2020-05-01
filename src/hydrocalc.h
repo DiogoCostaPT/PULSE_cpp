@@ -5,7 +5,7 @@
 
 #include "global.h"
 
-void vol_fract_calc(globalpar& gp,globalvar& gv,double *deltt);
+void vol_fract_calc(globalpar& gp,globalvar& gv,double *v,double *deltt);
 
 void wetfront_calc(globalpar& gp,globalvar& gv,double *v, double *deltt);
 

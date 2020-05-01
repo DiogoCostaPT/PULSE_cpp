@@ -66,7 +66,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
             wetfront_calc(gp,gv,&velc,&deltt);
             
             // calculate volume fractions
-            vol_fract_calc(gp,gv,&deltt);
+            vol_fract_calc(gp,gv,&velc,&deltt);
 
             // check CFC validation
             if((gv.wetfront_cell - gv.wetfront_cell_prev) > 1){

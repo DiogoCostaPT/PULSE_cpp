@@ -3,11 +3,17 @@
 /* *****
  * Calculate volume fractions for the different water phases 
  * **** */
-void vol_fract_calc(globalpar& gp,globalvar& gv,double *deltt)
+void vol_fract_calc(globalpar& gp,globalvar& gv,double *v,double *deltt)
 {
-    
+    int nli = gv.nl;
+    int nhi = gv.wetfront_cell;//-(gv.upperboundary_cell);                   // the boundaries are knowns, so don't need to be included in matrix A
+    //int nt = nli*nhi;
+    int ih,il;
+
+    double dv_snow2liqwater = gv.qmelt_i * (*deltt); // in top layer
+
     //double dvfrac_s_dt = (*q) / gv.vtotal_check;
-    double dvfrac_s_dt = gv.qmelt_i * (*deltt) / gv.nh;
+    double dvfrac_s_dt = gv.qmelt_i * (*deltt) / gv.nh; // top layer
     //double dvfrac_i_dt = dvfrac_s_dt;
 
     gv.vfrac_m_prev = gv.vfrac_m;
@@ -23,10 +29,37 @@ void vol_fract_calc(globalpar& gp,globalvar& gv,double *deltt)
     //    gv.vfrac_i = std::fmax(gv.vfrac_i - dvfrac_i_dt * (*deltt) , 0.f);     
     //};
 
-    if(gv.wetfront_cell>0){
-        (*gv. vfrac2d_m)(arma::span(0,gv.nl-1),arma::span(0,gv.wetfront_cell-1)) =  arma::ones(gv.nl,gv.wetfront_cell) * gv.vfrac_m;
-        (*gv.vfrac2d_s)(arma::span(0,gv.nl-1),arma::span(0,gv.wetfront_cell-1)) = arma::ones(gv.nl,gv.wetfront_cell) * gv.vfrac_s;
-    }
+    //if(gv.wetfront_cell>0){
+    //    (*gv. vfrac2d_m)(arma::span(0,gv.nl-1),arma::span(0,gv.wetfront_cell-1)) =  arma::ones(gv.nl,gv.wetfront_cell) * gv.vfrac_m;
+    //    (*gv.vfrac2d_s)(arma::span(0,gv.nl-1),arma::span(0,gv.wetfront_cell-1)) = arma::ones(gv.nl,gv.wetfront_cell) * gv.vfrac_s;
+    //}
+
+    // Volumes of water, swe and air
+    if (gv.qmelt_i > 0.0f){
+
+        // top layer (melt)
+        (*gv.vfrac2d_m)(arma::span(0,gv.nl-1),0) -= arma::ones(gv.nl,1) * dvfrac_s_dt;
+        (*gv.vfrac2d_s)(arma::span(0,gv.nl-1),0) += arma::ones(gv.nl,1) * dvfrac_s_dt;
+        (*gv.v_liqwater)(arma::span(0,gv.nl-1),0) += arma::ones(gv.nl,1) * dv_snow2liqwater;
+        (*gv.v_swe)(arma::span(0,gv.nl-1),0) -= arma::ones(gv.nl,1) * dv_snow2liqwater;
+
+        // advection (water only)
+        for (ih=0;ih<gv.wetfront_cell-1;ih++){
+            for (il=0;il<nli-1;il++){
+                   
+                    dvfrac_s_dt = (*v) * (*deltt) * (*gv. vfrac2d_m).at(il,ih);
+                    dv_snow2liqwater = (*v) * (*deltt) * (*gv.v_liqwater).at(il,ih);
+
+                    (*gv.vfrac2d_m).at(il,ih) -= dvfrac_s_dt;
+                    (*gv.vfrac2d_m).at(il,ih+1) += dvfrac_s_dt;
+                    //(*gv.vfrac2d_s)(il,ih) = ;
+
+                    (*gv.v_liqwater).at(il,ih) -= dv_snow2liqwater;
+                    (*gv.v_liqwater).at(il,ih+1) += dv_snow2liqwater;
+
+            }
+        }
+    }   
        
 }
 
@@ -105,8 +138,8 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
         (*gv.c_s).shed_cols(0,0);
         (*gv.exchange_si).shed_cols(0,0);
         (*gv.exchange_is).shed_cols(0,0);
-        (*gv. vfrac2d_m).shed_cols(0,0);
-        (*gv. vfrac2d_s).shed_cols(0,0);
+        (*gv.vfrac2d_m).shed_cols(0,0);
+        (*gv.vfrac2d_s).shed_cols(0,0);
         (*gv.v_liqwater).shed_cols(0,0);
         (*gv.v_swe).shed_cols(0,0);
         (*gv.v_air).shed_cols(0,0);
@@ -127,8 +160,8 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
         (*gv.c_s).col(0) = newsnowlayer * gv.precipc_i;
         (*gv.exchange_si).insert_cols(0,1);
         (*gv.exchange_is).insert_cols(0,1);
-        (*gv. vfrac2d_m).insert_cols(0,1);
-        (*gv. vfrac2d_s).insert_cols(0,1);
+        (*gv.vfrac2d_m).insert_cols(0,1);
+        (*gv.vfrac2d_s).insert_cols(0,1);
         (*gv.v_liqwater).insert_cols(0,1);
         (*gv.v_swe).insert_cols(0,1);
         (*gv.v_air).insert_cols(0,1);
