@@ -12,13 +12,13 @@ void vol_fract_calc(globalpar& gp,globalvar& gv,double *v,double *deltt)
 
     // Effect of melt at the top layer (change of mass and fraction_of_mass)
     double dv_snow2liqwater = gv.qmelt_i * (*deltt); // in top layer
-    double dvfrac_s_dt = gv.qmelt_i * (*deltt) / gv.nh; // top layer
+    double dvfrac_s_dt = gv.qmelt_i * (*deltt) / (gv.wetfront_cell+1); // top layer
 
     gv.vfrac_m_prev = gv.vfrac_m;
     gv.vfrac_s_prev = gv.vfrac_s;
     
-    gv.vfrac_s = std::fmax(gv.vfrac_s - dvfrac_s_dt/gv.snowh, 0.0f);
-    gv.vfrac_m = std::fmin(gv.vfrac_m + dvfrac_s_dt/gv.snowh, 1.0f);  
+    gv.vfrac_s = std::fmax(gv.vfrac_s - dvfrac_s_dt, 0.0f);
+    gv.vfrac_m = std::fmin(gv.vfrac_m + dvfrac_s_dt, 1.0f);  
 
     //if (gv.vfrac_s != 0){
     //    gv.vfrac_i = std::fmax(gv.vfrac_i + dvfrac_s_dt * (*deltt) - dvfrac_i_dt * (*deltt), 0.f); 
@@ -44,15 +44,16 @@ void vol_fract_calc(globalpar& gp,globalvar& gv,double *v,double *deltt)
         for (ih=0;ih<gv.wetfront_cell-1;ih++){
             for (il=0;il<nli-1;il++){
                    
-                    dvfrac_s_dt = (*v) * (*deltt) * (*gv. vfrac2d_m).at(il,ih);
                     dv_snow2liqwater = (*v) * (*deltt) * (*gv.v_liqwater).at(il,ih);
+                    (*gv.v_liqwater).at(il,ih) -= dv_snow2liqwater;
+                    (*gv.v_liqwater).at(il,ih+1) += dv_snow2liqwater;
 
+                    dvfrac_s_dt = (*v) * (*deltt) * (*gv. vfrac2d_m).at(il,ih);
                     (*gv.vfrac2d_m).at(il,ih) -= dvfrac_s_dt;
                     (*gv.vfrac2d_m).at(il,ih+1) += dvfrac_s_dt;
                     //(*gv.vfrac2d_s)(il,ih) = ;
 
-                    (*gv.v_liqwater).at(il,ih) -= dv_snow2liqwater;
-                    (*gv.v_liqwater).at(il,ih+1) += dv_snow2liqwater;
+                    
 
             }
         }
