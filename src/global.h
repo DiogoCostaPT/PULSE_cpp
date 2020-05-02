@@ -80,7 +80,8 @@ public:
             nh_change = 0.0f,
             qmelt_i = 0.0f,
             precip_i = 0.0f, 
-            precipc_i = 0.0f;
+            precipc_i = 0.0f,
+            v_swe_newlayer = 0.0f; // swe of any new layer added on top due to precipitation
 
     int wetfront_cell = 0,
         wetfront_cell_prev = 0,

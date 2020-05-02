@@ -35,11 +35,18 @@ void vol_fract_calc(globalpar& gp,globalvar& gv,double *v,double *deltt)
     if (gv.qmelt_i > 0.0f){
 
         // top layer (melt)
-        (*gv.vfrac2d_m)(arma::span(0,gv.nl-1),0) -= arma::ones(gv.nl,1) * dvfrac_s_dt;
-        (*gv.vfrac2d_s)(arma::span(0,gv.nl-1),0) += arma::ones(gv.nl,1) * dvfrac_s_dt;
         (*gv.v_liqwater)(arma::span(0,gv.nl-1),0) += arma::ones(gv.nl,1) * dv_snow2liqwater;
         (*gv.v_swe)(arma::span(0,gv.nl-1),0) -= arma::ones(gv.nl,1) * dv_snow2liqwater;
 
+        (*gv.vfrac2d_s)(arma::span(0,gv.nl-1),0) =  (*gv.v_swe)(arma::span(0,gv.nl-1),0) 
+                                / ((*gv.v_liqwater)(arma::span(0,gv.nl-1),0) 
+                                + (*gv.v_swe)(arma::span(0,gv.nl-1),0) 
+                                + (*gv.v_air)(arma::span(0,gv.nl-1),0));
+        (*gv.vfrac2d_m)(arma::span(0,gv.nl-1),0) = (*gv.v_liqwater)(arma::span(0,gv.nl-1),0) 
+                                / ((*gv.v_liqwater)(arma::span(0,gv.nl-1),0) 
+                                + (*gv.v_swe)(arma::span(0,gv.nl-1),0) 
+                                + (*gv.v_air)(arma::span(0,gv.nl-1),0));
+        
         // advection (water only)
         for (ih=0;ih<gv.wetfront_cell-1;ih++){
             for (il=0;il<nli-1;il++){
@@ -48,12 +55,15 @@ void vol_fract_calc(globalpar& gp,globalvar& gv,double *v,double *deltt)
                     (*gv.v_liqwater).at(il,ih) -= dv_snow2liqwater;
                     (*gv.v_liqwater).at(il,ih+1) += dv_snow2liqwater;
 
-                    dvfrac_s_dt = (*v) * (*deltt) * (*gv. vfrac2d_m).at(il,ih);
-                    (*gv.vfrac2d_m).at(il,ih) -= dvfrac_s_dt;
-                    (*gv.vfrac2d_m).at(il,ih+1) += dvfrac_s_dt;
-                    //(*gv.vfrac2d_s)(il,ih) = ;
-
-                    
+                    (*gv.vfrac2d_m).at(il,ih) = (*gv.v_liqwater).at(il,ih) 
+                                / ((*gv.v_liqwater).at(il,ih) 
+                                +  (*gv.v_swe).at(il,ih)
+                                +  (*gv.v_air).at(il,ih));
+                    (*gv.vfrac2d_s).at(il,ih) = (*gv.v_swe).at(il,ih) 
+                                / ((*gv.v_liqwater).at(il,ih) 
+                                +  (*gv.v_swe).at(il,ih)
+                                +  (*gv.v_air).at(il,ih));            
+                    //(*gv.vfrac2d_m).at(il,ih+1) = dv_snow2liqwater / (*gv.v_liqwater).at(il,ih+1);
 
             }
         }
@@ -82,8 +92,7 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
 
     int nl_l = gv.nl;
     
-    gv.nh_change += (std::abs(gv.precip_i)-std::abs(gv.qmelt_i))*(*deltt)
-                    *gp.rho_m/gp.rho_frshsnow_init; // cell increment
+    gv.nh_change += (std::abs(gv.precip_i)-std::abs(gv.qmelt_i))*(*deltt); // cell increment
 
     // Refreezing
     if (gv.qmelt_i==0.0f){ 
@@ -106,8 +115,10 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
         
     }
     
+    double v_swe_ref = (*gv.v_swe).at(5,0); // TO BE CHANGED: this will not work if the model us run for truly 2D melt with different snowdepths lateraly
+
     // layer add or remove
-    if (gv.nh_change<0 && std::abs(gv.nh_change)>=gv.snowh && gv.nh>0){ // MELT - remove layer
+    if (gv.nh_change<0 && std::abs(gv.nh_change)>= v_swe_ref&& gv.nh>0){ // MELT - remove layer
         
          // add all immobile and solid slow that melted from the last cell) 
         //(*gv.c_m)(arma::span(0,gv.nl-1),1) = ((*gv.c_m)(arma::span(0,gv.nl-1),0) * gv.vfrac_m_prev
@@ -142,7 +153,7 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
         (*gv.v_swe).shed_cols(0,0);
         (*gv.v_air).shed_cols(0,0);
             
-    } else if (gv.nh_change>0 && std::abs(gv.nh_change)>=gv.snowh){ // adding a new layer
+    } else if (gv.nh_change>0 && std::abs(gv.nh_change)>=gv.v_swe_newlayer){ // adding a new layer
 
         gv.nh++; // remove one layer
         gv.snowH += gv.snowh; // snowpack depth 
@@ -162,6 +173,7 @@ void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPU
         (*gv.vfrac2d_s).insert_cols(0,1);
         (*gv.v_liqwater).insert_cols(0,1);
         (*gv.v_swe).insert_cols(0,1);
+        (*gv.v_swe).col(0) = newsnowlayer * gv.v_swe_newlayer;
         (*gv.v_air).insert_cols(0,1);
     }
    return;  
