@@ -1,32 +1,47 @@
 
-% General info
-masterfile = 'simset';
-pulse_dir = 'bin';
-results_dir = 'bin/Results';
-Obs_file = 'BRG_data.xlsx';
-chemical_species = 'NO3';
+%% GUI
+varargout = PULSE_GUI_App();
+while(varargout.RUNButton.Value ~=1) 
+    pause(1);
+end
+
+%% Set user data
+masterfile = varargout.MasterfilenameEditField.Value; % modset
+pulse_dir = varargout.WorkingdirectoryEditField_2.Value; % bin/
+results_dir = varargout.ResultsdirectoryEditField.Value; %'bin/Results';
+Obs_file = varargout.ObservationfilefullpathEditField.Value; %'BRG_data.xlsx';
+chemical_species = varargout.ChemicalspeciesEditField.Value; %'NO3';
 col_li = 5; % vertical cell to print results
 
-% Run pulse once?
-Run_pulse_flag = 1;
-Clean_results_folder_except_IC_flag = 1;
-IC_file = '0.txt';
-
-% Plot results in "Results" directory?
-Plot_results_flag = 1;
-
-% Sensitivity analysys run?
+% Run pulse once or Sensitivity analysis
+optionname = varargout.Switch.Value;
+Run_pulse_flag = 0;
 Sens_run_flag = 0;
-num_samples = 500;
-A_D_max = 0.0003;           
-ALPHA_IE_max = 0.000003;
-
-% Analyse the runs in Sensitivity_analysis folder
+Clean_results_folder_except_IC_flag =0;
+Plot_results_flag = 0;
 Sens_analysis_flag = 0;
-
-% Plot Sens results
 Sens_plot_results_flag = 0;
 
+if strcmp(optionname,'Single RUN')
+    Run_pulse_flag = 1;
+    Clean_results_folder_except_IC_flag = varargout.deleteResultsfolderexceptICfileCheckBox.Value;
+    Plot_results_flag = varargout.PlotresultssinglerunCheckBox.Value;
+else
+   Sens_run_flag = 1;
+   Sens_analysis_flag = varargout.AnalyzeresultsCheckBox.Value; %0;
+   Sens_plot_results_flag = varargout.PlotSensresultsCheckBox.Value;
+end
+
+%Run_pulse_flag = 1;
+IC_file = varargout.edit3.Value; % 0.txt
+
+%Sens_run_flag = 0;
+num_samples = varargout.scenariosEditField.Value; %500;
+A_D_max = varargout.A_D_maxEditField.Value; %0.0003;           
+ALPHA_IE_max = varargout.ALPHA_IE_maxEditField.Value; %0.000003;
+
+% close GUI
+close(varargout.figure1)
 
 
 %% Run PULSE (once)

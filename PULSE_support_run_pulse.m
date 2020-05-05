@@ -17,11 +17,11 @@ end
 % delete Results folder, except the 0.txt file
 function deleted_results(results_dir,IC_file)
     f=dir(results_dir)
-    f={f.name}
+    f={f.name};
     n=find(strcmp(f,IC_file));
-    f{n}=[]
+    f{n}=[];
     for k=1:numel(f)
-      delete([results_dir,'/',f{k}])
+      delete([results_dir,f{k}])
     end
 end
 
