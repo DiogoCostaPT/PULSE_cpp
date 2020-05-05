@@ -23,11 +23,11 @@ Sens_analysis_flag = 0;
 Sens_plot_results_flag = 0;
 
 if strcmp(optionname,'Single RUN')
-    Run_pulse_flag = 1;
+    Run_pulse_flag = varargout.runsimulationCheckBox.Value;
     Clean_results_folder_except_IC_flag = varargout.deleteResultsfolderexceptICfileCheckBox.Value;
     Plot_results_flag = varargout.PlotresultssinglerunCheckBox.Value;
 else
-   Sens_run_flag = 1;
+   Sens_run_flag = varargout.RuntestsCheckBox.Value;
    Sens_analysis_flag = varargout.AnalyzeresultsCheckBox.Value; %0;
    Sens_plot_results_flag = varargout.PlotSensresultsCheckBox.Value;
 end

@@ -9,3 +9,7 @@ Results/
 Results_backup/
 Results_backup2/
 bin/
+Sensitivity_analysis/
+nbproject
+log.pulse
+code_backups
