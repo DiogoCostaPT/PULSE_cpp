@@ -31,7 +31,7 @@ bool print_results(globalvar& gv,globalpar& gp, int print_tag, unsigned int prin
     std::string filext(".txt");
     tprint += filext;
 
-    arma::mat filedataR(gv.nl*gv.nh,11); 
+    arma::mat filedataR(gv.nl*gv.nh,9); 
     
     for(ih=0;ih<gv.nh;ih++)
     {
@@ -53,9 +53,9 @@ bool print_results(globalvar& gv,globalpar& gp, int print_tag, unsigned int prin
         }
     }
    
-    arma::mat filedata(std::max(0,a-1),8); 
+    arma::mat filedata(std::max(0,a-1),9); 
     if (a>0){
-        filedata = filedataR(arma::span(0,std::max(0,a-1)),arma::span(0,10));
+        filedata = filedataR(arma::span(0,std::max(0,a-1)),arma::span(0,8));
     }
     
     bool outwritestatus =  filedata.save(tprint,arma::csv_ascii);
