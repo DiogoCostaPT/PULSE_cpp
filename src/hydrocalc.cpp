@@ -18,11 +18,12 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
     add = std::abs(gv.precip_i) * (*deltt);
     remove = std::abs(gv.qmelt_i) * (*deltt);
 
-    exist_vol = (*gv.v_swe)(5,0);
+    exist_vol = (*gv.v_swe)(round(gv.nl/2)-1,0); 
     tofill_vol = gv.v_swe_max - exist_vol;
 
     // Precipitation
-    if (add >= 0.0f){ // adding a new layer
+    if (add >= 0.0f)
+    {
 
         if (tofill_vol >= add) // no need to add new layer
         {
@@ -57,16 +58,14 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
 
             (*gv.v_liqwater).insert_cols(0,1); // set to zero by default
             (*gv.v_swe).insert_cols(0,1);
-            (*gv.v_swe).col(0) += (std::abs(gv.precip_i) - tofill_vol);
+            (*gv.v_swe).col(0) += (add - tofill_vol);
             (*gv.v_air).insert_cols(0,1);
             (*gv.v_air).col(0) += 0.0000001;
         }
 
-        //(*gv.v_swe).col(0) -= arma::ones(gv.nl,1) * dv_snow2liqwater;
-
     }
 
-    exist_vol = (*gv.v_swe)(5,0); // need to update because a new layer may have been added
+    exist_vol = (*gv.v_swe)(round(gv.nl/2)-1,0); // need to update because a new layer may have been added
     
     // Melt (and wetfront movement) or Refreezing
     if (remove == 0.0f) // refreezing
@@ -152,6 +151,7 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
                     dv_snow2liqwater = (*v) * (*deltt) * (*gv.v_liqwater).at(il,ih);
                     (*gv.v_liqwater).at(il,ih) -= dv_snow2liqwater;
                     (*gv.v_liqwater).at(il,ih+1) += dv_snow2liqwater;
+
             }
         }
     }

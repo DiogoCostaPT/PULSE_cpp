@@ -3,7 +3,7 @@ folder_loc = '/media/dcosta/data/megasync/ec_main/models/pulse/code/code_matlab_
 meteo_file = 'Meteo_2014-2015.xlsx';
 chemistry_file = 'BRG_data.xlsx';
 species = 'NO3';
-T_index_coef = 0.0000000002;
+T_index_coef = 0.000000002;
     
 gen_0txtfile_flag = 0;   
 snow_L = 100/1000; % 1000 mm -> m
