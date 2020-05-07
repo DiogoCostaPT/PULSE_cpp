@@ -37,7 +37,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
 
         gv.vfrac_m_prev = gv.vfrac_m;
         gv.vfrac_s_prev = gv.vfrac_s;
-        gv.wetfront_cell_prev = gv.wetfront_cell;
+        //gv.wetfront_cell_prev = gv.wetfront_cell;
 
         if (gv.qmelt_i==0.0f){ // accumulation only 
             deltt = std::fmin(gp.print_step,

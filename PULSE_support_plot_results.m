@@ -63,7 +63,9 @@ function PULSE_support_plot_results(pulse_dir,results_dir,chemical_species,...
         colormap(jet)
         colorbar
         view(0,90)
-        title(var_print_name)
+        xlabel('Date')
+        ylabel('Snow height [cm]')
+        title(var_print_name,'Interpreter', 'none')
         shading interp
         
     end

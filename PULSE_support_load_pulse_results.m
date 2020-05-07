@@ -77,7 +77,7 @@ end
 
     % load data and process it
     hbar = parfor_progressbar(numel(filename_no_sort), 'Loading results...');
-    for i = 1:numel(filename_no_sort)
+    parfor i = 1:numel(filename_no_sort)
         hbar.iterate(1)
         file_i = filename_no_sort(i);
         try

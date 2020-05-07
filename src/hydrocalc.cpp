@@ -92,6 +92,7 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
     {
 
         // wetting front calculation
+        gv.wetfront_cell_prev = gv.wetfront_cell;
         gv.wetfront_z = std::fmax(gv.wetfront_z - (*v) * (*deltt),0.0f);
         int tmp = std::round(nh_l-gv.wetfront_z/gv.snowh);
         gv.wetfront_cell = std::min(tmp,nh_l); // finding the cell when the wetting front is located
@@ -127,6 +128,7 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
            
             // adust some variables to the removal of a layer
             gv.nh = std::fmax(gv.nh - 1,0);
+            gv.wetfront_cell_prev = std::max(gv.wetfront_cell - 1,0);
             gv.wetfront_cell = std::max(gv.wetfront_cell - 1,0);
             gv.snowH = std::fmax(gv.snowH - gv.snowh,0); // snowpack depth
 
