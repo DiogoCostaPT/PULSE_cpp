@@ -98,22 +98,22 @@ end
                 extra_h = nh_l-nh_i;
                 c_m(i,:) = [cm_i,zeros(1,extra_h)];
 
-                cs_i = flipud(data.Var5)'; 
+                cs_i = flipud(data.Var4)'; 
                 c_s(i,:) =  [cs_i,zeros(1,extra_h)];
 
-                poros_m_i = flipud(data.Var6)'; 
+                poros_m_i = flipud(data.Var5)'; 
                 poros_m(i,:) =  [poros_m_i,zeros(1,extra_h)];
 
-                poros_s_i = flipud(data.Var7)'; 
+                poros_s_i = flipud(data.Var6)'; 
                 poros_s(i,:) =  [poros_s_i,zeros(1,extra_h)];
                 
-                v_liqwater_i = flipud(data.Var8)'; 
+                v_liqwater_i = flipud(data.Var7)'; 
                 v_liqwater(i,:) = [v_liqwater_i,zeros(1,extra_h)];
                 
-                v_swe_i = flipud(data.Var9)'; 
+                v_swe_i = flipud(data.Var8)'; 
                 v_swe(i,:) = [v_swe_i,zeros(1,extra_h)];
                 
-                v_air_i = flipud(data.Var10)'; 
+                v_air_i = flipud(data.Var9)'; 
                 v_air(i,:) = [v_air_i,zeros(1,extra_h)];
                 
             else
