@@ -8,7 +8,7 @@ function PULSE_support_plot_results(pulse_dir,results_dir,chemical_species,...
          v_liqwater,v_swe,v_air] = PULSE_support_load_pulse_results(results_dir,col_li);
                                         
     % get comment and timenum from masterfile
-    [comment,time_sim,H_LAY] = PULSE_support_Getinfo_masterfile(time_sim_elapsec,pulse_dir,masterfile);
+    [comment,time_sim,H_LAY,L_LAY] = PULSE_support_Getinfo_masterfile(time_sim_elapsec,pulse_dir,masterfile);
     H_LAY = H_LAY/10; % mm to cm
     ih = 0:H_LAY:(h_layers_max-1)*H_LAY;
     
@@ -19,25 +19,27 @@ function PULSE_support_plot_results(pulse_dir,results_dir,chemical_species,...
     [X_obs_mesh,Y_obs_mesh,Z_obs_mesh,Marsize_obs_mesh,colvec,...
         cmax_ctotal] = PULSE_support_GetTrans_obs_data(Obs_file,c_total,chemical_species); 
    
+    inanloc = isnan(c_total);
 
     figure('name',comment)
     for i = 1:8
         
-        if i==1; var_print = c_m; var_print_name = 'c_m'; end
-        if i==2; var_print = c_s; inanloc = find(c_s==0); var_print_name = 'c_s'; end
-        if i==3; var_print = c_total; var_print_name = 'c_total'; end
-        if i==4; var_print = poros_m; var_print_name = 'poros_m'; end
-        if i==5; var_print = poros_s; var_print_name = 'poros_s'; end
-        if i==6; var_print = v_liqwater; var_print_name = 'v_liqwater'; end
-        if i==7; var_print = v_swe; var_print_name = 'v_swe'; end
-        if i==8; var_print = v_air; var_print_name = 'v_air'; end
+        if i==1; var_print = c_m; var_print_name = ['Concentration liquid phase (mg/l): ', chemical_species]; end
+        if i==2; var_print = c_s; var_print_name = ['Concentration solid phase (mg/l): ', chemical_species]; end
+        if i==3; var_print = c_total; var_print_name = ['Concentration snow (liquid + solid phases) (mg/l): ', chemical_species]; end
         
-        if i > 1
-           var_print(inanloc) = NaN;
-        end
+        if i==4; var_print = v_liqwater/(L_LAY); var_print_name = 'Volume liquid phase [mm/mm]'; end
+        if i==5; var_print = v_swe/(L_LAY); var_print_name = 'Volume solid phase [mm/mm]'; end
+        if i==6; var_print = v_air/(L_LAY); var_print_name = 'Volume air phase [mm/mm]'; end
+        
+        if i==7; var_print = poros_m; var_print_name = 'Volume fraction of liquid phase [-]'; end
+        if i==8; var_print = poros_s; var_print_name = 'Volume fraction of solid phase [-]'; end
+                
+        var_print(inanloc) = NaN;
         
         subplot(3,3,i)
         surf(Tmesh,Hmesh,var_print)
+        grid on
         if i == 3
             hold on
             h1 = scatter3(X_obs_mesh,...
@@ -54,19 +56,23 @@ function PULSE_support_plot_results(pulse_dir,results_dir,chemical_species,...
             cmin_i = min(min(var_print));
         end
         xlim([min(Tmesh(:,1)) max(Tmesh(:,1))])
-        datetick('x','mm-dd','keepticks','keeplimits')
+        set(gca, 'XTick',linspace(min(Tmesh(:,1)),max(Tmesh(:,1)),6));
+        set(gca, 'XTickLabel',linspace(min(Tmesh(:,1)),max(Tmesh(:,1)),6));
         ylim([0 max(Hmesh(1,:))])
+        datetick('x','mmm-dd','keepticks','keeplimits')  
         try
             caxis([cmin_i cmax_i])
         catch
         end
-        colormap(jet)
+        colormap(othercolor('Blues9'))
         colorbar
         view(0,90)
         xlabel('Date')
         ylabel('Snow height [cm]')
         title(var_print_name,'Interpreter', 'none')
         shading interp
+        set(gca, 'layer', 'top');
+        alpha 0.7
         
     end
     
