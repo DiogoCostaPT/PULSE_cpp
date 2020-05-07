@@ -9,6 +9,7 @@ void vol_fract_calc(globalpar& gp,globalvar& gv,double *v,double *deltt);
 
 void wetfront_calc(globalpar& gp,globalvar& gv,double *v, double *deltt);
 
-void upbound_calc(globalvar& gv,globalpar& gp,double* deltt,std::ofstream* logPULSEfile);
+void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
+    std::ofstream* logPULSEfile);
 
 #endif

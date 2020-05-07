@@ -51,11 +51,15 @@ function PULSE_support_plot_results(pulse_dir,results_dir,chemical_species,...
         %    cmax_i = 1;
         else
             cmax_i = max(max(var_print));
+            cmin_i = min(min(var_print));
         end
         xlim([min(Tmesh(:,1)) max(Tmesh(:,1))])
         datetick('x','mm-dd','keepticks','keeplimits')
         ylim([0 max(Hmesh(1,:))])
-        caxis([0 cmax_i])
+        try
+            caxis([cmin_i cmax_i])
+        catch
+        end
         colormap(jet)
         colorbar
         view(0,90)

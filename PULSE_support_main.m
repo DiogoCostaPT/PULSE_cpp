@@ -2,7 +2,7 @@
 %% GUI
 varargout = PULSE_GUI_App();
 while(varargout.RUNButton.Value ~=1) 
-    pause(1);
+    pause(0.2);
 end
 
 %% Set user data

@@ -42,9 +42,9 @@ public:
     this->n_snowfallt = n_snowfallt;
    
     c_m = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
-    c_i = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
+    //c_i = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     c_s = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
-    exchange_si = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
+    // = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     exchange_is = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     qcmel_ts = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_qcmelt,2));
     snowfall_ts = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_snowfallt,3));
@@ -62,7 +62,7 @@ public:
     
     size_t nh,nl,n_qcmelt,n_snowfallt;
   
-    std::unique_ptr<arma::Mat<double>> c_m,c_i,c_s,qcmel_ts,snowfall_ts,exchange_si,
+    std::unique_ptr<arma::Mat<double>> c_m,c_s,qcmel_ts,snowfall_ts,//exchange_si,
                   exchange_is,velc_2d,disp_2d,vfrac2d_m,vfrac2d_s,v_liqwater,v_swe,v_air;
     
     double snowH = 0.0f, // snowpack depth
@@ -77,15 +77,14 @@ public:
             vfrac_s_prev=vfrac_s,
             timstart = 0.0f,
             wetfront_z = 0.0f,
-            nh_change = 0.0f,
+            //nh_change = 0.0f,
             qmelt_i = 0.0f,
             precip_i = 0.0f, 
             precipc_i = 0.0f,
-            v_swe_newlayer = 0.0f;
+            v_swe_max = 0.0f;
 
     int wetfront_cell = 0,
-        wetfront_cell_prev = 0,
-        upperboundary_cell_prev = 0;
+        wetfront_cell_prev = 0;
                  
 };
 

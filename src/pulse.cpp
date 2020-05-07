@@ -8,7 +8,6 @@
 void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
         std::string* results_flname)
 {
-    
     // initiation
     double tcum = 0.f,
             //q = 0.f, // melt volume/int
@@ -36,10 +35,15 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
         findInterpPrec(gv,&tcum);
         findInterpQmelt(gv,&tcum);
 
+        gv.vfrac_m_prev = gv.vfrac_m;
+        gv.vfrac_s_prev = gv.vfrac_s;
+        gv.wetfront_cell_prev = gv.wetfront_cell;
+
         if (gv.qmelt_i==0.0f){ // accumulation only 
             deltt = std::fmin(gp.print_step,
                     gv.snowh * gp.rho_frshsnow_init / (std::abs(gv.precip_i)*gp.rho_m)); 
-            upbound_calc(gv,gp,&deltt,logPULSEfile);
+            velc = 0.0f;
+           // watermass_calc(gv,gp,&deltt,&velc,logPULSEfile);
         } else {// melt       
                 // Estimate interstitial flow velocity 
             velc = gv.qmelt_i / gv.vfrac_m; // interstitial flow velocity [m s-1]
@@ -51,22 +55,24 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
             deltt = std::fmin(gp.Courant * gv.snowh / velc,gp.print_step);
 
             // limit step so that if there is melt or accumulation it doesn't go more than one cell
+            //deltt_volavail_melt = velc * (*deltt) * max(min((*gv.v_liqwater)));
             deltt = std::fmin(deltt,
-                    gv.snowh * gp.rho_frshsnow_init / (std::abs((std::abs(gv.precip_i)-std::abs(gv.qmelt_i)))*gp.rho_m));
+                gv.snowh * gp.rho_frshsnow_init / (std::abs((std::abs(gv.precip_i)-std::abs(gv.qmelt_i)))*gp.rho_m));
             
-            upbound_calc(gv,gp,&deltt,logPULSEfile);
+            // wetting front
+            //wetfront_calc(gp,gv,&velc,&deltt);
+            
             
         }
+
+        watermass_calc(gv,gp,&deltt,&velc,logPULSEfile);
 
         tcum = tcum + deltt; 
 
         if (gv.qmelt_i>0.0f && gv.nh>0){ // if melt
-            
-            // wetting front
-            wetfront_calc(gp,gv,&velc,&deltt);
-            
+ 
             // calculate volume fractions
-            vol_fract_calc(gp,gv,&velc,&deltt);
+            //vol_fract_calc(gp,gv,&velc,&deltt);
 
             // check CFC validation
             if((gv.wetfront_cell - gv.wetfront_cell_prev) > 1){
@@ -130,32 +136,32 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
 
                 
                 // Snowmelt
-                (*gv.exchange_si) = (*gv.c_s) * gv.qmelt_i * deltt / (gv.wetfront_cell+1);
+                //(*gv.exchange_si) = (*gv.c_s) * gv.qmelt_i * deltt / (gv.wetfront_cell+1);
 
                 // limit the flux to the available material
-                for(il=0;il<gv.nl ;il++){
-                    for(ih=0;ih<gv.nh ;ih++){
+                //for(il=0;il<gv.nl ;il++){
+                //    for(ih=0;ih<gv.nh ;ih++){
 
-                            if ((*gv.exchange_si).at(il,ih) > 0 && ih<gv.wetfront_cell){
-                                (*gv.exchange_si).at(il,ih) = std::fmin((*gv.exchange_si).at(il,ih),(*gv.c_s).at(il,ih));
+                //            if ((*gv.exchange_si).at(il,ih) > 0 && ih<gv.wetfront_cell){
+                //                (*gv.exchange_si).at(il,ih) = std::fmin((*gv.exchange_si).at(il,ih),(*gv.c_s).at(il,ih));
                             
-                                (*gv.c_s).at(il,ih) = ((*gv.c_s).at(il,ih) * gv.vfrac_s 
-                                    - (*gv.exchange_si).at(il,ih)) / gv.vfrac_s;
-                                (*gv.c_m).at(il,ih) = ((*gv.c_m).at(il,ih) * gv.vfrac_m 
-                                        + (*gv.exchange_si).at(il,ih)) / gv.vfrac_m;
-                                (*gv.c_s).at(il,ih) = std::fmax((*gv.c_s).at(il,ih),0.0f);
-                                (*gv.c_m).at(il,ih) = std::fmax((*gv.c_m).at(il,ih),0.0f);
+                //                (*gv.c_s).at(il,ih) = ((*gv.c_s).at(il,ih) * gv.vfrac_s 
+                //                    - (*gv.exchange_si).at(il,ih)) / gv.vfrac_s;
+                //                (*gv.c_m).at(il,ih) = ((*gv.c_m).at(il,ih) * gv.vfrac_m 
+                //                        + (*gv.exchange_si).at(il,ih)) / gv.vfrac_m;
+                //                (*gv.c_s).at(il,ih) = std::fmax((*gv.c_s).at(il,ih),0.0f);
+                //                (*gv.c_m).at(il,ih) = std::fmax((*gv.c_m).at(il,ih),0.0f);
                             
-                            }else if((*gv.exchange_si).at(il,ih) < 0){
+                //            }else if((*gv.exchange_si).at(il,ih) < 0){
                                 //msg = "PROBLEM: negative s->i exchange";
                                 //std::cout << msg << std::endl;
                                 //print_screen_log(logPULSEfile,&msg);
-                            }
+                //            }
                             //if(ih>gv.wetfront_cell){
                             //    (*gv.exchange_si).at(il,ih) = 0.0f;
                             //};
-                    }
-                };
+                //    }
+                //};
                 //(*gv.c_m) =  ( (*gv.c_m) * gv.vfrac_m_prev + (*gv.exchange_si) * gv.vfrac_s_prev ) / gv.vfrac_m; // / vfrac_m(t);
                 //(*gv.c_s) = ( (*gv.c_s) * gv.vfrac_s_prev - (*gv.exchange_si) * gv.vfrac_s_prev ) / gv.vfrac_s;
                 

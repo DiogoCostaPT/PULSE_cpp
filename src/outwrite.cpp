@@ -31,7 +31,7 @@ bool print_results(globalvar& gv,globalpar& gp, int print_tag, unsigned int prin
     std::string filext(".txt");
     tprint += filext;
 
-    arma::mat filedataR(gv.nl*gv.nh,12); 
+    arma::mat filedataR(gv.nl*gv.nh,11); 
     
     for(ih=0;ih<gv.nh;ih++)
     {
@@ -40,20 +40,20 @@ bool print_results(globalvar& gv,globalpar& gp, int print_tag, unsigned int prin
             filedataR(a,0) = nh_l - ih - 1;// * gv.snowh;  
             filedataR(a,1) = il;// * gv.snowl;  
             filedataR(a,2) = (*gv.c_m).at(il,ih); 
-            filedataR(a,3) = (*gv.c_i).at(il,ih); 
-            filedataR(a,4) = (*gv.c_s).at(il,ih); 
-            filedataR(a,5) = (*gv. vfrac2d_m).at(il,ih);
-            filedataR(a,6) = (*gv. vfrac2d_s).at(il,ih);
-            filedataR(a,7) = (*gv.v_liqwater).at(il,ih);
-            filedataR(a,8) = (*gv.v_swe).at(il,ih);
-            filedataR(a,9) = (*gv.v_air).at(il,ih);
-            filedataR(a,10) = (*gv.exchange_si).at(il,ih); 
-            filedataR(a,11) = (*gv.exchange_is).at(il,ih); 
+            //filedataR(a,3) = (*gv.c_i).at(il,ih); 
+            filedataR(a,3) = (*gv.c_s).at(il,ih); 
+            filedataR(a,4) = (*gv. vfrac2d_m).at(il,ih);
+            filedataR(a,5) = (*gv. vfrac2d_s).at(il,ih);
+            filedataR(a,6) = (*gv.v_liqwater).at(il,ih);
+            filedataR(a,7) = (*gv.v_swe).at(il,ih);
+            filedataR(a,8) = (*gv.v_air).at(il,ih);
+            //filedataR(a,9) = (*gv.exchange_si).at(il,ih); 
+            //filedataR(a,10) = (*gv.exchange_is).at(il,ih); 
             a = a + 1;
         }
     }
    
-    arma::mat filedata(std::max(0,a-1),11); 
+    arma::mat filedata(std::max(0,a-1),8); 
     if (a>0){
         filedata = filedataR(arma::span(0,std::max(0,a-1)),arma::span(0,10));
     }

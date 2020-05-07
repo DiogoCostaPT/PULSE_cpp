@@ -3,23 +3,23 @@ folder_loc = '/media/dcosta/data/megasync/ec_main/models/pulse/code/code_matlab_
 meteo_file = 'Meteo_2014-2015.xlsx';
 chemistry_file = 'BRG_data.xlsx';
 species = 'NO3';
-T_index_coef = 0.00002;
+T_index_coef = 0.0000000002;
     
-gen_0txtfile_flag = 1;   
+gen_0txtfile_flag = 0;   
 snow_L = 100/1000; % 1000 mm -> m
 snow_H = 1000/1000; % 100 mm -> m
 snow_h = 10/1000; % 10 mm - m
 snow_l = 10/1000; % 10 mm -> m
     
     
-gen_prec_and_qmelt_T_index_files_flag = 0;
+gen_prec_and_qmelt_T_index_files_flag = 1;
 
 %% Generate 0.txt file 
 if gen_0txtfile_flag == 1
     
     % Densities (as in PULSE)
     rho_s = 917.;  % kg.m-3 at 0 degrees
-    rho_m=998.8; % kg.m-3 at 0 degrees
+    rho_m = 998.8; % kg.m-3 at 0 degrees
     rho_frshsnow_init = 320;
 
     dataraw_chem = xlsread([folder_loc,chemistry_file],species);

@@ -28,7 +28,7 @@ void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
     //gv.upperboundary_cell = 0;
 
     // max swe of any new layer added on top of the snowpack due to precipitation
-    gv.v_swe_newlayer = (gv.snowh * gv.snowl) * gp.rho_frshsnow_init/gp.rho_m;
+    gv.v_swe_max = (gv.snowh * gv.snowl) * gp.rho_frshsnow_init/gp.rho_m;
     
     if(flstatus == true) 
     {
@@ -37,15 +37,15 @@ void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
             ih = nh_l - filedata(a,0) - 1;  
             il = filedata(a,1);  
             (*gv.c_m).at(il,ih) = filedata(a,2);
-            (*gv.c_i).at(il,ih) = filedata(a,3);
-            (*gv.c_s).at(il,ih) = filedata(a,4);
-            (*gv. vfrac2d_m).at(il,ih) = filedata(a,5);
-            (*gv. vfrac2d_s).at(il,ih) = filedata(a,6);
-            (*gv.v_liqwater).at(il,ih) = filedata(a,7);
-            (*gv.v_swe).at(il,ih) = filedata(a,8);
-            (*gv.v_air).at(il,ih) = filedata(a,9);
-            (*gv.exchange_si).at(il,ih) = filedata(a,10);
-            (*gv.exchange_is).at(il,ih) = filedata(a,11);
+            //(*gv.c_i).at(il,ih) = filedata(a,3);
+            (*gv.c_s).at(il,ih) = filedata(a,3);
+            (*gv. vfrac2d_m).at(il,ih) = filedata(a,4);
+            (*gv. vfrac2d_s).at(il,ih) = filedata(a,5);
+            (*gv.v_liqwater).at(il,ih) = filedata(a,6);
+            (*gv.v_swe).at(il,ih) = filedata(a,7);
+            (*gv.v_air).at(il,ih) = filedata(a,8);
+            //(*gv.exchange_si).at(il,ih) = filedata(a,9);
+            //(*gv.exchange_is).at(il,ih) = filedata(a,10);
 
             if((*gv.c_m).at(il,ih)!=0){
                 gv.wetfront_z = std::fmin((gv.nh - (ih+1)) * gv.snowh,gv.wetfront_z);
