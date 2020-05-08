@@ -9,7 +9,7 @@ function PULSE_support_plot_results(pulse_dir,results_dir,chemical_species,...
                                         
     % get comment and timenum from masterfile
     [comment,time_sim,H_LAY,L_LAY] = PULSE_support_Getinfo_masterfile(time_sim_elapsec,pulse_dir,masterfile);
-    H_LAY = H_LAY/10; % mm to cm
+    %H_LAY = H_LAY/10; % mm to cm
     ih = 0:H_LAY:(h_layers_max-1)*H_LAY;
     
     % generate mesh grid for plot surf
@@ -69,13 +69,15 @@ function PULSE_support_plot_results(pulse_dir,results_dir,chemical_species,...
         colorbar
         view(0,90)
         %xlabel('Date')
-        ylabel('Snow height [cm]')
+        ylabel('Snow height [mm]')
         title(var_print_name,'Interpreter', 'none')
         shading interp
         set(gca, 'layer', 'top');
         alpha 0.7
         
     end
+    
+    Y_obs_mesh = Y_obs_mesh * 10; % cm -> mm
     
     %Model_data_interc = interp1(Data_time(1:end-1),Data(1:end-1),T_WQsort);
     Model_data_interc = interp2(Hmesh,Tmesh,c_total,Y_obs_mesh,X_obs_mesh);

@@ -10,11 +10,11 @@
         if(contains(newline,'COMMNET'))
             comment = erase(newline,'COMMNET ');
         end
-        if(contains(newline,'H_LAY'))
-            H_LAY = str2double(erase(newline,'H_LAY '));
+        if(contains(newline,'H_LAY_mm'))
+            H_LAY = str2double(erase(newline,'H_LAY_mm '));
         end
-         if(contains(newline,'L_LAY'))
-            L_LAY = str2double(erase(newline,'L_LAY '));
+         if(contains(newline,'L_LAY_mm'))
+            L_LAY = str2double(erase(newline,'L_LAY_mm '));
         end
         if(contains(newline,'START_TIME'))
             start_time_text = erase(newline,'START_TIME ');

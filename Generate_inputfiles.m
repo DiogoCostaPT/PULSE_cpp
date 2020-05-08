@@ -4,14 +4,14 @@ folder_loc = '/media/dcosta/data/megasync/ec_main/models/pulse/code/code_matlab_
 meteo_file = 'Meteo_2014-2015.xlsx';
 chemistry_file = 'BRG_data.xlsx';
 species = 'NO3';
-T_index_coef = 10;
+T_index_coef = 0.1;
 
 % IC file
 gen_0txtfile_flag = 1;   
 snow_L = 100; % mm
 snow_H = 1000; % 100 cm * 10 = 1000 mm
-snow_h = 10; % 10 mm - m
-snow_l = 10; % 10 mm -> m
+snow_h = 10; % 10 mm
+snow_l = 10; % 10 mm
 v_frac_air_init = 0.0008;
 
 % qmelt and meteo files
@@ -53,8 +53,8 @@ if gen_0txtfile_flag == 1
 
     cm_0 = 0;
     v_liqwater = 0; % m3
-    v_swe = snow_h * snow_l * rho_frshsnow_init/rho_m; % m3
-    v_air = snow_h * snow_l * v_frac_air_init;
+    v_swe = snow_h/1000 * snow_l/1000 * rho_frshsnow_init/rho_m; % m3
+    v_air = snow_h/1000 * snow_l/1000 * v_frac_air_init;
     
     vfrac_s = v_swe / (v_swe + v_liqwater);
     vfrac_m = v_liqwater / (v_swe + v_liqwater);
@@ -183,7 +183,7 @@ if gen_prec_and_qmelt_T_index_files_flag == 1
 
     % data to copy past to model's meteo file (time and prec vol)
     time_pulse = SNOWfall_ts.Time(1:end);
-    snowaccum_2pulse = SNOWfall_ts.Data/(3600*24); % mm daily -> mm/sec
+    snowaccum_2pulse = SNOWfall_ts.Data; % mm daily -> mm/sec
 
     % now chem data
     data_toplayer = dataraw_chem(:,2)/1000; % ppb -> ppm
@@ -208,7 +208,7 @@ if gen_prec_and_qmelt_T_index_files_flag == 1
 
         
     %% QMELT
-    qmelt_estim_ts = max(TEMP_ts.data * T_index_coef/(3600*24),0);
+    qmelt_estim_ts = max(TEMP_ts.data * T_index_coef,0);
     qmelt_estim_ts(isnan(qmelt_estim_ts)) = 0;
     qmelt_file = [time_pulse_sec,qmelt_estim_ts];
     

@@ -110,50 +110,55 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
                         
         }else // remove layer
         {
-            // transfer mass from upper layer to lower layer because it is going to be removed
-            (*gv.c_m).col(1) = 
-            (
-            (*gv.c_m).col(0) % (*gv.v_liqwater).col(0) + 
-            (*gv.c_s).col(0) % (*gv.v_swe).col(0) + 
-            (*gv.c_m).col(1) % (*gv.v_liqwater).col(1) +
-            (*gv.c_s).col(1) % (arma::ones(gv.nl,1) * remove - (*gv.v_swe).col(0))
-            ) / (
-                (*gv.v_liqwater).col(0) + (*gv.v_swe).col(0) + (*gv.v_liqwater).col(1) + 
-                arma::ones(gv.nl,1) * remove - (*gv.v_swe).col(0)
-                );
-            // (*gv.c_s) -> no need to calculate for c_s because it will not change (water masses cancel out)
+            if ((*gv.c_m).n_cols <= 1) {
+                std::cout << "Snowpack melted completely: sum(qmelt) > sum(precip)" << std::endl;
+            }else {
+                // transfer mass from upper layer to lower layer because it is going to be removed
+                (*gv.c_m).col(1) = 
+                (
+                (*gv.c_m).col(0) % (*gv.v_liqwater).col(0) + 
+                (*gv.c_s).col(0) % (*gv.v_swe).col(0) + 
+                (*gv.c_m).col(1) % (*gv.v_liqwater).col(1) +
+                (*gv.c_s).col(1) % (arma::ones(gv.nl,1) * remove - (*gv.v_swe).col(0))
+                ) / (
+                    (*gv.v_liqwater).col(0) + (*gv.v_swe).col(0) + (*gv.v_liqwater).col(1) + 
+                    arma::ones(gv.nl,1) * remove - (*gv.v_swe).col(0)
+                    );
+                // (*gv.c_s) -> no need to calculate for c_s because it will not change (water masses cancel out)
 
-            (*gv.v_liqwater).col(1) += (*gv.v_swe).col(0) + (*gv.v_liqwater).col(0);
+                (*gv.v_liqwater).col(1) += (*gv.v_swe).col(0) + (*gv.v_liqwater).col(0);
 
-           
-            // adust some variables to the removal of a layer
-            gv.nh = std::fmax(gv.nh - 1,0);
-            gv.wetfront_cell_prev = std::max(gv.wetfront_cell - 1,0);
-            gv.wetfront_cell = std::max(gv.wetfront_cell - 1,0);
-            gv.snowH = std::fmax(gv.snowH - gv.snowh,0); // snowpack depth
-
-            // remove layer
-            (*gv.c_m).shed_cols(0,0);
-            //(*gv.c_i).shed_cols(0,0);
-            (*gv.c_s).shed_cols(0,0);
-            //(*gv.exchange_si).shed_cols(0,0);
-            (*gv.v_swe).shed_cols(0,0);
-            (*gv.v_air).shed_cols(0,0);
-            (*gv.exchange_is).shed_cols(0,0);
-            (*gv.vfrac2d_m).shed_cols(0,0);
-            (*gv.vfrac2d_s).shed_cols(0,0);
-            (*gv.v_liqwater).shed_cols(0,0);
             
+                // adust some variables to the removal of a layer
+                gv.nh = std::fmax(gv.nh - 1,0);
+                gv.wetfront_cell_prev = std::max(gv.wetfront_cell - 1,0);
+                gv.wetfront_cell = std::max(gv.wetfront_cell - 1,0);
+                gv.snowH = std::fmax(gv.snowH - gv.snowh,0); // snowpack depth
+
+                // remove layer
+                (*gv.c_m).shed_cols(0,0);
+                //(*gv.c_i).shed_cols(0,0);
+                (*gv.c_s).shed_cols(0,0);
+                //(*gv.exchange_si).shed_cols(0,0);
+                (*gv.v_swe).shed_cols(0,0);
+                (*gv.v_air).shed_cols(0,0);
+                (*gv.exchange_is).shed_cols(0,0);
+                (*gv.vfrac2d_m).shed_cols(0,0);
+                (*gv.vfrac2d_s).shed_cols(0,0);
+                (*gv.v_liqwater).shed_cols(0,0);
+            }    
         }
 
         // advection (only water)
-        for (ih=0;ih<gv.wetfront_cell-1;ih++){
-            for (il=0;il<nl_l-1;il++){
-                   
-                    dv_snow2liqwater = (*v) * (*deltt) * (*gv.v_liqwater).at(il,ih);
-                    (*gv.v_liqwater).at(il,ih) -= dv_snow2liqwater;
-                    (*gv.v_liqwater).at(il,ih+1) += dv_snow2liqwater;
+        if ((*gv.c_m).n_cols <= 1) {
+            for (ih=0;ih<gv.wetfront_cell-1;ih++){
+                for (il=0;il<nl_l-1;il++){
+                    
+                        dv_snow2liqwater = (*v) * (*deltt) * (*gv.v_liqwater).at(il,ih);
+                        (*gv.v_liqwater).at(il,ih) -= dv_snow2liqwater;
+                        (*gv.v_liqwater).at(il,ih+1) += dv_snow2liqwater;
 
+                }
             }
         }
     }
