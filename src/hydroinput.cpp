@@ -13,6 +13,7 @@ void findInterpPrec(globalvar& gv,double *tcum)
     
     nprec = int((*gv.snowfall_ts).col(0).n_elem);
     
+    // identification of the time step and linear interpolation for time t
     for(int a=0;a<nprec;a++){
         prec_t_i = (*gv.snowfall_ts).at(a,0);
         prec_i = (*gv.snowfall_ts).at(a,1);
@@ -27,11 +28,20 @@ void findInterpPrec(globalvar& gv,double *tcum)
         }else if(prec_t_i > *tcum){
             gv.precip_i = prec_i_prev 
                     + (prec_i - prec_i_prev) * ((*tcum - prec_t_i_prev)) 
-                    / (prec_t_i - prec_t_i_prev);
+                    / (prec_t_i - prec_t_i_prev); 
             break;
         }
     }
     
+    if ((prec_t_i - prec_t_i_prev) > 0.0f)
+    {
+        gv.precip_i = gv.precip_i / (prec_t_i - prec_t_i_prev); // m/deltatime -> m/sec
+    }else
+    {
+        gv.precip_i = 0.0f;
+    }
+    
+
     if (gv.precip_i>0){ // acumulation -> add concentration of snow
         if (prec_i>0 && prec_i_prev>0){ // accumulation
             gv.precipc_i = prec_c_i_prev 
@@ -58,6 +68,7 @@ void findInterpQmelt(globalvar& gv,double *tcum)
     
     nqcmelt = int((*gv.qcmel_ts).col(0).n_elem);
     
+    // identification of the time step and linear interpolation for time t
     for(int a=0;a<nqcmelt;a++){
         qmelt_t_i = (*gv.qcmel_ts).at(a,0);
         qmelt_i = (*gv.qcmel_ts).at(a,1);
@@ -74,6 +85,14 @@ void findInterpQmelt(globalvar& gv,double *tcum)
             break;
         }
     }
-        
+
+    if ((qmelt_t_i - qmelt_t_i_prev) > 0.0f)
+    {
+        gv.qmelt_i = gv.qmelt_i / (qmelt_t_i - qmelt_t_i_prev); // m/deltatime -> m/sec
+    }else
+    {
+        gv.precip_i = 0.0f;
+    }
+
     return;
 }

@@ -35,14 +35,15 @@ end
  function h_layers_max = Get_max_snow_depth(results_dir,filename_no_sort,col_li)
     hbar = parfor_progressbar(numel(filename_no_sort), 'Determine max snowpack depth...');
     h_layers = zeros(numel(filename_no_sort),1)*NaN;
-    parfor i = 1:numel(filename_no_sort)
+   parfor i = 1:numel(filename_no_sort)
         hbar.iterate(1)
 
         try
             file_2_read = [results_dir,'/',num2str(filename_no_sort(i)),'.txt'];
-            dataraw = readtable(file_2_read);
+            dataraw = readtable(file_2_read,'PreserveVariableNames',1);
             if ~isempty(dataraw)
-                i_rel = dataraw.Var2==col_li;
+                data_i = table2array(dataraw(:,2));
+                i_rel = ismember(data_i,col_li); % xl [-]
                 data = dataraw(i_rel,:);
                 h_layers(i) = numel(data(:,1));
             else
@@ -81,39 +82,41 @@ end
         hbar.iterate(1)
         file_i = filename_no_sort(i);
         try
-            data_raw = readtable([results_dir,'/',num2str(filename_no_sort(i)),'.txt']);
+            dataraw_tbl= readtable([results_dir,'/',num2str(filename_no_sort(i)),'.txt'],...
+                'PreserveVariableNames',1);
 
             time_i = file_i; % in seconds
             
-            if ~isempty(data_raw)
-                i_rel = find(data_raw.Var2==col_li);
+            if ~isempty(dataraw_tbl)
+                dataraw = table2array(dataraw_tbl);
+                i_rel = find(dataraw(:,2)==col_li);
 
-                data = data_raw(i_rel,:);
+                data = dataraw(i_rel,:);
                 h_layers_i = numel(data(:,1));
 
                 time(i) = time_i;
 
-                cm_i = flipud(data.Var3)';
+                cm_i = flipud(data(:,3))';
                 nh_i = numel(cm_i);
                 extra_h = nh_l-nh_i;
                 c_m(i,:) = [cm_i,zeros(1,extra_h)];
 
-                cs_i = flipud(data.Var4)'; 
+                cs_i = flipud(data(:,4))'; 
                 c_s(i,:) =  [cs_i,zeros(1,extra_h)];
 
-                poros_m_i = flipud(data.Var5)'; 
+                poros_m_i = flipud(data(:,5))'; 
                 poros_m(i,:) =  [poros_m_i,zeros(1,extra_h)];
 
-                poros_s_i = flipud(data.Var6)'; 
+                poros_s_i = flipud(data(:,6))'; 
                 poros_s(i,:) =  [poros_s_i,zeros(1,extra_h)];
                 
-                v_liqwater_i = flipud(data.Var7)'; 
+                v_liqwater_i = flipud(data(:,7))'; 
                 v_liqwater(i,:) = [v_liqwater_i,zeros(1,extra_h)];
                 
-                v_swe_i = flipud(data.Var8)'; 
+                v_swe_i = flipud(data(:,8))'; 
                 v_swe(i,:) = [v_swe_i,zeros(1,extra_h)];
                 
-                v_air_i = flipud(data.Var9)'; 
+                v_air_i = flipud(data(:,9))'; 
                 v_air(i,:) = [v_air_i,zeros(1,extra_h)];
                 
             else

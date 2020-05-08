@@ -1,38 +1,44 @@
 
+% general info
 folder_loc = '/media/dcosta/data/megasync/ec_main/models/pulse/code/code_matlab_original/Svalbard_Snownet/';
 meteo_file = 'Meteo_2014-2015.xlsx';
 chemistry_file = 'BRG_data.xlsx';
 species = 'NO3';
 T_index_coef = 10;
-    
-gen_0txtfile_flag = 0;   
-snow_L = 100/1000; % 1000 mm -> m
-snow_H = 1000/1000; % 100 mm -> m
-snow_h = 10/1000; % 10 mm - m
-snow_l = 10/1000; % 10 mm -> m
-    
-    
+
+% IC file
+gen_0txtfile_flag = 1;   
+snow_L = 100; % mm
+snow_H = 1000; % 100 cm * 10 = 1000 mm
+snow_h = 10; % 10 mm - m
+snow_l = 10; % 10 mm -> m
+v_frac_air_init = 0.0008;
+
+% qmelt and meteo files
 gen_prec_and_qmelt_T_index_files_flag = 1;
+new_qmeltfile_name = 'qcmelt_svalbard_test';
+new_meteofile_name = 'meteo_svalbard_test';
+
+% Densities (as in PULSE)
+rho_s = 917;  % kg.m-3 at 0 degrees
+rho_m = 998.8; % kg.m-3 at 0 degrees
+rho_frshsnow_init = 320;
+
 
 %% Generate 0.txt file 
 if gen_0txtfile_flag == 1
-    
-    % Densities (as in PULSE)
-    rho_s = 917.;  % kg.m-3 at 0 degrees
-    rho_m = 998.8; % kg.m-3 at 0 degrees
-    rho_frshsnow_init = 320;
-
+  
     dataraw_chem = xlsread([folder_loc,chemistry_file],species);
 
     time_obs_chem = dataraw_chem(:,1) + 693960;
 
-    depths_obs = [10,20,30,40,50,60,70,80,90,100]/100; % cm	-> m	
+    depths_obs = [10,20,30,40,50,60,70,80,90,100] * 10; % cm -> mm
 
     NO3_conc_ppb = dataraw_chem(1,2:end); % ppb
     %NO3_conc_ppb = [281.766753953895,112.96520293409,162.480671212122,102.504849889069,116.591016244802,...
     %    92.9862893794549,141.758823073791,100.783465395752,92.4981427755126,135.784890366924]; % ppb
 
-    NO3_conc_mgl = NO3_conc_ppb / 1000;
+    NO3_conc_mgl = NO3_conc_ppb / 1000; %mg/l
 
     % calc
 
@@ -46,9 +52,12 @@ if gen_0txtfile_flag == 1
     file_0txt = [];
 
     cm_0 = 0;
-    v_liqwater = 0.008 * snow_h * snow_l; % m3
-    v_swe = 0.991 * snow_h * snow_l; % m3
-    v_air = 0.001 * snow_h * snow_l;
+    v_liqwater = 0; % m3
+    v_swe = snow_h * snow_l * rho_frshsnow_init/rho_m; % m3
+    v_air = snow_h * snow_l * v_frac_air_init;
+    
+    vfrac_s = v_swe / (v_swe + v_liqwater);
+    vfrac_m = v_liqwater / (v_swe + v_liqwater);
 
     for hci = 0:cell_h_num-1
         for lci = 0:cell_l_num-1
@@ -59,11 +68,27 @@ if gen_0txtfile_flag == 1
 
         cs_0 = NO3_conc_mgl(iloc_max(end));
 
-        file_0txt = [file_0txt;[hci,lci,cm_0,0,cs_0,v_liqwater,v_swe,v_air,0,0]];
+        file_0txt = [file_0txt;[hci,lci,cm_0,cs_0,vfrac_m,vfrac_s,v_liqwater,v_swe,v_air]];
 
         end
 
     end
+    
+    file_0txt_cell = num2cell(file_0txt);
+    header = {};
+    header{1} = 'yh [-]';
+    header{2} = "xl [-]";
+    header{3} = "c_m [user_defined]";
+    header{4} = "c_s [user_defined]";
+    header{5} = "vfrac_liqwater [-]";
+    header{6} = "vfrac_swe [-]";
+    header{7} = "v_liqwater [mm*mm*m]";
+    header{8} = "v_swe [mm*mm*m]";
+    header{9} = "v_air [mm*mm*m]";     
+    
+    file_0txt_cell = [header;file_0txt_cell];
+    
+    writecell(file_0txt_cell,'0.txt','Delimiter',',')
 
 end
 %% Generate Qmelt data
@@ -146,7 +171,7 @@ if gen_prec_and_qmelt_T_index_files_flag == 1
 
     SNOWfall_ts = PREC_ts;
     SNOWfall_ts.Data(PREC_type_ts.Data==2) = 0; % daily
-    
+        
     % plot
     figure
     plot(RAIN_ts)
@@ -166,11 +191,35 @@ if gen_prec_and_qmelt_T_index_files_flag == 1
     
     % join
     time_pulse_sec = [0; cumsum(etime(datevec(SNOWfall_ts.Time(2:end)),datevec(SNOWfall_ts.Time(1:end-1))))];
+    snowaccum_2pulse(isnan(snowaccum_2pulse)) = 0;
+    snowprec_chem(isnan(snowprec_chem)) = 0;
     Snowfall_file = [time_pulse_sec,snowaccum_2pulse,snowprec_chem];
     
+    
+    Snowfall_file_cell = num2cell(Snowfall_file);
+    header = {};
+    header{1} = 'time (sec)';
+    header{2} = "prec [mm/deltatime]";
+    header{3} = "prec_conc [user_defined]";
+
+    Snowfall_file_cell = [header;Snowfall_file_cell];
+    
+    writecell(Snowfall_file_cell,new_meteofile_name,'Delimiter',',')
+
+        
     %% QMELT
     qmelt_estim_ts = max(TEMP_ts.data * T_index_coef/(3600*24),0);
+    qmelt_estim_ts(isnan(qmelt_estim_ts)) = 0;
     qmelt_file = [time_pulse_sec,qmelt_estim_ts];
+    
+    qmelt_file_cell = num2cell(qmelt_file);
+    header = {};
+    header{1} = 'time (sec)';
+    header{2} = "qmelt [mm/deltatime]";
+
+    qmelt_file_cell = [header;qmelt_file_cell];
+    
+    writecell(qmelt_file_cell,new_qmeltfile_name,'Delimiter',',')
 
 end
 

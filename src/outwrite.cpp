@@ -42,11 +42,11 @@ bool print_results(globalvar& gv,globalpar& gp, int print_tag, unsigned int prin
             filedataR(a,2) = (*gv.c_m).at(il,ih); 
             //filedataR(a,3) = (*gv.c_i).at(il,ih); 
             filedataR(a,3) = (*gv.c_s).at(il,ih); 
-            filedataR(a,4) = (*gv. vfrac2d_m).at(il,ih);
-            filedataR(a,5) = (*gv. vfrac2d_s).at(il,ih);
-            filedataR(a,6) = (*gv.v_liqwater).at(il,ih);
-            filedataR(a,7) = (*gv.v_swe).at(il,ih);
-            filedataR(a,8) = (*gv.v_air).at(il,ih);
+            filedataR(a,4) = (*gv.vfrac2d_m).at(il,ih);
+            filedataR(a,5) = (*gv.vfrac2d_s).at(il,ih);
+            filedataR(a,6) = (*gv.v_liqwater).at(il,ih)*1000*1000; // m*m*m -> mm*mm*m
+            filedataR(a,7) = (*gv.v_swe).at(il,ih)*1000*1000; // m*m*m -> mm*mm*m
+            filedataR(a,8) = (*gv.v_air).at(il,ih)*1000*1000; // m*m*m -> mm*mm*m
             //filedataR(a,9) = (*gv.exchange_si).at(il,ih); 
             //filedataR(a,10) = (*gv.exchange_is).at(il,ih); 
             a = a + 1;
@@ -58,6 +58,18 @@ bool print_results(globalvar& gv,globalpar& gp, int print_tag, unsigned int prin
         filedata = filedataR(arma::span(0,std::max(0,a-1)),arma::span(0,8));
     }
     
-    bool outwritestatus =  filedata.save(tprint,arma::csv_ascii);
+    int num_export_var = 9;
+    arma::field<std::string> header(num_export_var);
+    header(0) = "yh [-]";
+    header(1) = "xl [-]";
+    header(2) = "c_m [user_defined]";
+    header(3) = "c_s [user_defined]";
+    header(4) = "vfrac_liqwater [-]";
+    header(5) = "vfrac_swe [-]";
+    header(6) = "v_liqwater [mm*mm*m]";
+    header(7) = "v_swe [mm*mm*m]";
+    header(8) = "v_air [mm*mm*m]";     
+    
+    bool outwritestatus =  filedata.save(arma::csv_name(tprint, header));
     return outwritestatus;
 }

@@ -64,10 +64,11 @@ function PULSE_support_plot_results(pulse_dir,results_dir,chemical_species,...
             caxis([cmin_i cmax_i])
         catch
         end
-        colormap(othercolor('Blues9'))
+        %colormap(othercolor('Blues9'))
+        colormap(jet)
         colorbar
         view(0,90)
-        xlabel('Date')
+        %xlabel('Date')
         ylabel('Snow height [cm]')
         title(var_print_name,'Interpreter', 'none')
         shading interp

@@ -69,7 +69,8 @@ public:
             snowL = 0.0f, // snowpack horizontal lenght
             snowl = 0.0f, // grid h lenght
             snowh = 0.0f, // grid l lenght
-            vfrac_m=0.008,
+            vfrac_m= 0.0f,
+            vfrac_a = 0.0008f,
             //vfrac_i=0.001,
             vfrac_s= 1 - vfrac_m,// - vfrac_i,
             vfrac_m_prev=vfrac_m,

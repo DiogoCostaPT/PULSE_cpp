@@ -91,12 +91,12 @@ void read_meteofile(globalpar& gp,globalvar& gv,std::string* meteo_file,
 
     if(flstatusM == true) {
         for(a=0;a<num_cols;a++){
-            tprec = filedataM(a,0);  // t melt seconds
-            prec_i = filedataM(a,1)/1000;  // value of melt
-            precs_i = filedataM(a,2);  // value of melt
+            tprec = filedataM(a,0);  // t prec seconds
+            prec_i = filedataM(a,1);  // mm/deltatime
+            precs_i = filedataM(a,2);  // conc of precip
             (*gv.snowfall_ts).at(a,0) = std::fabs(tprec);  
-            (*gv.snowfall_ts).at(a,1) = std::fabs(prec_i);
-            (*gv.snowfall_ts).at(a,2) = std::fabs(precs_i); // hh-> sec
+            (*gv.snowfall_ts).at(a,1) = std::fabs(prec_i)/1000;  // mm/deltatime -> m/deltatime
+            (*gv.snowfall_ts).at(a,2) = std::fabs(precs_i); 
         }
        (gp.Tperd) = tprec;
        //msg = "Successful loading the file: " + (*meteo_file);
@@ -124,10 +124,10 @@ void read_qmelfile(globalpar& gp,globalvar& gv,std::string* qcmelt_file,
     if(flstatusQ == true) {
         for(a=0;a<filedataQ.col(1).n_elem;a++){
             tmelts = filedataQ(a,0);  // t melt seconds
-            qcmelt_i = filedataQ(a,1)/1000;  // value of melt
+            qcmelt_i = filedataQ(a,1);  // mm/deltatime
             //cmelt_i = filedataQ(a,2);  // value of melt
             (*gv.qcmel_ts).at(a,0) = std::fabs(tmelts);  
-            (*gv.qcmel_ts).at(a,1) = std::fabs(qcmelt_i);
+            (*gv.qcmel_ts).at(a,1) = std::fabs(qcmelt_i)/1000; // mm/deltatime -> m/deltatime
             //(*gv.qcmel_ts).at(a,2) = cmelt_i; // hh-> sec
         }
        msg = "Successful loading the file: " + (*qcmelt_file);

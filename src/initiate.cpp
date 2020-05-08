@@ -22,6 +22,9 @@ void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
     init_file = *results_flname + '/' + std::to_string(int(gv.timstart)) + ".txt";
     
     bool flstatus = filedata.load(init_file,arma::csv_ascii);
+
+    
+
     //gv.upperboundary_z = gv.nh*gv.snowh;
     gv.wetfront_z = gv.nh*gv.snowh;
     gv.wetfront_cell = 0;
@@ -41,9 +44,9 @@ void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
             (*gv.c_s).at(il,ih) = filedata(a,3);
             (*gv. vfrac2d_m).at(il,ih) = filedata(a,4);
             (*gv. vfrac2d_s).at(il,ih) = filedata(a,5);
-            (*gv.v_liqwater).at(il,ih) = filedata(a,6);
-            (*gv.v_swe).at(il,ih) = filedata(a,7);
-            (*gv.v_air).at(il,ih) = filedata(a,8);
+            (*gv.v_liqwater).at(il,ih) = filedata(a,6)/(1000*1000); // mm*mm*m -> m*m*m
+            (*gv.v_swe).at(il,ih) = filedata(a,7)/(1000*1000); // mm*mm*m -> m*m*m
+            (*gv.v_air).at(il,ih) = filedata(a,8)/(1000*1000); // mm*mm*m -> m*m*m
             //(*gv.exchange_si).at(il,ih) = filedata(a,9);
             //(*gv.exchange_is).at(il,ih) = filedata(a,10);
 
