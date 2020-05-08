@@ -6,57 +6,33 @@
  * **** */
 void findInterpPrec(globalvar& gv,double *tcum)
 {
-    double prec_t_i = 0.0f,prec_t_i_prev = 0.0f, // time
-            prec_i = 0.0f,prec_i_prev=0.0f, // melt rate
-            prec_c_i = 0.0f, prec_c_i_prev = 0.0f; // concentration of added snow
+    double prec_t_i = 0.0f,prec_t_i2 = 0.0f, // time
+            prec_i = 0.0f, // melt rate
+            prec_c_i = 0.0f; // concentration of added snow
     unsigned int nprec = 0;;
     
-    nprec = int((*gv.snowfall_ts).col(0).n_elem);
+    nprec = int((*gv.snowfall_ts).col(0).n_elem) - 1;
     
     // identification of the time step and linear interpolation for time t
-    prec_c_i_prev = 0.0f;
-    prec_t_i_prev = 0.0f;
+    prec_t_i2 = 0.0f;
     for(int a=0;a<nprec;a++){
         prec_t_i = (*gv.snowfall_ts).at(a,0);
+        prec_t_i2 = (*gv.snowfall_ts).at(a+1,0);
         prec_i = (*gv.snowfall_ts).at(a,1);
         prec_c_i = (*gv.snowfall_ts).at(a,2);
-        if(prec_t_i < (*tcum)){
-            prec_t_i_prev = prec_t_i;
-            prec_i_prev = prec_i;
-            prec_c_i_prev = prec_c_i;
-        }else if (prec_t_i == (*tcum)){
-            gv.precip_i =  prec_i;
-            break;
-        }else if(prec_t_i > (*tcum)){
-            gv.precip_i = prec_i_prev 
-                    + (prec_i - prec_i_prev) * ((*tcum) - prec_t_i_prev) 
-                    / (prec_t_i - prec_t_i_prev); 
-            break;
-        }
-        prec_i_prev = prec_i;
-    }
-    
-    if ((prec_t_i - prec_t_i_prev) > 0.0f)
-    {
-        gv.precip_i = gv.precip_i / (prec_t_i - prec_t_i_prev); // m/deltatime -> m/sec
-    }else
-    {
-        gv.precip_i = 0.0f;
-    }
-    
 
-    if (gv.precip_i>0){ // acumulation -> add concentration of snow
-        if (prec_i>0 && prec_i_prev>0){ // accumulation
-            gv.precipc_i = prec_c_i_prev 
-                    + (prec_c_i - prec_c_i_prev) * ((*tcum) - prec_t_i_prev) 
-                    / (prec_t_i - prec_t_i_prev);
-        }else if(prec_i>0 && prec_i_prev<=0){
-            gv.precipc_i = prec_c_i;        
-        }else if(prec_i<=0 && prec_i_prev>0){
-            gv.precipc_i = prec_c_i_prev;        
+        if ((*tcum) > prec_t_i && (*tcum) <= prec_t_i2) {
+            if ((prec_t_i2 - prec_t_i) > 0){
+                gv.precip_i = prec_i / (prec_t_i2 - prec_t_i); // m/deltatime -> m/sec
+                gv.precipc_i = prec_c_i;        
+             }else
+            {
+                gv.precip_i = 0.0f;
+            }
+        break;
         }
-    }
     
+    }
 }
 
 /* *****
@@ -64,40 +40,29 @@ void findInterpPrec(globalvar& gv,double *tcum)
  * **** */
 void findInterpQmelt(globalvar& gv,double *tcum)
 {
-    double qmelt_t_i=0.0f,qmelt_t_i_prev = 0.0f, // time
-            qmelt_i=0.0f,qmelt_i_prev=0.0f; // melt rate
-    unsigned int nqcmelt = 0;
+
+    double qmlt_t_i = 0.0f,qmlt_t_i2 = 0.0f, // time
+            qmlt_i = 0.0f; // melt rate
+    unsigned int nqmlt = 0;;
     
-    nqcmelt = int((*gv.qcmel_ts).col(0).n_elem);
+    nqmlt = int((*gv.snowfall_ts).col(0).n_elem) - 1;
     
     // identification of the time step and linear interpolation for time t
-    qmelt_i_prev = 0.0f;
-    qmelt_t_i_prev = 0.0f;
-    for(int a=0;a<nqcmelt;a++){
-        qmelt_t_i = (*gv.qcmel_ts).at(a,0);
-        qmelt_i = (*gv.qcmel_ts).at(a,1);
-        if(qmelt_t_i < (*tcum)){
-            qmelt_t_i_prev = qmelt_t_i;
-            qmelt_i_prev = qmelt_i;
-        }else if (qmelt_t_i == (*tcum)){
-            gv.qmelt_i =  qmelt_i;
-            break;
-        }else if(qmelt_t_i > (*tcum)){
-            gv.qmelt_i = qmelt_i_prev 
-                    + (qmelt_i - qmelt_i_prev) * ((*tcum) - qmelt_t_i_prev) 
-                    / (qmelt_t_i - qmelt_t_i_prev);
-            break;
+    qmlt_t_i2 = 0.0f;
+    for(int a=0;a<nqmlt;a++){
+        qmlt_t_i = (*gv.qcmel_ts).at(a,0);
+        qmlt_t_i2 = (*gv.qcmel_ts).at(a+1,0);
+        qmlt_i = (*gv.qcmel_ts).at(a,1);
+
+        if ((*tcum) > qmlt_t_i && (*tcum) <= qmlt_t_i2) {
+            if ((qmlt_t_i2 - qmlt_t_i) > 0){
+                gv.qmelt_i = qmlt_i / (qmlt_t_i2 - qmlt_t_i); // m/deltatime -> m/sec      
+             }else
+            {
+                gv.qmelt_i = 0.0f;
+            }
+        break;
         }
-        qmelt_i_prev = qmelt_i;
-    }
 
-    if ((qmelt_t_i - qmelt_t_i_prev) > 0.0f)
-    {
-        gv.qmelt_i = gv.qmelt_i / (qmelt_t_i - qmelt_t_i_prev); // m/deltatime -> m/sec
-    }else
-    {
-        gv.qmelt_i = 0.0f;
     }
-
-    return;
 }

@@ -13,16 +13,17 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
     //int nt = nli*nhi;
     int ih,il;
     double dv_snow2liqwater,dvfrac_s_dt,exist_vol,tofill_vol, add,remove;
-   
-    //gv.nh_change += (std::abs(gv.precip_i)-std::abs(gv.qmelt_i))*(*deltt); // cell increment
-    add = std::abs(gv.precip_i) * gv.snowh * gv.snowl * (*deltt);
-    remove = std::abs(gv.qmelt_i) * gv.snowh * gv.snowl * (*deltt);
+
+    // timestep fluxes and volumes
+    add = std::abs(gv.precip_i) * gv.snowl * (*deltt); // as vol mm*mm*m
+    remove = std::abs(gv.qmelt_i) * gv.snowl * (*deltt); // as vol mm*mm*m
 
     exist_vol = (*gv.v_swe)(round(gv.nl/2)-1,0); 
     tofill_vol = gv.v_swe_max - exist_vol;
 
+
     // Precipitation
-    if (add >= 0.0f)
+    if (add > 0.0f)
     {
 
         if (add > 0.0f && tofill_vol >= add) // no need to add new layer
@@ -67,6 +68,7 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
 
     exist_vol = (*gv.v_swe)(round(gv.nl/2)-1,0); // need to update because a new layer may have been added
     
+
     // Melt (and wetfront movement) or Refreezing
     if (remove == 0.0f) // refreezing
     {
@@ -175,6 +177,7 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
         gv.vfrac_s = mean(mean((*gv.vfrac2d_s)(arma::span(0,nl_l-1),arma::span(0,gv.wetfront_cell-1))));
         gv.vfrac_m = mean(mean((*gv.vfrac2d_m)(arma::span(0,nl_l-1),arma::span(0,gv.wetfront_cell-1))));
     };
+
 
    return;  
 }

@@ -87,13 +87,13 @@ void read_meteofile(globalpar& gp,globalvar& gv,std::string* meteo_file,
      
     arma::mat filedataM; 
     bool flstatusM =  filedataM.load((*meteo_file),arma::csv_ascii);
-    int num_cols = filedataM.col(1).n_elem;
+    int num_cols = filedataM.col(1).n_elem-1;
 
     if(flstatusM == true) {
         for(a=0;a<num_cols;a++){
-            tprec = filedataM(a,0);  // t prec seconds
-            prec_i = filedataM(a,1);  // mm/deltatime
-            precs_i = filedataM(a,2);  // conc of precip
+            tprec = filedataM(a+1,0);  // t prec seconds
+            prec_i = filedataM(a+1,1);  // mm/deltatime
+            precs_i = filedataM(a+1,2);  // conc of precip
             (*gv.snowfall_ts).at(a,0) = fabs(tprec);  
             (*gv.snowfall_ts).at(a,1) = fabs(prec_i)/1000;  // mm/deltatime -> m/deltatime
             (*gv.snowfall_ts).at(a,2) = fabs(precs_i); 
@@ -121,10 +121,12 @@ void read_qmelfile(globalpar& gp,globalvar& gv,std::string* qcmelt_file,
       
     arma::mat filedataQ; 
     bool flstatusQ =  filedataQ.load((*qcmelt_file),arma::csv_ascii);
+    int num_cols = filedataQ.col(1).n_elem-1;
+
     if(flstatusQ == true) {
-        for(a=0;a<filedataQ.col(1).n_elem;a++){
-            tmelts = filedataQ(a,0);  // t melt seconds
-            qcmelt_i = filedataQ(a,1);  // mm/deltatime
+        for(a=0;a<num_cols;a++){
+            tmelts = filedataQ(a+1,0);  // t melt seconds
+            qcmelt_i = filedataQ(a+1,1);  // mm/deltatime
             //cmelt_i = filedataQ(a,2);  // value of melt
             (*gv.qcmel_ts).at(a,0) = std::fabs(tmelts);  
             (*gv.qcmel_ts).at(a,1) = std::fabs(qcmelt_i)/1000; // mm/deltatime -> m/deltatime

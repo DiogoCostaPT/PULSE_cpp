@@ -4,7 +4,7 @@ folder_loc = '/media/dcosta/data/megasync/ec_main/models/pulse/code/code_matlab_
 meteo_file = 'Meteo_2014-2015.xlsx';
 chemistry_file = 'BRG_data.xlsx';
 species = 'NO3';
-T_index_coef = 1;
+T_index_coef = 10;
 
 % IC file
 gen_0txtfile_flag = 1;   
@@ -53,8 +53,8 @@ if gen_0txtfile_flag == 1
 
     cm_0 = 0;
     v_liqwater = 0; % m3
-    v_swe = snow_h/1000 * snow_l/1000 * rho_frshsnow_init/rho_m; % m3
-    v_air = snow_h/1000 * snow_l/1000 * v_frac_air_init;
+    v_swe = snow_h * snow_l * rho_frshsnow_init/rho_m; % m3
+    v_air = snow_h * snow_l * v_frac_air_init;
     
     vfrac_s = v_swe / (v_swe + v_liqwater);
     vfrac_m = v_liqwater / (v_swe + v_liqwater);

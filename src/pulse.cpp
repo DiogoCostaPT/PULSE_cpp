@@ -40,7 +40,8 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
         //gv.wetfront_cell_prev = gv.wetfront_cell;
 
         if (gv.qmelt_i==0.0f){ // accumulation only 
-            deltt = std::fmin(print_next-tcum,gv.v_swe_max/(std::abs(gv.precip_i) * gv.snowh * gv.snowl));
+            deltt = std::fmin(print_next-tcum,
+                gv.v_swe_max/(std::abs(gv.precip_i) * gv.snowh * gv.snowl));
             velc = 0.0f;
            // watermass_calc(gv,gp,&deltt,&velc,logPULSEfile);
         } else {// melt       
