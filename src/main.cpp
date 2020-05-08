@@ -41,7 +41,7 @@
 int main(int argc, char* argv[]) 
 {   
     
-    double H_local,L_local,h_layer,l_layer;
+    double H_local,L_local,h_layer,l_layer,vfrac_frshsnow;
     int nl,nh;
     int n_qcmelt,n_snowfallt;
     std::string sim_purp,qcmelt_file,meteo_file,msg;
@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
         // read simulation setup
         read_simset(gp,modset_flname,&sim_purp,
             &h_layer,&l_layer,&qcmelt_file,
-            &meteo_file,&logPULSEfile,&n_qcmelt,&n_snowfallt);  
+            &meteo_file,&logPULSEfile,&n_qcmelt,&n_snowfallt,&vfrac_frshsnow);  
 
         // Check if input data is consistent
         if (n_qcmelt!=n_snowfallt){
@@ -77,10 +77,11 @@ int main(int argc, char* argv[])
 
         // Asign global variables (heap)
         globalvar gv(nh,nl,n_qcmelt,n_snowfallt); 
-        (gv.snowH) = H_local;
-        (gv.snowL) = L_local;
-        (gv.snowh) = h_layer;
-        (gv.snowl) = l_layer;
+        gv.snowH = H_local;
+        gv.snowL = L_local;
+        gv.snowh = h_layer;
+        gv.snowl = l_layer;
+        gv.vfrac_frshsnow = vfrac_frshsnow;
 
         // read snowmelt input
         read_qmelfile(gp,gv,&qcmelt_file,&logPULSEfile);

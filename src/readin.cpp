@@ -10,7 +10,7 @@ void read_simset(globalpar& gp,const std::string& modset_flname,
                 std::string* sim_purp,double *h_layer,double *l_layer,
                 std::string* qcmelt_file,std::string* meteo_file ,
                 std::ofstream* logPULSEfile,int* n_qcmelt, 
-                int* n_snowfallt)
+                int* n_snowfallt, double *vfrac_frshsnow)
 {
     
     std::string str, msg, str_hydro_solver;
@@ -26,12 +26,14 @@ void read_simset(globalpar& gp,const std::string& modset_flname,
         if(str.find("START_TIME") != std::string::npos){(*gp.start_time) = str.substr(11);}; // comment
         if(str.find("H_LAY_mm") != std::string::npos){(*h_layer) = std::stof(str.substr(9))/1000;};  // average roughness height (m)
         if(str.find("L_LAY_mm") != std::string::npos){(*l_layer) = std::stof(str.substr(9))/1000;};  // average roughness height (m)
+        if(str.find("VFRAC_AIR_FRESHSNOW") != std::string::npos){(*vfrac_frshsnow) = std::stof(str.substr(21));};  // volume fraction of air in snow (%)
         if(str.find("QMELT_FILE") != std::string::npos){*qcmelt_file = str.substr(11);}; // snowmelt file
         if(str.find("METEO_FILE") != std::string::npos){*meteo_file = str.substr(11);}; // snowmelt file
         if(str.find("PRINT_STEP") != std::string::npos){(gp.print_step) = std::stoi(str.substr(11));}; // print time step
         if(str.find("A_D") != std::string::npos){(gp.aD) = std::stof(str.substr(4));}; // SWE standard deviation (snow depletion curves, Kevin's paper)
         if(str.find("ALPHA_IE") != std::string::npos){(gp.alphaIE) = std::stof(str.substr(9));}; // SWE standard deviation (snow depletion curves, Kevin's paper)
         if(str.find("HYDRO_SOLVER") != std::string::npos){str_hydro_solver = str.substr(13);}; // snowmelt file
+        
     }
     file.close();
     

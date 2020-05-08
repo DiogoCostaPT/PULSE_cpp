@@ -61,7 +61,7 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
             (*gv.v_swe).insert_cols(0,1);
             (*gv.v_swe).col(0) += (add - tofill_vol);
             (*gv.v_air).insert_cols(0,1);
-            (*gv.v_air).col(0) += 0.0000001;
+            (*gv.v_air).col(0) += gv.vfrac_frshsnow * gv.snowl * gv.snowh;
         }
 
     }

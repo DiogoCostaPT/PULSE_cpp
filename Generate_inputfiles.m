@@ -12,7 +12,7 @@ snow_L = 100; % mm
 snow_H = 1000; % 100 cm * 10 = 1000 mm
 snow_h = 10; % 10 mm
 snow_l = 10; % 10 mm
-v_frac_air_init = 0.0008;
+v_frac_air_init = 0.05; % volume percertage
 
 % qmelt and meteo files
 gen_prec_and_qmelt_T_index_files_flag = 1;
