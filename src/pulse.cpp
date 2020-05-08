@@ -56,8 +56,8 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
 
             // limit step so that if there is melt or accumulation it doesn't go more than one cell
             //deltt_volavail_melt = velc * (*deltt) * max(min((*gv.v_liqwater)));
-            deltt = std::fmin(deltt,gv.v_swe_max/std::abs(gv.precip_i));
-            deltt = std::fmin(deltt,gv.v_swe_max/std::abs(gv.qmelt_i));
+            deltt = std::fmin(deltt,gv.v_swe_max/(std::abs(gv.precip_i) * gv.snowh * gv.snowl));
+            deltt = std::fmin(deltt,gv.v_swe_max/(std::abs(gv.qmelt_i) * gv.snowh * gv.snowl));
             
             // wetting front
             //wetfront_calc(gp,gv,&velc,&deltt);

@@ -20,6 +20,8 @@ function PULSE_support_plot_results(pulse_dir,results_dir,chemical_species,...
         cmax_ctotal] = PULSE_support_GetTrans_obs_data(Obs_file,c_total,chemical_species); 
    
     inanloc = isnan(c_total);
+    
+    Y_obs_mesh = Y_obs_mesh * 10; % cm to mm
 
     figure('name',comment)
     for i = 1:8
@@ -36,7 +38,7 @@ function PULSE_support_plot_results(pulse_dir,results_dir,chemical_species,...
         if i==8; var_print = poros_s; var_print_name = 'Volume fraction of solid phase [-]'; end
                 
         var_print(inanloc) = NaN;
-        
+             
         subplot(3,3,i)
         surf(Tmesh,Hmesh,var_print)
         grid on
