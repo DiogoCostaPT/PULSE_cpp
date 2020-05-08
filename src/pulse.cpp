@@ -40,8 +40,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
         //gv.wetfront_cell_prev = gv.wetfront_cell;
 
         if (gv.qmelt_i==0.0f){ // accumulation only 
-            deltt = std::fmin(gp.print_step,
-                    gv.snowh * gp.rho_frshsnow_init / (std::abs(gv.precip_i)*gp.rho_m)); 
+            deltt = std::fmin(print_next-tcum,gv.v_swe_max/(std::abs(gv.precip_i) * gv.snowh * gv.snowl));
             velc = 0.0f;
            // watermass_calc(gv,gp,&deltt,&velc,logPULSEfile);
         } else {// melt       
@@ -52,7 +51,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
             (*gv.velc_2d) = (*gv.velc_2d)*0 + velc;
             (*gv.disp_2d) = (*gv.disp_2d)*0 + D;
             
-            deltt = std::fmin(gp.Courant * gv.snowh / velc,gp.print_step);
+            deltt = std::fmin(print_next-tcum,gp.Courant * gv.snowh / velc);
 
             // limit step so that if there is melt or accumulation it doesn't go more than one cell
             //deltt_volavail_melt = velc * (*deltt) * max(min((*gv.v_liqwater)));
@@ -60,8 +59,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
             deltt = std::fmin(deltt,gv.v_swe_max/(std::abs(gv.qmelt_i) * gv.snowh * gv.snowl));
             
             // wetting front
-            //wetfront_calc(gp,gv,&velc,&deltt);
-            
+            //wetfront_calc(gp,gv,&velc,&deltt);   
             
         }
 
