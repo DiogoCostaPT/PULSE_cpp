@@ -117,19 +117,19 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
             }else {
                 // transfer mass from upper layer to lower layer because it is going to be removed
                 (*gv.c_m).col(1) = 
-                (
-                (*gv.c_m).col(0) % (*gv.v_liqwater).col(0) + 
-                (*gv.c_s).col(0) % (*gv.v_swe).col(0) + 
-                (*gv.c_m).col(1) % (*gv.v_liqwater).col(1) +
-                (*gv.c_s).col(1) % (arma::ones(gv.nl,1) * remove - (*gv.v_swe).col(0))
-                ) / (
-                    (*gv.v_liqwater).col(0) + (*gv.v_swe).col(0) + (*gv.v_liqwater).col(1) + 
-                    arma::ones(gv.nl,1) * remove - (*gv.v_swe).col(0)
-                    );
+                    ((*gv.c_m).col(0) % (*gv.v_liqwater).col(0)
+                    + (*gv.c_s).col(0) % (*gv.v_swe).col(0) 
+                    + (*gv.c_m).col(1) % (*gv.v_liqwater).col(1)
+                    + (*gv.c_s).col(1) % (arma::ones(gv.nl,1) * remove - (*gv.v_swe).col(0))) 
+                    / ((*gv.v_liqwater).col(0) 
+                        + (*gv.v_swe).col(0) 
+                        + (*gv.v_liqwater).col(1) 
+                        + arma::ones(gv.nl,1) * remove - (*gv.v_swe).col(0));
                 // (*gv.c_s) -> no need to calculate for c_s because it will not change (water masses cancel out)
 
-                (*gv.v_liqwater).col(1) += (*gv.v_swe).col(0) + (*gv.v_liqwater).col(0);
-
+                (*gv.v_liqwater).col(1) += (*gv.v_liqwater).col(0) 
+                    + (*gv.v_swe).col(0) 
+                    + arma::ones(gv.nl,1) * remove - (*gv.v_swe).col(0);
             
                 // adust some variables to the removal of a layer
                 gv.nh = std::fmax(gv.nh - 1,0);
@@ -142,12 +142,13 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
                 //(*gv.c_i).shed_cols(0,0);
                 (*gv.c_s).shed_cols(0,0);
                 //(*gv.exchange_si).shed_cols(0,0);
+                (*gv.v_liqwater).shed_cols(0,0);
                 (*gv.v_swe).shed_cols(0,0);
                 (*gv.v_air).shed_cols(0,0);
                 (*gv.exchange_is).shed_cols(0,0);
                 (*gv.vfrac2d_m).shed_cols(0,0);
                 (*gv.vfrac2d_s).shed_cols(0,0);
-                (*gv.v_liqwater).shed_cols(0,0);
+                
             }    
         }
 
