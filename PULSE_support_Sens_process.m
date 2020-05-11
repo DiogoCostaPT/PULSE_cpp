@@ -7,6 +7,7 @@ sens_folder = [pwd,'/Sensitivity_analysis/'];
 windowtitle = 'Select the folder conaiting the Sensitivity batch runs'; 
 sensbatch_dir = uigetdir(sens_folder,windowtitle);
 
+resultsreport_fullpath = [sensbatch_dir,'/Sens_report.txt'];
 folder_content = dir(sensbatch_dir);
 folder_content = {folder_content.name};
 folder_content(~contains(folder_content,'Run_')) = [];
@@ -17,11 +18,11 @@ num_runs = numel(folder_content);
 %     chemical_species);
  
 % import Obs_data data
-A_D_all = zeros(num_runs,1)*NaN;
-ALPHA_IE_all = zeros(num_runs,1)*NaN;
-Nash = zeros(num_runs,1)*NaN;
-Bias = zeros(num_runs,1)*NaN;
-RMSE = zeros(num_runs,1)*NaN;
+%A_D_all = zeros(num_runs,1)*NaN;
+%ALPHA_IE_all = zeros(num_runs,1)*NaN;
+%Nash = zeros(num_runs,1)*NaN;
+%Bias = zeros(num_runs,1)*NaN;
+%RMSE = zeros(num_runs,1)*NaN;
 
 hbar = parfor_progressbar(num_runs, 'Calculating Nash, RMSE and Bias...');
 %run_no = str2num(char(run_no));
@@ -31,12 +32,20 @@ for run_i = 1:num_runs
     sim_i = folder_content{run_i};
     sim_i_folder = [sensbatch_dir,'/',sim_i];
     results_dir = [sim_i_folder,'/Results'];
+    resreport_fullpath = [sim_i_folder,'/Sens_results.txt'];
+    
+    reportexists = exist(resreport_fullpath,'file');
+    
+    if reportexists ~= 0
+        disp(['SensProcess: simulation already processed (',sim_i,')'])
+        continue;
+    end
     
     % get parameters
     param_folder = [sim_i_folder,'/Sens_info.txt'];
     param = importdata(param_folder);
-    A_D_all(run_i) = param.data(1);
-    ALPHA_IE_all(run_i) = param.data(2);
+    A_D = param.data(1);
+    ALPHA_IE = param.data(2);
     
     % load model results
     [time_sim_elapsec,h_layers_max,c_m,c_s,c_total,poros_m,poros_s] = ...
@@ -85,25 +94,52 @@ for run_i = 1:num_runs
     % Nash
     numerator=(WQ_use-Model_data_interc_use).^2;
     denominator=(WQ_use-mean(WQ_use)).^2;
-    Nash(run_i) =1-(sum(numerator)/sum(denominator));
+    Nash =1-(sum(numerator)/sum(denominator));
     
     % RMSE
     Sumcal = (Model_data_interc_use-WQ_use).^2;
     numerator = sum(Sumcal);
     n=numel(WQ_use);
-    RMSE(run_i)=(numerator/n)^(1/2);
+    RMSE=(numerator/n)^(1/2);
     
     % BIAS
     numerator = sum(WQ_use);
     denominator = sum(Model_data_interc_use);
-    Bias(run_i) = numerator/denominator-1;
-     
+    Bias = numerator/denominator-1;
+    
+    printcell = {'A_D,','ALPHA_IE','Nash','Bias','RMSE';
+                  A_D,ALPHA_IE,Nash,Bias,RMSE};
+    writecell(printcell,resreport_fullpath,'delimiter',',')
+      
+    
 end
  hbar.close();
 
-sens_res_fullpath = [sensbatch_dir,'/Sens_results.mat'];
-save(sens_res_fullpath,'A_D_all','ALPHA_IE_all','Nash','Bias','RMSE')
+% import Obs_data data
+ResSens_all = cell(num_runs,5);
+ResSens_all(1,1:end) = {'A_D,','ALPHA_IE','Nash','Bias','RMSE'};
 
-
-
+% Save now in one file
+hbar = parfor_progressbar(num_runs, 'Calculating Nash, RMSE and Bias...');
+%run_no = str2num(char(run_no));
+parfor run_i = 1:num_runs
+    hbar.iterate(1)
+    
+    sim_i = folder_content{run_i};
+    sim_i_folder = [sensbatch_dir,'/',sim_i];
+    resreport_fullpath = [sim_i_folder,'/Sens_results.txt'];
+    
+    reportexists = exist(resreport_fullpath,'file');
+    
+     if reportexists ~= 0
+        disp(['SensProcess: cannot find sens report for (',sim_i,') -> skipped'])
+        continue;
+     else
+        dataall = importdata(resreport_fullpath);
+        ResSens_all(run_i,:) = dataall.data;
+     end
+ 
 end
+ hbar.close();
+ 
+ writecell(ResSens_all,resultsreport_fullpath,'delimiter',',');

@@ -4,7 +4,7 @@ folder_loc = '/media/dcosta/data/megasync/ec_main/models/pulse/code/code_matlab_
 meteo_file = 'Meteo_2014-2015.xlsx';
 chemistry_file = 'BRG_data.xlsx';
 species = 'NO3';
-T_index_coef = 10;
+T_index_coef = 30;
 
 % IC file
 gen_0txtfile_flag = 1;   

@@ -39,7 +39,7 @@ mkdir(new_test_dir);
 A_D_all = rand(num_samples,1) * A_D_max;           
 ALPHA_IE_all = rand(num_samples,1) * ALPHA_IE_max;
 
-hbar = parfor_progressbar(num_samples, 'Sensiivity_test running...');
+hbar = parfor_progressbar(num_samples, 'Sensitivity_test running...');
     
 parfor i=1:num_samples
     
