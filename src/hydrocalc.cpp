@@ -96,7 +96,7 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
         // wetting front calculation
         gv.wetfront_cell_prev = gv.wetfront_cell;
         gv.wetfront_z = std::fmax(gv.wetfront_z - (*v) * (*deltt),0.0f);
-        int tmp = std::floor(nh_l-gv.wetfront_z/gv.snowh);
+        int tmp = nh_l-std::floor(gv.wetfront_z/gv.snowh);
         gv.wetfront_cell = std::min(tmp,nh_l); // finding the cell when the wetting front is located
 
         gv.wetfront_cell_prev = std::max(gv.wetfront_cell_prev,0);
