@@ -102,10 +102,6 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
         gv.wetfront_cell_prev = std::max(gv.wetfront_cell_prev,0);
         gv.wetfront_cell = std::max(gv.wetfront_cell,0);
 
-         if((gv.wetfront_cell - gv.wetfront_cell_prev) > 1){
-               
-                abort();
-            }
 
         if (exist_vol >= remove ) // don't remove layer
         {
