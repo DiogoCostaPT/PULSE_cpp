@@ -77,6 +77,7 @@ function PULSE_support_plot_results(pulse_dir,results_dir,chemical_species,...
         set(gca, 'layer', 'top');
         alpha 0.7
         
+        
     end
     
     Y_obs_mesh = Y_obs_mesh * 10; % cm -> mm
@@ -90,8 +91,9 @@ function PULSE_support_plot_results(pulse_dir,results_dir,chemical_species,...
     limmax = max(max(Model_data_interc));
     hold on
     plot([0 limmax],[0 limmax],'k')
-    xlim([0 limmax])
-    ylim([0 limmax])
+    %xlim([0 limmax])
+    %ylim([0 limmax])
+    axis tight
     grid on
     xlabel('Obs (mg/l)')
     ylabel('Model (mg/l)')

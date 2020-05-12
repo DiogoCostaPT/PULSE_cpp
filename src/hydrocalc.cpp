@@ -19,21 +19,21 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
     remove = std::abs(gv.qmelt_i) * gv.snowl * (*deltt); // as vol mm*mm*m
 
     exist_vol = (*gv.v_swe)(round(gv.nl/2)-1,0); 
-    tofill_vol = gv.v_swe_max - exist_vol;
+    tofill_vol = fmax(gv.v_swe_max - exist_vol,0.0f);
 
 
     // Precipitation
     if (add > 0.0f)
     {
 
-        if (add > 0.0f && tofill_vol >= add) // no need to add new layer
+        if (tofill_vol >= add) // no need to add new layer
         {
             (*gv.c_s).col(0) = ((*gv.c_s).col(0) % (*gv.v_swe).col(0) +
                  arma::ones(gv.nl,1) * add * gv.precipc_i)
                 / ((*gv.v_swe).col(0) + arma::ones(gv.nl,1) * add);
             (*gv.v_swe).col(0) = (*gv.v_swe).col(0) + arma::ones(gv.nl,1) * add;
         } 
-        else if (add > tofill_vol) // add new top layer
+        else // add new top layer
         {
 
             (*gv.c_s).col(0) = ((*gv.c_s).col(0) % (*gv.v_swe).col(0) +
@@ -61,7 +61,7 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
             (*gv.v_swe).insert_cols(0,1);
             (*gv.v_swe).col(0) = arma::ones<arma::vec>(nl_l,1) * (add - tofill_vol);
             (*gv.v_air).insert_cols(0,1);
-            (*gv.v_air).col(0) = arma::ones<arma::vec>(nl_l,1) * (gv.vfrac_frshsnow * gv.snowl * gv.snowh);
+            (*gv.v_air).col(0) = arma::ones<arma::vec>(nl_l,1) * (gv.vfrac_air_frshsnow * gv.snowl * gv.snowh);
         }
 
     }
@@ -163,8 +163,8 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
                 for (il=0;il<nl_l-1;il++){
                     
                     dv_snow2liqwater = fmin((*v) * (*deltt),1) * (*gv.v_liqwater).at(il,ih);
-                    (*gv.v_liqwater).at(il,ih) -= dv_snow2liqwater;
-                    (*gv.v_liqwater).at(il,ih+1) += dv_snow2liqwater;
+                    (*gv.v_liqwater).at(il,ih) = (*gv.v_liqwater).at(il,ih) - dv_snow2liqwater;
+                    (*gv.v_liqwater).at(il,ih+1) = (*gv.v_liqwater).at(il,ih+1) + dv_snow2liqwater;
 
                 }
             }

@@ -4,7 +4,7 @@ folder_loc = '/media/dcosta/data/megasync/ec_main/models/pulse/code/code_matlab_
 meteo_file = 'Meteo_2014-2015.xlsx';
 chemistry_file = 'BRG_data.xlsx';
 species = 'NO3';
-T_index_coef = 60;
+T_index_coef = 10;
 
 % IC file
 gen_0txtfile_flag = 1;   
@@ -174,9 +174,17 @@ if gen_prec_and_qmelt_T_index_files_flag == 1
         
     % plot
     figure
+    subplot(1,2,1)
     plot(RAIN_ts)
     hold on
     plot(SNOWfall_ts)
+    legend('RAIN_tc','SNOWfall_tc')
+    grid on
+    ylabel('mm')
+    subplot(1,2,2)
+    plot(cumsum(RAIN_ts.data))
+    hold on
+    plot(cumsum(SNOWfall_ts.data))
     legend('RAIN_tc','SNOWfall_tc')
     grid on
     ylabel('mm')
@@ -220,6 +228,24 @@ if gen_prec_and_qmelt_T_index_files_flag == 1
     qmelt_file_cell = [header;qmelt_file_cell];
     
     writecell(qmelt_file_cell,new_qmeltfile_name,'Delimiter',',')
+    
+     % plot
+    figure
+    subplot(1,2,1)
+    plot(SNOWfall_ts)
+    hold on
+    qmelt_file_ts = timeseries(qmelt_file(:,2),qmelt_file(:,1));
+    plot(qmelt_file_ts)
+    legend('SNOWfall_tc','Qmelt')
+    grid on
+    ylabel('mm')
+    subplot(1,2,2)
+     plot(cumsum(SNOWfall_ts.data))
+    hold on
+    plot(cumsum(qmelt_file_ts.data))
+    legend('SNOWfall_tc','Qmelt')
+    grid on
+    ylabel('mm')
 
 end
 

@@ -83,7 +83,7 @@ public:
             precip_i = 0.0f, 
             precipc_i = 0.0f,
             v_swe_max = 0.0f,
-            vfrac_frshsnow = 0.0f;
+            vfrac_air_frshsnow = 0.0f;
 
     int wetfront_cell = 0,
         wetfront_cell_prev = 0;

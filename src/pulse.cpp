@@ -56,8 +56,8 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
 
             // limit step so that if there is melt or accumulation it doesn't go more than one cell
             //deltt_volavail_melt = velc * (*deltt) * max(min((*gv.v_liqwater)));
-            deltt = std::fmin(deltt,gv.v_swe_max/(std::abs(gv.precip_i) * gv.snowh * gv.snowl));
-            deltt = std::fmin(deltt,gv.v_swe_max/(std::abs(gv.qmelt_i) * gv.snowh * gv.snowl));
+            deltt = std::fmin(deltt,gv.v_swe_max/(std::abs(gv.precip_i) * gv.snowl));
+            deltt = std::fmin(deltt,gv.v_swe_max/(std::abs(gv.qmelt_i) * gv.snowl));
             
             // wetting front
             //wetfront_calc(gp,gv,&velc,&deltt);   
@@ -84,9 +84,9 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
             //if (gv.vfrac_m < 1-gp.num_stblty_thrshld_prsity && gv.vfrac_i > gp.num_stblty_thrshld_prsity && gv.vfrac_s > gp.num_stblty_thrshld_prsity){
             if (gv.vfrac_m < 1-gp.num_stblty_thrshld_prsity && gv.vfrac_s > gp.num_stblty_thrshld_prsity){  if (gv.wetfront_cell > 5){ // to have sufficient layers for ADE solver
 
-                if (gp.hydro_solver == 0){
+                if (gp.hydro_solver == 1){
                    crank_nicholson(gv,&deltt,&velc,&D); // solve advection and dispersion in the mobile zone
-                }else if (gp.hydro_solver == 1){
+                }else if (gp.hydro_solver == 0){
                    //crank_nicholson_hydr2D(gv,&deltt);
                    FtCs_solve_hydr2D(gv,&deltt);
 
