@@ -31,7 +31,7 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
             (*gv.c_s).col(0) = ((*gv.c_s).col(0) % (*gv.v_swe).col(0) +
                  arma::ones(gv.nl,1) * add * gv.precipc_i)
                 / ((*gv.v_swe).col(0) + arma::ones(gv.nl,1) * add);
-            (*gv.v_swe).col(0) += arma::ones(gv.nl,1) * add;
+            (*gv.v_swe).col(0) = (*gv.v_swe).col(0) + arma::ones(gv.nl,1) * add;
         } 
         else if (add > tofill_vol) // add new top layer
         {
@@ -49,19 +49,19 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
 
             (*gv.c_m).insert_cols(0,1); // set to zero by default
             (*gv.c_s).insert_cols(0,1); // set to precipc_i
-            (*gv.c_s).col(0) += gv.precipc_i;
+            (*gv.c_s).col(0) = arma::ones<arma::vec>(nl_l,1) * gv.precipc_i;
 
             (*gv.exchange_is).insert_cols(0,1);  // set to zero by default
 
             (*gv.vfrac2d_m).insert_cols(0,1);  // set to zero by default
             (*gv.vfrac2d_s).insert_cols(0,1); //set to one
-            (*gv.vfrac2d_s).col(0) += 1;
+            (*gv.vfrac2d_s).col(0) = arma::ones<arma::vec>(nl_l,1);
 
             (*gv.v_liqwater).insert_cols(0,1); // set to zero by default
             (*gv.v_swe).insert_cols(0,1);
-            (*gv.v_swe).col(0) += (add - tofill_vol);
+            (*gv.v_swe).col(0) = arma::ones<arma::vec>(nl_l,1) * (add - tofill_vol);
             (*gv.v_air).insert_cols(0,1);
-            (*gv.v_air).col(0) += gv.vfrac_frshsnow * gv.snowl * gv.snowh;
+            (*gv.v_air).col(0) = arma::ones<arma::vec>(nl_l,1) * (gv.vfrac_frshsnow * gv.snowl * gv.snowh);
         }
 
     }
@@ -107,8 +107,8 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
                 / ( (*gv.v_liqwater).col(0) + remove);
             // (*gv.c_s) -> no need to calculate for c_s because it will not change (water masses cancel out)
 
-            (*gv.v_swe).col(0) -= arma::ones(gv.nl,1) * remove;
-            (*gv.v_liqwater).col(0) += arma::ones(gv.nl,1) * remove;
+            (*gv.v_swe).col(0) = (*gv.v_swe).col(0) - remove;
+            (*gv.v_liqwater).col(0) = (*gv.v_liqwater).col(0) + remove;
                         
         }else // remove layer
         {
@@ -127,7 +127,8 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
                         + arma::ones(gv.nl,1) * remove - (*gv.v_swe).col(0));
                 // (*gv.c_s) -> no need to calculate for c_s because it will not change (water masses cancel out)
 
-                (*gv.v_liqwater).col(1) += (*gv.v_liqwater).col(0) 
+                (*gv.v_liqwater).col(1) = (*gv.v_liqwater).col(1) 
+                    + (*gv.v_liqwater).col(0) 
                     + (*gv.v_swe).col(0) 
                     + arma::ones(gv.nl,1) * remove - (*gv.v_swe).col(0);
             
