@@ -30,9 +30,9 @@ function PULSE_support_plot_results(pulse_dir,results_dir,chemical_species,...
         if i==2; var_print = c_s; var_print_name = ['Concentration solid phase (mg/l): ', chemical_species]; end
         if i==3; var_print = c_total; var_print_name = ['Concentration snow (liquid + solid phases) (mg/l): ', chemical_species]; end
         
-        if i==4; var_print = v_liqwater/(L_LAY); var_print_name = 'Volume liquid phase [mm/mm]'; end
-        if i==5; var_print = v_swe/(L_LAY); var_print_name = 'Volume solid phase [mm/mm]'; end
-        if i==6; var_print = v_air/(L_LAY); var_print_name = 'Volume air phase [mm/mm]'; end
+        if i==4; var_print = v_liqwater; var_print_name = 'Volume liquid phase [mm/mm/m]'; end
+        if i==5; var_print = v_swe; var_print_name = 'Volume solid phase [mm/mm/m]'; end
+        if i==6; var_print = v_air; var_print_name = 'Volume air phase [mm/mm/m]'; end
         
         if i==7; var_print = poros_m; var_print_name = 'Volume fraction of liquid phase [-]'; end
         if i==8; var_print = poros_s; var_print_name = 'Volume fraction of solid phase [-]'; end
