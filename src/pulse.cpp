@@ -112,7 +112,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
                 // limit the flux to the available material
                 for(il=0;il<gv.nl ;il++){
                     for(ih=0;ih<gv.wetfront_cell ;ih++){
-                         if ((*gv.exchange_is).at(il,ih) > 0 && (*gv.v_liqwater).at(il,ih) > 0.000001){
+                         if ((*gv.exchange_is).at(il,ih) > 0 && (*gv.v_liqwater).at(il,ih) > 0.0001){
 
                              //std::cout << std::to_string((*gv.v_liqwater).at(il,ih)) << std::endl;
                             exchange_is_l = fmin((*gv.exchange_is).at(il,ih),
