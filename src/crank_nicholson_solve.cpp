@@ -9,13 +9,6 @@ void crank_nicholson(globalvar& gv,double *deltt,double *v,double *D)
     // calculation - implicit scheme
     int il;    
 
-    if (arma::min((*gv.c_m).col(0)) < 0.0f){
-                    std::cout << std::to_string((*gv.c_m)(5,0)) << std::endl;
-                    std::cout << std::to_string((*gv.v_liqwater)(5,0)) << std::endl;
-                    std::cout << std::to_string((*gv.c_s)(5,0)) << std::endl;
-                    std::cout << std::to_string((*gv.v_swe)(5,0)) << std::endl;
-                }
-
     // to solveA.x1=B.x0
     int nli = gv.nl;
     int nhi = gv.wetfront_cell;//-(gv.upperboundary_cell);                   // the boundaries are knowns, so don't need to be included in matrix A
@@ -97,11 +90,5 @@ void crank_nicholson(globalvar& gv,double *deltt,double *v,double *D)
     arma::mat c2=arma::solve(A,b);     // calculation of c
     (*gv.c_m)(arma::span(0,nli-1),arma::span(0,gv.wetfront_cell-1)) = arma::reshape(c2,nli,nhi);
 
-    if (arma::min((*gv.c_m).col(0)) < 0.0f){
-                    std::cout << std::to_string((*gv.c_m)(5,0)) << std::endl;
-                    std::cout << std::to_string((*gv.v_liqwater)(5,0)) << std::endl;
-                    std::cout << std::to_string((*gv.c_s)(5,0)) << std::endl;
-                    std::cout << std::to_string((*gv.v_swe)(5,0)) << std::endl;
-                }
 
 }

@@ -95,6 +95,11 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
                    //(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) -= exchange_i; // compute onh advection to the wetting front
                    //(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new) += exchange_i; // compute onh advection to the wetting front
                 }
+                for(il=0;il<gv.nl ;il++){
+                    for(ih=0;ih<gv.nh ;ih++){
+                        (*gv.c_m).at(il,ih) = fmax((*gv.c_m).at(il,ih),0.0f);
+                    }
+                }
               }
 
             if (gv.qmelt_i > 0.0f){
