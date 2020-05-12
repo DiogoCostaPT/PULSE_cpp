@@ -9,6 +9,13 @@ void crank_nicholson(globalvar& gv,double *deltt,double *v,double *D)
     // calculation - implicit scheme
     int il;    
 
+    if (arma::min((*gv.c_m).col(0)) < 0.0f){
+                    std::cout << std::to_string((*gv.c_m)(5,0)) << std::endl;
+                    std::cout << std::to_string((*gv.v_liqwater)(5,0)) << std::endl;
+                    std::cout << std::to_string((*gv.c_s)(5,0)) << std::endl;
+                    std::cout << std::to_string((*gv.v_swe)(5,0)) << std::endl;
+                }
+
     // to solveA.x1=B.x0
     int nli = gv.nl;
     int nhi = gv.wetfront_cell;//-(gv.upperboundary_cell);                   // the boundaries are knowns, so don't need to be included in matrix A
@@ -41,13 +48,15 @@ void crank_nicholson(globalvar& gv,double *deltt,double *v,double *D)
     }
 
     // 2) first row (y=1)
-    A(arma::span(0,nli-1),arma::span(0,nli-1)) = a1*arma::diagmat(arma::ones(1,nli)); //diagonal
+    A(arma::span(0,nli-1),arma::span(0,nli-1)) = A(arma::span(0,nli-1),arma::span(0,nli-1)) 
+                                                + a1*arma::diagmat(arma::ones(1,nli)); //diagonal
     A(0,0)=a1+a2-k3; // left corner
     A(nli-1,nli-1)=a2+a1-k3; // left corner
 
     
     // 3) last row (y=ny)
-    A(arma::span(nt-nli,nt-1),arma::span(nt-nli,nt-1)) = (a2+a3)*arma::diagmat(arma::ones(1,nli)); // diagonal !!!! CHECK IF IT SHOULDN'T BE "+=" (LINE ABOVE) INSTEAD OF "="
+    A(arma::span(nt-nli,nt-1),arma::span(nt-nli,nt-1)) = A(arma::span(nt-nli,nt-1),arma::span(nt-nli,nt-1))
+                            + (a2+a3)*arma::diagmat(arma::ones(1,nli)); // diagonal !!!! CHECK IF IT SHOULDN'T BE "+=" (LINE ABOVE) INSTEAD OF "="
     A(nt-1,nt-1)=a2+a3-k3; // right corner
     A(nt-nli,nt-nli)=a3+a2-k3; // left corner
 
@@ -71,12 +80,14 @@ void crank_nicholson(globalvar& gv,double *deltt,double *v,double *D)
     }
 
     // 2) first row (y=1)
-    B(arma::span(0,nli-1),arma::span(0,nli-1)) = (-a1)*arma::diagmat(arma::ones(1,nli)); //diagonal
+    B(arma::span(0,nli-1),arma::span(0,nli-1)) = B(arma::span(0,nli-1),arma::span(0,nli-1)) 
+                                                + (-a1)*arma::diagmat(arma::ones(1,nli)); //diagonal
     B(0,0)=-a1+a4+k3; // left corner
     B(nli-1,nli-1)=a4-a1+k3; // left corner
 
     // 3) last row (y=ny)
-    B(arma::span(nt-nli,nt-1),arma::span(nt-nli,nt-1)) =(a4-a3)*arma::diagmat(arma::ones(1,nli)); // diagonal !!!! CHECK IF IT SHOULDN'T BE "+=" (LINE ABOVE) INSTEAD OF "="
+    B(arma::span(nt-nli,nt-1),arma::span(nt-nli,nt-1)) = B(arma::span(nt-nli,nt-1),arma::span(nt-nli,nt-1))
+                        +(a4-a3)*arma::diagmat(arma::ones(1,nli)); // diagonal !!!! CHECK IF IT SHOULDN'T BE "+=" (LINE ABOVE) INSTEAD OF "="
     B(nt-1,nt-1)=a4-a3+k3; // right corner
     B(nt-nli,nt-nli)=-a3+a4+k3; // left corner
 
@@ -85,5 +96,12 @@ void crank_nicholson(globalvar& gv,double *deltt,double *v,double *D)
     arma::vec b=B*trans(c1);    // calculation of [b]
     arma::mat c2=arma::solve(A,b);     // calculation of c
     (*gv.c_m)(arma::span(0,nli-1),arma::span(0,gv.wetfront_cell-1)) = arma::reshape(c2,nli,nhi);
+
+    if (arma::min((*gv.c_m).col(0)) < 0.0f){
+                    std::cout << std::to_string((*gv.c_m)(5,0)) << std::endl;
+                    std::cout << std::to_string((*gv.v_liqwater)(5,0)) << std::endl;
+                    std::cout << std::to_string((*gv.c_s)(5,0)) << std::endl;
+                    std::cout << std::to_string((*gv.v_swe)(5,0)) << std::endl;
+                }
 
 }
