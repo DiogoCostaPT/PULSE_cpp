@@ -100,26 +100,33 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
                         (*gv.c_m).at(il,ih) = fmax((*gv.c_m).at(il,ih),0.0f);
                     }
                 }
+
               }
 
             if (gv.qmelt_i > 0.0f){
 
                  // Ion exclusion: Exchange with immobile phase (just exchange)
-                (*gv.exchange_is)  = deltt * (gp.alphaIE * (*gv.c_s) * gv.vfrac_s) ; 
+                (*gv.exchange_is)  = deltt * gp.alphaIE * (*gv.c_s) % (*gv.v_swe) ; 
+                float exchange_is_l = 0.0f;
 
                 // limit the flux to the available material
                 for(il=0;il<gv.nl ;il++){
-                    for(ih=0;ih<gv.nh ;ih++){
-                         if ((*gv.exchange_is).at(il,ih) > 0 && ih<gv.wetfront_cell){
-                            (*gv.exchange_is).at(il,ih) = std::fmin((*gv.exchange_is).at(il,ih),
-                                (*gv.c_s).at(il,ih) * gv.vfrac_s);
+                    for(ih=0;ih<gv.wetfront_cell ;ih++){
+                         if ((*gv.exchange_is).at(il,ih) > 0 && (*gv.v_liqwater).at(il,ih) > 0.000001){
 
-                            (*gv.c_s).at(il,ih) = ((*gv.c_s).at(il,ih) * gv.vfrac_s 
-                                    - (*gv.exchange_is).at(il,ih)) / gv.vfrac_s;
-                            (*gv.c_m).at(il,ih) = ((*gv.c_m).at(il,ih) * gv.vfrac_m 
-                                    + (*gv.exchange_is).at(il,ih)) / gv.vfrac_m;
+                             //std::cout << std::to_string((*gv.v_liqwater).at(il,ih)) << std::endl;
+                            exchange_is_l = fmin((*gv.exchange_is).at(il,ih),
+                                                 (*gv.c_s).at(il,ih) * (*gv.v_swe).at(il,ih));   
+
+                            (*gv.c_s).at(il,ih) = ((*gv.c_s).at(il,ih) * (*gv.v_swe).at(il,ih) 
+                                    - exchange_is_l) / (*gv.v_swe).at(il,ih);
+
+                            (*gv.c_m).at(il,ih) = ((*gv.c_m).at(il,ih) * (*gv.v_liqwater).at(il,ih) 
+                                    + exchange_is_l) / (*gv.v_liqwater).at(il,ih);
+
                             (*gv.c_s).at(il,ih) = std::fmax((*gv.c_s).at(il,ih),0.0f);
                             (*gv.c_m).at(il,ih) = std::fmax((*gv.c_m).at(il,ih),0.0f);
+                            
 
                         //}else if((*gv.exchange_is).at(il,ih) < 0){
                         //     (*gv.exchange_is).at(il,ih) = 0.0f;
@@ -133,7 +140,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
                         //};
                     }
                 };
-                
+             
                 //(*gv.c_s) =  ( (*gv.c_s) * gv.vfrac_s - (*gv.exchange_is)) / gv.vfrac_s; // / vfrac_m(t);
                 //(*gv.c_m) = ( (*gv.c_m) * gv.vfrac_m + (*gv.exchange_is)) / gv.vfrac_m;
   
