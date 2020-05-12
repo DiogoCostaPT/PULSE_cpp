@@ -27,6 +27,7 @@ void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
 
     //gv.upperboundary_z = gv.nh*gv.snowh;
     gv.wetfront_z = gv.nh*gv.snowh;
+    gv.wetfront_cell_prev = 0;
     gv.wetfront_cell = 0;
     //gv.upperboundary_cell = 0;
 
@@ -57,6 +58,8 @@ void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
                 //gv.upperboundary_cell = std::min(int(std::round(nh_l-gv.upperboundary_z/gv.snowh)),nh_l);
             }
         }
+        
+        gv.wetfront_cell_prev = gv.wetfront_cell;
 
         msg = "Initial conditions found: " + init_file;
         print_screen_log(logPULSEfile,&msg);  
