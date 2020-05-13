@@ -12,18 +12,18 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
     int nhi = gv.wetfront_cell;//-(gv.upperboundary_cell);                   // the boundaries are knowns, so don't need to be included in matrix A
     //int nt = nli*nhi;
     int ih,il;
-    double dv_snow2liqwater,dvfrac_s_dt,exist_vol,tofill_vol, add,remove;
+    double dv_snow2liqwater,dvfrac_s_dt,existsnow_vol,tofillsnow_vol, add_snow,remove_snow;
 
     // timestep fluxes and volumes
-    add = std::abs(gv.snowfall_i) * gv.snowl * (*deltt); // as vol mm*mm*m
-    remove = std::abs(gv.qmelt_i) * gv.snowl * (*deltt); // as vol mm*mm*m
+    add_snow = std::abs(gv.snowfall_i) * gv.snowl * (*deltt); // as vol mm*mm*m
+    remove_snow = std::abs(gv.qmelt_i) * gv.snowl * (*deltt); // as vol mm*mm*m
 
-    exist_vol = (*gv.v_swe)(round(gv.nl/2)-1,0); 
-    tofill_vol = fmax(gv.v_swe_max - exist_vol,0.0f);
+    existsnow_vol = (*gv.v_swe)(round(gv.nl/2)-1,0); 
+    tofillsnow_vol = fmax(gv.v_swe_max - existsnow_vol,0.0f);
 
     
-    // Melt (and wetfront movement) or Refreezing
-    if (gv.tempert_i < 0.0f) // refreezing
+    // Refreezing if T<0
+    if (gv.tempert_i < 0.0f) 
     {
         (*gv.c_s) = ((*gv.c_s) % (*gv.v_swe) + (*gv.c_m) % (*gv.v_liqwater))
             / ((*gv.v_swe) + (*gv.v_liqwater)); // c_m mass will go to c_i
@@ -45,29 +45,29 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
 
     }
 
-    exist_vol = (*gv.v_swe)(round(gv.nl/2)-1,0); 
-    tofill_vol = fmax(gv.v_swe_max - exist_vol,0.0f);
+    existsnow_vol = (*gv.v_swe)(round(gv.nl/2)-1,0); 
+    tofillsnow_vol = fmax(gv.v_swe_max - existsnow_vol,0.0f);
 
-    // Precipitation
-    if (add > 0.0f)
+    // Snowfall
+    if (add_snow > 0.0f)
     {
 
-        if (tofill_vol >= add) // no need to add new layer
+        if (tofillsnow_vol >= add_snow) // no need to add_snow new layer
         {
             (*gv.c_s).col(0) = ((*gv.c_s).col(0) % (*gv.v_swe).col(0) +
-                 arma::ones(gv.nl,1) * add * gv.snowfall_c_i)
-                / ((*gv.v_swe).col(0) + arma::ones(gv.nl,1) * add);
-            (*gv.v_swe).col(0) = (*gv.v_swe).col(0) + arma::ones(gv.nl,1) * add;
+                 arma::ones(gv.nl,1) * add_snow * gv.snowfall_c_i)
+                / ((*gv.v_swe).col(0) + arma::ones(gv.nl,1) * add_snow);
+            (*gv.v_swe).col(0) = (*gv.v_swe).col(0) + arma::ones(gv.nl,1) * add_snow;
         } 
-        else // add new top layer
+        else // add_snow new top layer
         {
 
             (*gv.c_s).col(0) = ((*gv.c_s).col(0) % (*gv.v_swe).col(0) +
-                tofill_vol * gv.snowfall_c_i) / gv.v_swe_max ;
+                tofillsnow_vol * gv.snowfall_c_i) / gv.v_swe_max ;
             (*gv.v_swe).col(0) = arma::ones(gv.nl,1) * gv.v_swe_max;
             
             // new layer
-            gv.nh++; // remove one layer
+            gv.nh++; // remove_snow one layer
             gv.snowH += gv.snowh; // snowpack depth 
             //gv.nh_change -= gv.snowh; 
             gv.wetfront_cell_prev = std::max(gv.wetfront_cell_prev + 1,0);
@@ -88,18 +88,18 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
 
             (*gv.v_liqwater).insert_cols(0,1); // set to zero by default
             (*gv.v_swe).insert_cols(0,1);
-            (*gv.v_swe).col(0) = arma::ones<arma::vec>(nl_l,1) * (add - tofill_vol);
+            (*gv.v_swe).col(0) = arma::ones<arma::vec>(nl_l,1) * (add_snow - tofillsnow_vol);
             (*gv.v_air).insert_cols(0,1);
             (*gv.v_air).col(0) = arma::ones<arma::vec>(nl_l,1) * (gv.vfrac_air_frshsnow * gv.snowl * gv.snowh);
         }
 
     }
 
-    exist_vol = (*gv.v_swe)(round(gv.nl/2)-1,0); 
-    tofill_vol = fmax(gv.v_swe_max - exist_vol,0.0f);
+    existsnow_vol = (*gv.v_swe)(round(gv.nl/2)-1,0); 
+    tofillsnow_vol = fmax(gv.v_swe_max - existsnow_vol,0.0f);
     
-
-    if (remove > 0.0f) // melt
+    // Snowmelt
+    if (remove_snow > 0.0f) // melt
     {
 
         // wetting front calculation
@@ -112,19 +112,19 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
         gv.wetfront_cell = std::max(gv.wetfront_cell,0);
 
 
-        if (exist_vol >= remove ) // don't remove layer
+        if (existsnow_vol >= remove_snow ) // don't remove_snow layer
         {
             
 
             (*gv.c_m).col(0) = ((*gv.c_m).col(0) % (*gv.v_liqwater).col(0) + 
-                (*gv.c_s).col(0) * remove)
-                / ( (*gv.v_liqwater).col(0) + remove);
+                (*gv.c_s).col(0) * remove_snow)
+                / ( (*gv.v_liqwater).col(0) + remove_snow);
             // (*gv.c_s) -> no need to calculate for c_s because it will not change (water masses cancel out)
 
-            (*gv.v_swe).col(0) = (*gv.v_swe).col(0) - remove;
-            (*gv.v_liqwater).col(0) = (*gv.v_liqwater).col(0) + remove;
+            (*gv.v_swe).col(0) = (*gv.v_swe).col(0) - remove_snow;
+            (*gv.v_liqwater).col(0) = (*gv.v_liqwater).col(0) + remove_snow;
                         
-        }else // remove layer
+        }else // remove_snow layer
         {
             if ((*gv.c_m).n_cols <= 1) {
                 std::cout << "Snowpack melted completely: sum(qmelt) > sum(precip)" << std::endl;
@@ -134,17 +134,17 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
                     ((*gv.c_m).col(0) % (*gv.v_liqwater).col(0)
                     + (*gv.c_s).col(0) % (*gv.v_swe).col(0) 
                     + (*gv.c_m).col(1) % (*gv.v_liqwater).col(1)
-                    + (*gv.c_s).col(1) % (arma::ones(gv.nl,1) * remove - (*gv.v_swe).col(0))) 
+                    + (*gv.c_s).col(1) % (arma::ones(gv.nl,1) * remove_snow - (*gv.v_swe).col(0))) 
                     / ((*gv.v_liqwater).col(0) 
                         + (*gv.v_swe).col(0) 
                         + (*gv.v_liqwater).col(1) 
-                        + arma::ones(gv.nl,1) * remove - (*gv.v_swe).col(0));
+                        + arma::ones(gv.nl,1) * remove_snow - (*gv.v_swe).col(0));
                 // (*gv.c_s) -> no need to calculate for c_s because it will not change (water masses cancel out)
 
                 (*gv.v_liqwater).col(1) = (*gv.v_liqwater).col(1) 
                     + (*gv.v_liqwater).col(0) 
                     + (*gv.v_swe).col(0) 
-                    + arma::ones(gv.nl,1) * remove - (*gv.v_swe).col(0);
+                    + arma::ones(gv.nl,1) * remove_snow - (*gv.v_swe).col(0);
             
                 // adust some variables to the removal of a layer
                 gv.nh = std::fmax(gv.nh - 1,0);
@@ -152,7 +152,7 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
                 gv.wetfront_cell = std::max(gv.wetfront_cell - 1,0);
                 gv.snowH = std::fmax(gv.snowH - gv.snowh,0); // snowpack depth
 
-                // remove layer
+                // remove_snow layer
                 (*gv.c_m).shed_col(0);
                 //(*gv.c_i).shed_cols(0,0);
                 (*gv.c_s).shed_col(0);
