@@ -57,6 +57,9 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
             (*gv.vfrac2d_s).insert_cols(0,1); //set to one
             (*gv.vfrac2d_s).col(0) = arma::ones<arma::vec>(nl_l,1);
 
+            (*gv.velc_2d).insert_cols(0,1); 
+            (*gv.disp_2d).insert_cols(0,1); 
+
             (*gv.v_liqwater).insert_cols(0,1); // set to zero by default
             (*gv.v_swe).insert_cols(0,1);
             (*gv.v_swe).col(0) = arma::ones<arma::vec>(nl_l,1) * (add - tofill_vol);
@@ -154,6 +157,9 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
                 (*gv.exchange_is).shed_col(0);
                 (*gv.vfrac2d_m).shed_col(0);
                 (*gv.vfrac2d_s).shed_col(0);
+
+                (*gv.velc_2d).shed_col(0); 
+                (*gv.disp_2d).shed_col(0);
                 
             }    
         }

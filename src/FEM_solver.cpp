@@ -21,7 +21,7 @@ arma::mat dc2dy2(nli,gv.wetfront_cell,arma::fill::zeros);
 arma::mat dc2dx2(nli,gv.wetfront_cell,arma::fill::zeros); 
 arma::mat dcdt(nli,gv.wetfront_cell,arma::fill::zeros); 
 
-for (ih=1;ih<nhi-1;ih++){
+for (ih=1;ih<gv.wetfront_cell-1;ih++){
     for (il=1;il<nli-1;il++){
         
         if ((*gv.velc_2d)(il,ih-1) > 0){

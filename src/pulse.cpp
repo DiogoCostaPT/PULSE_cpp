@@ -46,7 +46,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
            // watermass_calc(gv,gp,&deltt,&velc,logPULSEfile);
         } else {// melt       
                 // Estimate interstitial flow velocity 
-            velc = gv.qmelt_i/ (gv.vfrac_m + gv.vfrac_a); // interstitial flow velocity [m s-1]
+            velc = gv.qmelt_i/ (gv.vfrac_a); // interstitial flow velocity [m s-1]
             D = gp.aD * velc;       // dispersion coefficient [m2/s]
 
             (*gv.velc_2d) = (*gv.velc_2d)*0 + velc;
@@ -74,11 +74,11 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
             //vol_fract_calc(gp,gv,&velc,&deltt);
 
             // check CFC validation
-            if((gv.wetfront_cell - gv.wetfront_cell_prev) > 1){
-                msg = "CFC condition violation - check code";
-                print_screen_log(logPULSEfile,&msg);
-                abort();
-            }
+            //if((gv.wetfront_cell - gv.wetfront_cell_prev) > 1){
+            //    msg = "CFC condition violation - check code";
+            //    print_screen_log(logPULSEfile,&msg);
+            //    abort();
+            //}
 
             // 
             //if (gv.vfrac_m < 1-gp.num_stblty_thrshld_prsity && gv.vfrac_i > gp.num_stblty_thrshld_prsity && gv.vfrac_s > gp.num_stblty_thrshld_prsity){
