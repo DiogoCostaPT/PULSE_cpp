@@ -15,7 +15,7 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
     double dv_snow2liqwater,dvfrac_s_dt,exist_vol,tofill_vol, add,remove;
 
     // timestep fluxes and volumes
-    add = std::abs(gv.precip_i) * gv.snowl * (*deltt); // as vol mm*mm*m
+    add = std::abs(gv.snowfall_i) * gv.snowl * (*deltt); // as vol mm*mm*m
     remove = std::abs(gv.qmelt_i) * gv.snowl * (*deltt); // as vol mm*mm*m
 
     exist_vol = (*gv.v_swe)(round(gv.nl/2)-1,0); 
@@ -29,7 +29,7 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
         if (tofill_vol >= add) // no need to add new layer
         {
             (*gv.c_s).col(0) = ((*gv.c_s).col(0) % (*gv.v_swe).col(0) +
-                 arma::ones(gv.nl,1) * add * gv.precipc_i)
+                 arma::ones(gv.nl,1) * add * gv.snowfall_c_i)
                 / ((*gv.v_swe).col(0) + arma::ones(gv.nl,1) * add);
             (*gv.v_swe).col(0) = (*gv.v_swe).col(0) + arma::ones(gv.nl,1) * add;
         } 
@@ -37,7 +37,7 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
         {
 
             (*gv.c_s).col(0) = ((*gv.c_s).col(0) % (*gv.v_swe).col(0) +
-                tofill_vol * gv.precipc_i) / gv.v_swe_max ;
+                tofill_vol * gv.snowfall_c_i) / gv.v_swe_max ;
             (*gv.v_swe).col(0) = arma::ones(gv.nl,1) * gv.v_swe_max;
             
             // new layer
@@ -48,8 +48,8 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
             gv.wetfront_cell = std::max(gv.wetfront_cell + 1,0);
 
             (*gv.c_m).insert_cols(0,1); // set to zero by default
-            (*gv.c_s).insert_cols(0,1); // set to precipc_i
-            (*gv.c_s).col(0) = arma::ones<arma::vec>(nl_l,1) * gv.precipc_i;
+            (*gv.c_s).insert_cols(0,1); // set to snowfall_c_i
+            (*gv.c_s).col(0) = arma::ones<arma::vec>(nl_l,1) * gv.snowfall_c_i;
 
             (*gv.exchange_is).insert_cols(0,1);  // set to zero by default
 

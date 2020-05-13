@@ -10,7 +10,7 @@ void read_simset(globalpar& gp,const std::string& modset_flname,
                 std::string* sim_purp,double *h_layer,double *l_layer,
                 std::string* qcmelt_file,std::string* meteo_file ,
                 std::ofstream* logPULSEfile,int* n_qcmelt, 
-                int* n_snowfallt, double *vfrac_air_frshsnow)
+                int* n_meteoall, double *vfrac_air_frshsnow)
 {
     
     std::string str, msg, str_hydro_solver;
@@ -67,7 +67,7 @@ void read_simset(globalpar& gp,const std::string& modset_flname,
     // Get meteo file size
     flstatus =  filedata.load((*meteo_file),arma::csv_ascii);
     if(flstatus==true){
-        *n_snowfallt = filedata.col(1).n_elem;
+        *n_meteoall = filedata.col(1).n_elem;
     }else{
         msg = "PROBLEM loading the file: " + (*meteo_file);   
         print_screen_log(logPULSEfile,&msg);
@@ -84,7 +84,8 @@ void read_meteofile(globalpar& gp,globalvar& gv,std::string* meteo_file,
                     std::ofstream* logPULSEfile)
 {
     unsigned int a; 
-    double tprec=0.0f,prec_i=0.0f,precs_i=0.0f;
+    double tprec=0.0f,snowfall_calc_i=0.0f,temp_calc_i=0.0f,precs_i=0.0f,
+            rainfall_calc_i = 0.0f,precip_conc_i = 0.0f;
     std::string msg;
      
     arma::mat filedataM; 
@@ -94,11 +95,16 @@ void read_meteofile(globalpar& gp,globalvar& gv,std::string* meteo_file,
     if(flstatusM == true) {
         for(a=0;a<num_cols;a++){
             tprec = filedataM(a+1,0);  // t prec seconds
-            prec_i = filedataM(a+1,1);  // mm/deltatime
-            precs_i = filedataM(a+1,2);  // conc of precip
-            (*gv.snowfall_ts).at(a,0) = fabs(tprec);  
-            (*gv.snowfall_ts).at(a,1) = fabs(prec_i)/1000;  // mm/deltatime -> m/deltatime
-            (*gv.snowfall_ts).at(a,2) = fabs(precs_i); 
+            temp_calc_i = filedataM(a+1,2);  // degrees celsius
+            rainfall_calc_i = filedataM(a+1,2);  // mm/deltatime
+            snowfall_calc_i = filedataM(a+1,3);  // mm/deltatime
+            precip_conc_i = filedataM(a+1,4);  // conc of precip
+            
+            (*gv.meteoall_ts).at(a,0) = fabs(tprec);  
+            (*gv.meteoall_ts).at(a,1) = fabs(temp_calc_i);  
+            (*gv.meteoall_ts).at(a,2) = fabs(rainfall_calc_i)/1000;  
+            (*gv.meteoall_ts).at(a,3) = fabs(snowfall_calc_i)/1000;  // mm/deltatime -> m/deltatime
+            (*gv.meteoall_ts).at(a,4) = fabs(precip_conc_i); 
         }
        (gp.Tperd) = tprec;
        //msg = "Successful loading the file: " + (*meteo_file);

@@ -171,7 +171,8 @@ if gen_prec_and_qmelt_T_index_files_flag == 1
 
     SNOWfall_ts = PREC_ts;
     SNOWfall_ts.Data(PREC_type_ts.Data==2) = 0; % daily
-        
+    
+           
     % plot
     figure
     subplot(1,2,1)
@@ -191,7 +192,9 @@ if gen_prec_and_qmelt_T_index_files_flag == 1
 
     % data to copy past to model's meteo file (time and prec vol)
     time_pulse = SNOWfall_ts.Time(1:end);
-    snowaccum_2pulse = SNOWfall_ts.Data; % mm daily -> mm/sec
+    snowaccum_2pulse = SNOWfall_ts.Data; % mm acumul
+    rainaccum_2pulse = RAIN_ts.Data;
+    temp_2pulse = TEMP_ts.Data;
 
     % now chem data
     data_toplayer = dataraw_chem(:,2)/1000; % ppb -> ppm
@@ -201,18 +204,24 @@ if gen_prec_and_qmelt_T_index_files_flag == 1
     time_pulse_sec = [0; cumsum(etime(datevec(SNOWfall_ts.Time(2:end)),datevec(SNOWfall_ts.Time(1:end-1))))];
     snowaccum_2pulse(isnan(snowaccum_2pulse)) = 0;
     snowprec_chem(isnan(snowprec_chem)) = 0;
-    Snowfall_file = [time_pulse_sec,snowaccum_2pulse,snowprec_chem];
+    Meteo_file = [time_pulse_sec,...
+                  temp_2pulse,...
+                  rainaccum_2pulse,...
+                  snowaccum_2pulse,...
+                  snowprec_chem];
     
-    
-    Snowfall_file_cell = num2cell(Snowfall_file);
+
+    Meteo_file_cell = num2cell(Meteo_file);
     header = {};
     header{1} = 'time (sec)';
-    header{2} = "prec [mm/deltatime]";
-    header{3} = "prec_conc [user_defined]";
+    header{2} = "temperature [degree celsius]";
+    header{3} = "rain [mm/deltatime]";
+    header{4} = "snowfall [mm/deltatime]";
+    header{5} = "prec_conc [user_defined]";
 
-    Snowfall_file_cell = [header;Snowfall_file_cell];
+    Meteo_file_cell = [header;Meteo_file_cell];
     
-    writecell(Snowfall_file_cell,new_meteofile_name,'Delimiter',',')
+    writecell(Meteo_file_cell,new_meteofile_name,'Delimiter',',')
 
         
     %% QMELT

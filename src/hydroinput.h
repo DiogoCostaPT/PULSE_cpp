@@ -6,7 +6,7 @@
 #include<armadillo>
 #include "global.h"
 
-void findInterpPrec(globalvar& gv,double *tcum);
+void findInterpMeteo(globalvar& gv,double *tcum);
 
 void findInterpQmelt(globalvar& gv,double *tcum);
 

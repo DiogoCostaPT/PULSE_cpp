@@ -35,11 +35,11 @@ public:
   globalvar() {
 
   }
-  globalvar(size_t nh, size_t nl,size_t n_qcmelt,size_t n_snowfallt) {
+  globalvar(size_t nh, size_t nl,size_t n_qcmelt,size_t n_meteoall) {
     this->nh = nh;
     this->nl = nl;
     this->n_qcmelt = n_qcmelt;
-    this->n_snowfallt = n_snowfallt;
+    this->n_meteoall = n_meteoall;
    
     c_m = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     //c_i = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
@@ -47,7 +47,7 @@ public:
     // = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     exchange_is = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     qcmel_ts = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_qcmelt,2));
-    snowfall_ts = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_snowfallt,3));
+    meteoall_ts = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_meteoall,5));
     velc_2d = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     disp_2d = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
 
@@ -60,9 +60,9 @@ public:
 
   }
     
-    size_t nh,nl,n_qcmelt,n_snowfallt;
+    size_t nh,nl,n_qcmelt,n_meteoall;
   
-    std::unique_ptr<arma::Mat<double>> c_m,c_s,qcmel_ts,snowfall_ts,//exchange_si,
+    std::unique_ptr<arma::Mat<double>> c_m,c_s,qcmel_ts,meteoall_ts,//exchange_si,
                   exchange_is,velc_2d,disp_2d,vfrac2d_m,vfrac2d_s,v_liqwater,v_swe,v_air;
     
     double snowH = 0.0f, // snowpack depth
@@ -80,8 +80,10 @@ public:
             wetfront_z = 0.0f,
             //nh_change = 0.0f,
             qmelt_i = 0.0f,
-            precip_i = 0.0f, 
-            precipc_i = 0.0f,
+            tempert_i = 0.0f,
+            rainfall_i = 0.0f,
+            snowfall_i = 0.0f, 
+            snowfall_c_i = 0.0f,
             v_swe_max = 0.0f,
             vfrac_air_frshsnow = 0.0f;
 
