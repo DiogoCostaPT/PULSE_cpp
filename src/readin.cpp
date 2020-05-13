@@ -95,13 +95,13 @@ void read_meteofile(globalpar& gp,globalvar& gv,std::string* meteo_file,
     if(flstatusM == true) {
         for(a=0;a<num_cols;a++){
             tprec = filedataM(a+1,0);  // t prec seconds
-            temp_calc_i = filedataM(a+1,2);  // degrees celsius
+            temp_calc_i = filedataM(a+1,1);  // degrees celsius
             rainfall_calc_i = filedataM(a+1,2);  // mm/deltatime
             snowfall_calc_i = filedataM(a+1,3);  // mm/deltatime
             precip_conc_i = filedataM(a+1,4);  // conc of precip
             
             (*gv.meteoall_ts).at(a,0) = fabs(tprec);  
-            (*gv.meteoall_ts).at(a,1) = fabs(temp_calc_i);  
+            (*gv.meteoall_ts).at(a,1) = temp_calc_i;  
             (*gv.meteoall_ts).at(a,2) = fabs(rainfall_calc_i)/1000;  
             (*gv.meteoall_ts).at(a,3) = fabs(snowfall_calc_i)/1000;  // mm/deltatime -> m/deltatime
             (*gv.meteoall_ts).at(a,4) = fabs(precip_conc_i); 

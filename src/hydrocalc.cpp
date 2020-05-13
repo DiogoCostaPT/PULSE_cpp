@@ -21,6 +21,32 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
     exist_vol = (*gv.v_swe)(round(gv.nl/2)-1,0); 
     tofill_vol = fmax(gv.v_swe_max - exist_vol,0.0f);
 
+    
+    // Melt (and wetfront movement) or Refreezing
+    if (gv.tempert_i < 0.0f) // refreezing
+    {
+        (*gv.c_s) = ((*gv.c_s) % (*gv.v_swe) + (*gv.c_m) % (*gv.v_liqwater))
+            / ((*gv.v_swe) + (*gv.v_liqwater)); // c_m mass will go to c_i
+        (*gv.c_m) =  (*gv.c_m) * 0.0f;
+
+        (*gv.v_swe) = (*gv.v_swe) + (*gv.v_liqwater);
+        (*gv.v_liqwater) = (*gv.v_liqwater) * 0.0f;
+
+        gv.wetfront_cell = 0; // assumes refreezing
+        gv.wetfront_cell_prev = 0;
+        gv.wetfront_z = gv.snowH;
+        gv.vfrac_m = 0.0080f;
+        //gv.vfrac_i=0.001;
+        gv.vfrac_s = 1.0f - gv.vfrac_m;// - gv.vfrac_i;
+        gv.vfrac_m_prev=gv.vfrac_m;
+        //gv.vfrac_i_prev=gv.vfrac_i;
+        gv.vfrac_s_prev=gv.vfrac_s;
+                
+
+    }
+
+    exist_vol = (*gv.v_swe)(round(gv.nl/2)-1,0); 
+    tofill_vol = fmax(gv.v_swe_max - exist_vol,0.0f);
 
     // Precipitation
     if (add > 0.0f)
@@ -69,31 +95,11 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
 
     }
 
-    exist_vol = (*gv.v_swe)(round(gv.nl/2)-1,0); // need to update because a new layer may have been added
+    exist_vol = (*gv.v_swe)(round(gv.nl/2)-1,0); 
+    tofill_vol = fmax(gv.v_swe_max - exist_vol,0.0f);
     
 
-    // Melt (and wetfront movement) or Refreezing
-    if (remove == 0.0f) // refreezing
-    {
-        (*gv.c_s) = ((*gv.c_s) % (*gv.v_swe) + (*gv.c_m) % (*gv.v_liqwater))
-            / ((*gv.v_swe) + (*gv.v_liqwater)); // c_m mass will go to c_i
-        (*gv.c_m) =  (*gv.c_m) * 0.0f;
-
-        (*gv.v_swe) = (*gv.v_swe) + (*gv.v_liqwater);
-        (*gv.v_liqwater) = (*gv.v_liqwater) * 0.0f;
-
-        gv.wetfront_cell = 0; // assumes refreezing
-        gv.wetfront_cell_prev = 0;
-        gv.wetfront_z = gv.snowH;
-        gv.vfrac_m = 0.0080f;
-        //gv.vfrac_i=0.001;
-        gv.vfrac_s = 1.0f - gv.vfrac_m;// - gv.vfrac_i;
-        gv.vfrac_m_prev=gv.vfrac_m;
-        //gv.vfrac_i_prev=gv.vfrac_i;
-        gv.vfrac_s_prev=gv.vfrac_s;
-                
-
-    } else // melt
+    if (remove > 0.0f) // melt
     {
 
         // wetting front calculation
