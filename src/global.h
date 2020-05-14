@@ -17,7 +17,7 @@ public:
            rho_m=998.8, // kg.m-3 at 0 degrees
            rho_frshsnow_init = 320,
            wetfront_z,num_stblty_thrshld_prsity = 1E-6,alphaIE,Tperd;
-    
+        
     int flag_sens,run_id,s,print_step,
          hydro_solver; // 0) Crank Nicholson, 1) Forward-time, Central-diff space;
     //std::ofstream logPULSEfile;
@@ -84,8 +84,10 @@ public:
             rainfall_i = 0.0f,
             snowfall_i = 0.0f, 
             precip_c_i = 0.0f,
-            v_swe_max = 0.0f,
-            vfrac_air_frshsnow = 0.0f;
+            v_swe_freshsnow_max = 0.0f,
+            v_swe_comp_max = 0.0f,
+            vfrac_air_frshsnow = 0.0f,
+            compatfact = 0.0f;
 
     int wetfront_cell = 0,
         wetfront_cell_prev = 0;

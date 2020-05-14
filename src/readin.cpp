@@ -10,7 +10,7 @@ void read_simset(globalpar& gp,const std::string& modset_flname,
                 std::string* sim_purp,double *h_layer,double *l_layer,
                 std::string* qcmelt_file,std::string* meteo_file ,
                 std::ofstream* logPULSEfile,int* n_qcmelt, 
-                int* n_meteoall, double *vfrac_air_frshsnow)
+                int* n_meteoall, double *vfrac_air_frshsnow, double *compatfact)
 {
     
     std::string str, msg, str_hydro_solver;
@@ -33,6 +33,7 @@ void read_simset(globalpar& gp,const std::string& modset_flname,
         if(str.find("A_D") != std::string::npos){(gp.aD) = std::stof(str.substr(4));}; // SWE standard deviation (snow depletion curves, Kevin's paper)
         if(str.find("ALPHA_IE") != std::string::npos){(gp.alphaIE) = std::stof(str.substr(9));}; // SWE standard deviation (snow depletion curves, Kevin's paper)
         if(str.find("HYDRO_SOLVER") != std::string::npos){str_hydro_solver = str.substr(13);}; // snowmelt file
+        if(str.find("COMPFACTOR") != std::string::npos){(*compatfact) = std::stof(str.substr(11));}; // compaction factor
         
     }
     file.close();
@@ -95,6 +96,7 @@ void read_meteofile(globalpar& gp,globalvar& gv,std::string* meteo_file,
     if(flstatusM == true) {
         for(a=0;a<num_cols;a++){
             tprec = filedataM(a+1,0);  // t prec seconds
+<<<<<<< Updated upstream
             temp_calc_i = filedataM(a+1,1);  // degrees celsius
             rainfall_calc_i = filedataM(a+1,2);  // mm/deltatime
             snowfall_calc_i = filedataM(a+1,3);  // mm/deltatime
@@ -105,6 +107,13 @@ void read_meteofile(globalpar& gp,globalvar& gv,std::string* meteo_file,
             (*gv.meteoall_ts).at(a,2) = fabs(rainfall_calc_i)/1000;  
             (*gv.meteoall_ts).at(a,3) = fabs(snowfall_calc_i)/1000;  // mm/deltatime -> m/deltatime
             (*gv.meteoall_ts).at(a,4) = fabs(precip_conc_i); 
+=======
+            prec_i = filedataM(a+1,1);  // mm/deltatime
+            precs_i = filedataM(a+1,2);  // conc of precip
+            (*gv.snowfall_ts).at(a,0) = fabs(tprec);  
+            (*gv.snowfall_ts).at(a,1) = fabs(prec_i)/1000;  // mm/deltatime -> m/deltatime
+            (*gv.snowfall_ts).at(a,2) = fabs(precs_i); 
+>>>>>>> Stashed changes
         }
        (gp.Tperd) = tprec;
        //msg = "Successful loading the file: " + (*meteo_file);

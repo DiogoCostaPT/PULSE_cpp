@@ -12,16 +12,25 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
     int nhi = gv.wetfront_cell;//-(gv.upperboundary_cell);                   // the boundaries are knowns, so don't need to be included in matrix A
     //int nt = nli*nhi;
     int ih,il;
+<<<<<<< Updated upstream
     double dv_snow2liqwater,dvfrac_s_dt,existsnow_vol,tofillsnow_vol, 
-            add_snow,remove_snow,add_rain;
+            add_snow,remove_snow,add_rain,dcomp_swe;
+=======
+    double dv_snow2liqwater,dvfrac_s_dt,exist_vol,tofill_vol, add,remove;
+
+    // timestep fluxes and volumes
+    add = std::abs(gv.precip_i) * gv.snowl * (*deltt); // as vol mm*mm*m
+    remove = std::abs(gv.qmelt_i) * gv.snowl * (*deltt); // as vol mm*mm*m
+>>>>>>> Stashed changes
 
     // timestep fluxes and volumes
     add_snow = std::abs(gv.snowfall_i) * gv.snowl * (*deltt); // as vol mm*mm*m
     remove_snow = std::abs(gv.qmelt_i) * gv.snowl * (*deltt); // as vol mm*mm*m
     add_rain = std::abs(gv.rainfall_i) * gv.snowl * (*deltt); // as vol mm*mm*m
 
+<<<<<<< Updated upstream
     existsnow_vol = (*gv.v_swe)(round(gv.nl/2)-1,0); 
-    tofillsnow_vol = fmax(gv.v_swe_max - existsnow_vol,0.0f);
+    tofillsnow_vol = fmax(gv.v_swe_freshsnow_max - existsnow_vol,0.0f);
 
     // Refreezing if T<0
     if (gv.tempert_i < 0.0f) 
@@ -47,10 +56,15 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
     }
 
     existsnow_vol = (*gv.v_swe)(round(gv.nl/2)-1,0); 
-    tofillsnow_vol = fmax(gv.v_swe_max - existsnow_vol,0.0f);
+    tofillsnow_vol = fmax(gv.v_swe_freshsnow_max - existsnow_vol,0.0f);
 
     // Snowfall
     if (add_snow > 0.0f)
+=======
+
+    // Precipitation
+    if (add > 0.0f)
+>>>>>>> Stashed changes
     {
 
         if (tofillsnow_vol >= add_snow) // no need to add_snow new layer
@@ -64,8 +78,8 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
         {
 
             (*gv.c_s).col(0) = ((*gv.c_s).col(0) % (*gv.v_swe).col(0) +
-                tofillsnow_vol * gv.precip_c_i) / gv.v_swe_max ;
-            (*gv.v_swe).col(0) = arma::ones(gv.nl,1) * gv.v_swe_max;
+                tofillsnow_vol * gv.precip_c_i) / gv.v_swe_freshsnow_max ;
+            (*gv.v_swe).col(0) = arma::ones(gv.nl,1) * gv.v_swe_freshsnow_max;
             
             // new layer
             gv.nh++; // remove_snow one layer
@@ -97,10 +111,36 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
     }
 
     existsnow_vol = (*gv.v_swe)(round(gv.nl/2)-1,0); 
-    tofillsnow_vol = fmax(gv.v_swe_max - existsnow_vol,0.0f);
+    tofillsnow_vol = fmax(gv.v_swe_freshsnow_max - existsnow_vol,0.0f);
     
+<<<<<<< Updated upstream
     // Snowmelt or rainfall
     if (remove_snow > 0.0f || add_rain > 0.0f) // melt
+=======
+
+    // Melt (and wetfront movement) or Refreezing
+    if (remove == 0.0f) // refreezing
+    {
+        (*gv.c_s) = ( (*gv.c_s) % (*gv.v_swe) + (*gv.c_m) % (*gv.v_liqwater))
+            / ((*gv.v_swe) + (*gv.v_liqwater)); // c_m mass will go to c_i
+        (*gv.c_m) *= 0;
+
+        (*gv.v_swe) += (*gv.v_liqwater);
+        (*gv.v_liqwater) *= 0;
+
+        gv.wetfront_cell = 0; // assumes refreezing
+        gv.wetfront_cell_prev = 0;
+        gv.wetfront_z = gv.snowH;
+        gv.vfrac_m = 0.008;
+        //gv.vfrac_i=0.001;
+        gv.vfrac_s = 1 - gv.vfrac_m;// - gv.vfrac_i;
+        gv.vfrac_m_prev=gv.vfrac_m;
+        //gv.vfrac_i_prev=gv.vfrac_i;
+        gv.vfrac_s_prev=gv.vfrac_s;
+                
+
+    } else // melt
+>>>>>>> Stashed changes
     {
         // wetting front calculation
         gv.wetfront_cell_prev = gv.wetfront_cell;
@@ -192,7 +232,28 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
             }
         }
     }
-    
+
+    // Compaction (Hooke's law)
+    for (ih=0;ih<nh_l-2;ih++){
+            for (il=0;il<nl_l-1;il++){
+                
+                dcomp_swe = (ih+1) * gv.snowh * gv.compatfact * (gv.v_swe_comp_max - (*gv.v_swe)(il,ih+1));
+                dcomp_swe = fmax(0.0f,dcomp_swe);
+                dcomp_swe = fmin(dcomp_swe,(*gv.v_swe)(il,ih));
+                
+                (*gv.c_s)(il,ih+1) = ((*gv.v_swe)(il,ih+1) * (*gv.c_s)(il,ih+1) 
+                                    + dcomp_swe *(*gv.c_s)(il,ih))
+                                    / ((*gv.v_swe)(il,ih+1) + dcomp_swe);
+                (*gv.c_s)(il,ih) = ((*gv.v_swe)(il,ih) * (*gv.c_s)(il,ih) 
+                                    - dcomp_swe * (*gv.c_s)(il,ih))
+                                    / ((*gv.v_swe)(il,ih) - dcomp_swe);
+                
+                (*gv.v_swe)(il,ih) = (*gv.v_swe)(il,ih) - dcomp_swe;
+                (*gv.v_swe)(il,ih+1) = (*gv.v_swe)(il,ih+1) + dcomp_swe;
+
+            }
+        }
+
     // update mass frac
     (*gv.vfrac2d_m) = (*gv.v_liqwater) / 
         ((*gv.v_liqwater) +  (*gv.v_swe) +  (*gv.v_air));
