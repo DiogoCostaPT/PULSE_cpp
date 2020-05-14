@@ -39,14 +39,14 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
         gv.vfrac_s_prev = gv.vfrac_s;
         //gv.wetfront_cell_prev = gv.wetfront_cell;
 
-        if (gv.qmelt_i==0.0f){ // accumulation only 
+        if (gv.qmelt_i==0.0f && gv.rainfall_i == 0.0f){ // accumulation only 
             deltt = std::fmin(print_next-tcum,
                 gv.v_swe_max/(std::abs(gv.snowfall_i) * gv.snowl));
             velc = 0.0f;
            // watermass_calc(gv,gp,&deltt,&velc,logPULSEfile);
         } else {// melt       
                 // Estimate interstitial flow velocity 
-            velc = gv.qmelt_i/ (gv.vfrac_a); // interstitial flow velocity [m s-1]
+            velc = (gv.qmelt_i + gv.rainfall_i)/ (gv.vfrac_a + gv.vfrac_m); // interstitial flow velocity [m s-1]
             D = gp.aD * velc;       // dispersion coefficient [m2/s]
 
             (*gv.velc_2d) = (*gv.velc_2d)*0 + velc;
@@ -68,7 +68,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
 
         tcum = tcum + deltt; 
 
-        if (gv.qmelt_i>0.0f && gv.nh>0){ // if melt
+        if ((gv.qmelt_i+gv.rainfall_i)>0.0f && gv.nh>0){ // if melt
  
             // calculate volume fractions
             //vol_fract_calc(gp,gv,&velc,&deltt);
@@ -82,28 +82,31 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
 
             // 
             //if (gv.vfrac_m < 1-gp.num_stblty_thrshld_prsity && gv.vfrac_i > gp.num_stblty_thrshld_prsity && gv.vfrac_s > gp.num_stblty_thrshld_prsity){
-            if (gv.vfrac_m < 1-gp.num_stblty_thrshld_prsity && gv.vfrac_s > gp.num_stblty_thrshld_prsity){  if (gv.wetfront_cell > 5){ // to have sufficient layers for ADE solver
+            if (gv.vfrac_m < 1-gp.num_stblty_thrshld_prsity && gv.vfrac_s > gp.num_stblty_thrshld_prsity){  
+                
+                if (gv.wetfront_cell > 3){ // to have sufficient layers for ADE solver
 
-                if (gp.hydro_solver == 1){
-                   crank_nicholson(gv,&deltt,&velc,&D); // solve advection and dispersion in the mobile zone
-                }else if (gp.hydro_solver == 0){
-                   //crank_nicholson_hydr2D(gv,&deltt);
-                   FtCs_solve_hydr2D(gv,&deltt);
+                    if (gp.hydro_solver == 1){
+                        crank_nicholson(gv,&deltt,&velc,&D); // solve advection and dispersion in the mobile zone
+                    }else if (gp.hydro_solver == 0){
+                    //crank_nicholson_hydr2D(gv,&deltt);
+                        FtCs_solve_hydr2D(gv,&deltt);
 
-                    // Crank Nicolson to limit the fluxes across boundaries
-                   //exchange_i = arma::max(v * deltt * ((*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) - (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new))/gv.snowh,(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1));
-                   //(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) -= exchange_i; // compute onh advection to the wetting front
-                   //(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new) += exchange_i; // compute onh advection to the wetting front
-                }
-                for(il=0;il<gv.nl ;il++){
-                    for(ih=0;ih<gv.nh ;ih++){
-                        (*gv.c_m).at(il,ih) = fmax((*gv.c_m).at(il,ih),0.0f);
+                        // Crank Nicolson to limit the fluxes across boundaries
+                    //exchange_i = arma::max(v * deltt * ((*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) - (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new))/gv.snowh,(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1));
+                    //(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) -= exchange_i; // compute onh advection to the wetting front
+                    //(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new) += exchange_i; // compute onh advection to the wetting front
                     }
-                }
+                    for(il=0;il<gv.nl ;il++){
+                        for(ih=0;ih<gv.nh ;ih++){
+                            (*gv.c_m).at(il,ih) = fmax((*gv.c_m).at(il,ih),0.0f);
+                        }
+                    }
 
               }
+            }
 
-            if (gv.qmelt_i > 0.0f){
+            if (gv.qmelt_i > 0.0f || gv.rainfall_i > 0.0f){
 
                  // Ion exclusion: Exchange with immobile phase (just exchange)
                 (*gv.exchange_is)  = deltt * gp.alphaIE * (*gv.c_s) % (*gv.v_swe) ; 
@@ -176,7 +179,6 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
                 //(*gv.c_m) =  ( (*gv.c_m) * gv.vfrac_m_prev + (*gv.exchange_si) * gv.vfrac_s_prev ) / gv.vfrac_m; // / vfrac_m(t);
                 //(*gv.c_s) = ( (*gv.c_s) * gv.vfrac_s_prev - (*gv.exchange_si) * gv.vfrac_s_prev ) / gv.vfrac_s;
                 
-            }
         }
     }
 

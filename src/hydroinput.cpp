@@ -31,7 +31,7 @@ void findInterpMeteo(globalvar& gv,double *tcum)
                 gv.tempert_i = temp_calc_i;
                 gv.rainfall_i = rainfall_calc_i / (meteo_t_i2 - meteo_t_i); // m/deltatime -> m/sec
                 gv.snowfall_i = snowfall_calc_i / (meteo_t_i2 - meteo_t_i); // m/deltatime -> m/sec
-                gv.snowfall_c_i = precipt_c_calc_i;        
+                gv.precip_c_i = precipt_c_calc_i;        
              }else
             {
                 gv.snowfall_i = 0.0f;

@@ -83,7 +83,7 @@ public:
             tempert_i = 0.0f,
             rainfall_i = 0.0f,
             snowfall_i = 0.0f, 
-            snowfall_c_i = 0.0f,
+            precip_c_i = 0.0f,
             v_swe_max = 0.0f,
             vfrac_air_frshsnow = 0.0f;
 
