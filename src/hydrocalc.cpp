@@ -199,7 +199,7 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
                 
                 dcomp_swe = (ih+1) * gv.snowh * gv.compatfact * (gv.v_swe_comp_max - (*gv.v_swe)(il,ih+1));
                 dcomp_swe = fmax(0.0f,dcomp_swe);
-                dcomp_swe = fmin(dcomp_swe,(*gv.v_swe)(il,ih));
+                dcomp_swe = fmin(dcomp_swe,0.9*(*gv.v_swe)(il,ih));
                 
                 (*gv.c_s)(il,ih+1) = ((*gv.v_swe)(il,ih+1) * (*gv.c_s)(il,ih+1) 
                                     + dcomp_swe *(*gv.c_s)(il,ih))
