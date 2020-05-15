@@ -4,10 +4,9 @@ folder_loc = '/media/dcosta/data/megasync/ec_main/models/pulse/code/code_matlab_
 meteo_file = 'Meteo_2014-2015.xlsx';
 chemistry_file = 'BRG_data.xlsx';
 species = 'NO3';
-T_index_coef = 10;
 
 % IC file
-gen_0txtfile_flag = 1;   
+gen_0txtfile_flag = 0;   
 snow_L = 100; % mm
 snow_H = 1000; % 100 cm * 10 = 1000 mm
 snow_h = 10; % 10 mm
@@ -16,8 +15,12 @@ v_frac_air_init = 0.05; % volume percertage
 
 % qmelt and meteo files
 gen_prec_and_qmelt_T_index_files_flag = 1;
-new_qmeltfile_name = 'qcmelt_svalbard_test';
+snowmelt_method = 1; % 0)T-index, 1) CRHM output
+T_index_coef = 10; % only used if snowmelt_method = 0
+crhmoutput_dir = '/media/dcosta/data/megasync/ec_main/models/crhm/support/PROJECTS/Svalbard/CRHM_output_1.txt'; % only used if snowmelt_method =  1;
+new_qmeltfile_name = 'qcmelt_svalbard_test_crhm';
 new_meteofile_name = 'meteo_svalbard_test';
+
 
 % Densities (as in PULSE)
 rho_s = 917;  % kg.m-3 at 0 degrees
@@ -225,9 +228,30 @@ if gen_prec_and_qmelt_T_index_files_flag == 1
 
         
     %% QMELT
-    qmelt_estim_ts = max(TEMP_ts.data * T_index_coef,0);
-    qmelt_estim_ts(isnan(qmelt_estim_ts)) = 0;
-    qmelt_file = [time_pulse_sec,qmelt_estim_ts];
+    if snowmelt_method == 0
+        qmelt_estim_ts = max(TEMP_ts.data * T_index_coef,0);
+        qmelt_estim_ts(isnan(qmelt_estim_ts)) = 0;
+        qmelt_file = [time_pulse_sec,qmelt_estim_ts];
+    else
+       crhm_output = readtable(crhmoutput_dir);     
+       timecrhm = str2double(crhm_output.time(2:end)) + 693960;
+       snowmelt_data = str2double(crhm_output.snowmelt_int_1_);
+       
+       date_start = datenum('25-03-2015','dd-mm-yyyy');
+       date_end = datenum(date_start + seconds(5616000));
+       
+       date_start_loc = find(timecrhm == date_start);
+       date_end_loc = find(timecrhm == date_end);
+       
+       time_crhm_relvt = timecrhm(date_start_loc:date_end_loc);
+       time_crhm_relvt_secdiff = etime(datevec(time_crhm_relvt(2:end)),...
+                                datevec(time_crhm_relvt(1:end-1)));
+       time_crhm_relvt_secdiff_cumsum = [0;cumsum(time_crhm_relvt_secdiff)];
+       snowmelt_data_relvt = snowmelt_data(date_start_loc:date_end_loc);
+       
+       qmelt_file = [time_crhm_relvt_secdiff_cumsum,snowmelt_data_relvt];
+       
+    end
     
     qmelt_file_cell = num2cell(qmelt_file);
     header = {};
