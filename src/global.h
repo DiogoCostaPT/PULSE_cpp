@@ -86,6 +86,7 @@ public:
             precip_c_i = 0.0f,
             v_swe_freshsnow_max = 0.0f,
             v_swe_comp_max = 0.0f,
+            v_swe_comp_min = 0.0f,
             vfrac_air_frshsnow = 0.0f,
             compatfact = 0.0f;
 

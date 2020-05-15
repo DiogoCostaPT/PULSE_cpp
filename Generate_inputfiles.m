@@ -235,7 +235,7 @@ if gen_prec_and_qmelt_T_index_files_flag == 1
     else
        crhm_output = readtable(crhmoutput_dir);     
        timecrhm = str2double(crhm_output.time(2:end)) + 693960;
-       snowmelt_data = str2double(crhm_output.snowmelt_int_1_);
+       snowmelt_data = str2double(crhm_output.snowmelt_int_1_); % m-> mm
        
        date_start = datenum('25-03-2015','dd-mm-yyyy');
        date_end = datenum(date_start + seconds(5616000));
