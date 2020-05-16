@@ -11,7 +11,8 @@ void read_simset(globalpar& gp,const std::string& modset_flname,
                 std::string* sim_purp,double *h_layer,double *l_layer,
                 std::string* qcmelt_file,std::string* meteo_file ,
                 std::ofstream* logPULSEfile,int* n_qcmelt, 
-                int* n_meteoall, double *vfrac_air_frshsnow,double *compatfact);
+                int* n_meteoall, double *vfrac_air_frshsnow, double *compatfact,
+                double *rho_ice, double *rho_water, double *rho_freshsnow);
 
 void read_qmelfile(globalpar& gp,globalvar& gv,std::string* qcmelt_file,
                 std::ofstream* logPULSEfile);

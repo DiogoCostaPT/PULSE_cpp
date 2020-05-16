@@ -13,9 +13,9 @@ class globalpar
 public:
     
     double Courant=0.8,aD,
-           rho_s=917.0, // kg.m-3 at 0 degrees
-           rho_m=998.8, // kg.m-3 at 0 degrees
-           rho_frshsnow_init = 320,
+           rho_ice=0, // kg.m-3 at 0 degrees
+           rho_water=0, // kg.m-3 at 0 degrees
+           rho_freshsnow = 320,
            wetfront_z,num_stblty_thrshld_prsity = 1E-6,alphaIE,Tperd;
         
     int flag_sens,run_id,s,print_step,

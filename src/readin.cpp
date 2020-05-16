@@ -10,7 +10,8 @@ void read_simset(globalpar& gp,const std::string& modset_flname,
                 std::string* sim_purp,double *h_layer,double *l_layer,
                 std::string* qcmelt_file,std::string* meteo_file ,
                 std::ofstream* logPULSEfile,int* n_qcmelt, 
-                int* n_meteoall, double *vfrac_air_frshsnow, double *compatfact)
+                int* n_meteoall, double *vfrac_air_frshsnow, double *compatfact,
+                double *rho_ice, double *rho_water, double *rho_freshsnow)
 {
     
     std::string str, msg, str_hydro_solver;
@@ -35,6 +36,10 @@ void read_simset(globalpar& gp,const std::string& modset_flname,
         if(str.find("HYDRO_SOLVER") != std::string::npos){str_hydro_solver = str.substr(13);}; // snowmelt file
         if(str.find("COMPFACTOR") != std::string::npos){(*compatfact) = std::stof(str.substr(11));}; // compaction factor
         
+        if(str.find("DENSITY_ICE") != std::string::npos){(*rho_ice) = std::stof(str.substr(12));}; // density of ice 
+        if(str.find("DENSITY_WATER") != std::string::npos){(*rho_water) = std::stof(str.substr(14));}; // density of water
+        if(str.find("DENSITY_FRESHSNOW") != std::string::npos){(*rho_freshsnow) = std::stof(str.substr(18));}; // density of freshsnow
+
     }
     file.close();
     

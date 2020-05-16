@@ -32,8 +32,8 @@ void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
     //gv.upperboundary_cell = 0;
 
     // max swe of any new layer added on top of the snowpack due to precipitation
-    gv.v_swe_freshsnow_max = (gv.snowh * gv.snowl) * gp.rho_frshsnow_init/gp.rho_m;
-    gv.v_swe_comp_max = 0.85 * gv.snowh * gv.snowl;
+    gv.v_swe_freshsnow_max = (gv.snowh * gv.snowl) * gp.rho_freshsnow/gp.rho_water;
+    gv.v_swe_comp_max = (gv.snowh * gv.snowl) * gp.rho_ice/gp.rho_water;
     gv.v_swe_comp_min = 0.001 * gv.snowh * gv.snowl;
     
     if(flstatus == true) 
