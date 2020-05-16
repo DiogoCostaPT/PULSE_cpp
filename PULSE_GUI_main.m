@@ -1,6 +1,6 @@
 
 
-varargout = Generate_inputfiles_GUI();
+varargout = PULSE_GUI();
 winopen = 1;
 pause(2);
 
