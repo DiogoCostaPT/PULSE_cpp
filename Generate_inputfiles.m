@@ -6,14 +6,22 @@ pause(2);
 
 while(winopen == 1)
     
+    GENALLFILES_FLAG = varargout.GENERATEALLFILESButton.Value;
     genetate_masterfile = varargout.GENERATEMASTERFILEButton_2.Value;
     gen_0txtfile_flag = varargout.GENERATEICFILEButton_2.Value;   
     gen_meteo_file_flag = varargout.GENERATEMETEOFILEButton_3.Value;
     gen_qmelt_file_flag = varargout.GENERATEQMELTFILEButton.Value;
     
-    if ~genetate_masterfile && ~gen_0txtfile_flag && ~gen_meteo_file_flag && ~gen_qmelt_file_flag  
+    if ~GENALLFILES_FLAG && ~genetate_masterfile && ~gen_0txtfile_flag && ~gen_meteo_file_flag && ~gen_qmelt_file_flag  
         pause(2)
         continue; 
+    end
+    
+    if GENALLFILES_FLAG == 1
+        genetate_masterfile = 1;
+        gen_0txtfile_flag = 1;
+        gen_meteo_file_flag = 1;
+        gen_qmelt_file_flag = 1;
     end
     
     % Master file
@@ -54,8 +62,8 @@ while(winopen == 1)
     varargout.ChemicalspeciesworksheetnameinthefileaboveEditField_2.Value = varargout.ChemicalspeciesworksheetnameinthefileaboveEditField.Value; 
     varargout.METEO_FILEfullorrelativepathEditField_2.Value = varargout.METEO_FILEfullorrelativepathEditField.Value;
     varargout.QMELT_FILEfullorrelativepathEditField_2.Value = varargout.QMELT_FILEfullorrelativepathEditField.Value;
-    varargout.H_LAYmmEditField_2.Value = varargout.H_LAYmmEditField.Value
-    varargout.L_LAYmmEditField_2.Value = varargout.L_LAYmmEditField.Value
+    varargout.H_LAYmmEditField_2.Value = varargout.H_LAYmmEditField.Value;
+    varargout.L_LAYmmEditField_2.Value = varargout.L_LAYmmEditField.Value;
     varargout.VFRAC_AIR_FRESHSNOWEditField_2.Value = varargout.VFRAC_AIR_FRESHSNOWEditField.Value;
     
     if genetate_masterfile == 1
@@ -314,11 +322,11 @@ while(winopen == 1)
             pause(0.1)
             
             %% QMELT
-            if snowmelt_method == 0
+            if snowmelt_method == 1
                 qmelt_estim_ts = max(TEMP_ts.data * T_index_coef,0);
                 qmelt_estim_ts(isnan(qmelt_estim_ts)) = 0;
                 qmelt_file = [time_pulse_sec,qmelt_estim_ts];
-            else
+            elseif snowmelt_method == 2
                crhm_output = readtable(crhmoutput_dir);     
                timecrhm = str2double(crhm_output.time(2:end)) + 693960;
                snowmelt_data = str2double(crhm_output.snowmelt_int_1_); % m-> mm
@@ -372,7 +380,9 @@ while(winopen == 1)
         grid on
         ylabel('mm')
         %}
-
+        
+       varargout.GENERATEALLFILESButton.Value = 0;
+        
         try
             check = varargout.figure1.Position;
         catch
