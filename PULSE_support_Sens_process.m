@@ -58,7 +58,7 @@ for run_i = 1:num_runs
      
     % get comment and timenum from masterfile
     [comment,time_sim,H_LAY,~] = PULSE_support_Getinfo_masterfile(...
-            time_sim_elapsec,sim_i_folder,masterfile);
+            time_sim_elapsec,masterfile);
     H_LAY = H_LAY/10; % mm to cm
     ih = 0:H_LAY:(h_layers_max-1)*H_LAY;
     

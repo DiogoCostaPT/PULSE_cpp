@@ -1,19 +1,19 @@
 
 
-varargout = PULSE_GUI();
+gui_varargout = PULSE_GUI();
 winopen = 1;
 pause(2);
 
 while(winopen == 1)
     
     try
-        GENALLFILES_FLAG = varargout.GENERATEALLFILESButton.Value;
-        genetate_masterfile = varargout.GENERATEMASTERFILEButton_2.Value;
-        gen_0txtfile_flag = varargout.GENERATEICFILEButton_2.Value;   
-        gen_meteo_file_flag = varargout.GENERATEMETEOFILEButton_3.Value;
-        gen_qmelt_file_flag = varargout.GENERATEQMELTFILEButton.Value;
-        RUN_single = varargout.RUNButton.Value;
-        RUN_sens = varargout.RUNButton_2.Value;
+        GENALLFILES_FLAG = gui_varargout.GENERATEALLFILESButton.Value;
+        genetate_masterfile = gui_varargout.GENERATEMASTERFILEButton_2.Value;
+        gen_0txtfile_flag = gui_varargout.GENERATEICFILEButton_2.Value;   
+        gen_meteo_file_flag = gui_varargout.GENERATEMETEOFILEButton_3.Value;
+        gen_qmelt_file_flag = gui_varargout.GENERATEQMELTFILEButton.Value;
+        RUN_single = gui_varargout.RUNButton.Value;
+        RUN_sens = gui_varargout.RUNButton_2.Value;
     catch
         winopen = 0;
         continue;
@@ -40,49 +40,49 @@ while(winopen == 1)
     end
     
     % Master file
-    masterfile_fullpath = varargout.MASTERFILENAMEfullorrelativepathEditField.Value;
-    COMMENT = varargout.HYDRO_SOLVEREditField_2.Value;
-    START_TIME = varargout.START_TIMEEditField.Value;
-    END_TIME = varargout.END_TIMEEditField.Value;
-    PRINT_STEP = varargout.PRINT_STEPsecEditField.Value;
-    L_LAY = varargout.L_LAYmmEditField_2.Value; % mm
-    H_LAY = varargout.H_LAYmmEditField_2.Value; % 100 cm * 10 = 1000 mm
-    VFRAC_AIR_FRESHSNOW = varargout.VFRAC_AIR_FRESHSNOWEditField.Value;
-    DENSITY_ICE = varargout.DENSITY_ICEkgm3EditField.Value;
-    DENSITY_WATER = varargout.DENSITY_WATERkgm3EditField.Value;
-    DENSITY_FRESHSNOW = varargout.DENSITY_FRESHSNOWkgm3EditField.Value;
-    A_D = varargout.A_Dm2sEditField.Value;
-    ALPHA_IE = varargout.ALPHA_IEEditField.Value;
-    COMPFACTOR = varargout.COMPFACTOREditField.Value;
-    HYDRO_SOLVER = varargout.HYDRO_SOLVEREditField.Value;
-    METEO_FILE = varargout.METEO_FILEfullorrelativepathEditField.Value;
-    QMELT_FILE = varargout.QMELT_FILEfullorrelativepathEditField.Value;
+    masterfile_fullpath = gui_varargout.MASTERFILENAMEfullorrelativepathEditField.Value;
+    COMMENT = gui_varargout.HYDRO_SOLVEREditField_2.Value;
+    START_TIME = gui_varargout.START_TIMEEditField.Value;
+    END_TIME = gui_varargout.END_TIMEEditField.Value;
+    PRINT_STEP = gui_varargout.PRINT_STEPsecEditField.Value;
+    L_LAY = gui_varargout.L_LAYmmEditField_2.Value; % mm
+    H_LAY = gui_varargout.H_LAYmmEditField_2.Value; % 100 cm * 10 = 1000 mm
+    VFRAC_AIR_FRESHSNOW = gui_varargout.VFRAC_AIR_FRESHSNOWEditField.Value;
+    DENSITY_ICE = gui_varargout.DENSITY_ICEkgm3EditField.Value;
+    DENSITY_WATER = gui_varargout.DENSITY_WATERkgm3EditField.Value;
+    DENSITY_FRESHSNOW = gui_varargout.DENSITY_FRESHSNOWkgm3EditField.Value;
+    A_D = gui_varargout.A_Dm2sEditField.Value;
+    ALPHA_IE = gui_varargout.ALPHA_IEEditField.Value;
+    COMPFACTOR = gui_varargout.COMPFACTOREditField.Value;
+    HYDRO_SOLVER = gui_varargout.HYDRO_SOLVEREditField.Value;
+    METEO_FILE = gui_varargout.METEO_FILEfullorrelativepathEditField.Value;
+    QMELT_FILE = gui_varargout.QMELT_FILEfullorrelativepathEditField.Value;
     
     % IC file 
-    Results_folder_pulse = varargout.SAVEFILEINFOLDERfullorrelativepathEditField.Value;
-    meteo_file = varargout.MeteoObservationsfileEditField.Value;
-    chemistry_file = varargout.SnowChemistryfilefullorrelativepathEditField.Value;
-    chemical_species = varargout.ChemicalspeciesworksheetnameinthefileaboveEditField.Value; 
-    H_SNOWPACK = varargout.H_SNOWPACKmmEditField.Value; % 10 mm
-    L_SNOWPACK = varargout.L_SNOWPACKmmEditField.Value; % 10 mm
-    v_frac_air_init = varargout.VFRAC_AIR_FRESHSNOWEditField.Value; % volume percertage
+    Results_folder_pulse = gui_varargout.SAVEFILEINFOLDERfullorrelativepathEditField.Value;
+    meteo_file = gui_varargout.MeteoObservationsfileEditField.Value;
+    chemistry_file = gui_varargout.SnowChemistryfilefullorrelativepathEditField.Value;
+    chemical_species = gui_varargout.ChemicalspeciesworksheetnameinthefileaboveEditField.Value; 
+    H_SNOWPACK = gui_varargout.H_SNOWPACKmmEditField.Value; % 10 mm
+    L_SNOWPACK = gui_varargout.L_SNOWPACKmmEditField.Value; % 10 mm
+    v_frac_air_init = gui_varargout.VFRAC_AIR_FRESHSNOWEditField.Value; % volume percertage
 
     % qmelt and meteo files
-    snowmelt_method = varargout.snowmeltcalcmethod1Tindex2CRHMEditField_3.Value; % 0)T-index, 1) CRHM output
-    T_index_coef = varargout.T_index_coefifsnowmeltcalcmethod1EditField_3.Value; % only used if snowmelt_method = 0
-    crhmoutput_dir = varargout.CRHMoutputfilefullorrelativepathEditField.Value; % only used if snowmelt_method =  1;
+    snowmelt_method = gui_varargout.snowmeltcalcmethod1Tindex2CRHMEditField_3.Value; % 0)T-index, 1) CRHM output
+    T_index_coef = gui_varargout.T_index_coefifsnowmeltcalcmethod1EditField_3.Value; % only used if snowmelt_method = 0
+    crhmoutput_dir = gui_varargout.CRHMoutputfilefullorrelativepathEditField.Value; % only used if snowmelt_method =  1;
    
     % reset uneditable boxes
-    varargout.SnowChemistryfilefullorrelativepathEditField_2.Value = varargout.SnowChemistryfilefullorrelativepathEditField.Value;
-    varargout.ChemicalspeciesworksheetnameinthefileaboveEditField_2.Value = varargout.ChemicalspeciesworksheetnameinthefileaboveEditField.Value; 
-    varargout.METEO_FILEfullorrelativepathEditField_2.Value = varargout.METEO_FILEfullorrelativepathEditField.Value;
-    varargout.QMELT_FILEfullorrelativepathEditField_2.Value = varargout.QMELT_FILEfullorrelativepathEditField.Value;
-    varargout.H_LAYmmEditField_2.Value = varargout.H_LAYmmEditField.Value;
-    varargout.L_LAYmmEditField_2.Value = varargout.L_LAYmmEditField.Value;
-    varargout.VFRAC_AIR_FRESHSNOWEditField_2.Value = varargout.VFRAC_AIR_FRESHSNOWEditField.Value;
+    gui_varargout.SnowChemistryfilefullorrelativepathEditField_2.Value = gui_varargout.SnowChemistryfilefullorrelativepathEditField.Value;
+    gui_varargout.ChemicalspeciesworksheetnameinthefileaboveEditField_2.Value = gui_varargout.ChemicalspeciesworksheetnameinthefileaboveEditField.Value; 
+    gui_varargout.METEO_FILEfullorrelativepathEditField_2.Value = gui_varargout.METEO_FILEfullorrelativepathEditField.Value;
+    gui_varargout.QMELT_FILEfullorrelativepathEditField_2.Value = gui_varargout.QMELT_FILEfullorrelativepathEditField.Value;
+    gui_varargout.H_LAYmmEditField_2.Value = gui_varargout.H_LAYmmEditField.Value;
+    gui_varargout.L_LAYmmEditField_2.Value = gui_varargout.L_LAYmmEditField.Value;
+    gui_varargout.VFRAC_AIR_FRESHSNOWEditField_2.Value = gui_varargout.VFRAC_AIR_FRESHSNOWEditField.Value;
     
     % simuations
-    pulse_dir = varargout.Directoryofpulse_cppexecutableEditField.Value; % bin/
+    pulse_dir = gui_varargout.Directoryofpulse_cppexecutableEditField.Value; % bin/
     col_li = round(L_SNOWPACK/L_LAY/2);
 
     Run_pulse_flag = 0;
@@ -93,50 +93,110 @@ while(winopen == 1)
     Sens_plot_results_flag = 0;
 
     if RUN_single == 1
-        Run_pulse_flag = varargout.runsimulationCheckBox.Value;
-        Clean_results_folder_except_IC_flag = varargout.deleteResultsfolderexceptICfileCheckBox.Value;
-        Plot_results_flag = varargout.PlotresultssinglerunCheckBox.Value;
+        Run_pulse_flag = gui_varargout.runsimulationCheckBox.Value;
+        Clean_results_folder_except_IC_flag = gui_varargout.deleteResultsfolderexceptICfileCheckBox.Value;
+        Plot_results_flag = gui_varargout.PlotresultssinglerunCheckBox.Value;
     elseif RUN_sens == 1
-       Sens_run_flag = varargout.RuntestsCheckBox.Value;
-       Sens_analysis_flag = varargout.AnalyzeresultsCheckBox.Value; %0;
-       Sens_plot_results_flag = varargout.PlotSensresultsCheckBox.Value;
+       Sens_run_flag = gui_varargout.RuntestsCheckBox.Value;
+       Sens_analysis_flag = gui_varargout.AnalyzeresultsCheckBox.Value; %0;
+       Sens_plot_results_flag = gui_varargout.PlotSensresultsCheckBox.Value;
     end
 
     %Run_pulse_flag = 1;
-    IC_file = varargout.edit3.Value; % 0.txt
+    IC_file = gui_varargout.edit3.Value; % 0.txt
 
     %Sens_run_flag = 0;
-    num_samples = varargout.scenariosEditField.Value; %500;
-    A_D_max = varargout.A_D_maxEditField.Value; %0.0003;           
-    ALPHA_IE_max = varargout.ALPHA_IE_maxEditField.Value; %0.000003;
+    num_samples = gui_varargout.scenariosEditField.Value; %500;
+    A_D_max = gui_varargout.A_D_maxEditField.Value; %0.0003;           
+    ALPHA_IE_max = gui_varargout.ALPHA_IE_maxEditField.Value; %0.000003;
 
     %% Run PULSE (once)
-    if Run_pulse_flag; PULSE_support_run_pulse(Clean_results_folder_except_IC_flag,pulse_dir,...
-        Results_folder_pulse,IC_file,masterfile_fullpath); end
+    if Run_pulse_flag
+        RunningsimulationGauge.Value = 0;
+        gui_varargout.Lamp_5.Color = [1 1 0];
+        drawnow;
+        
+        PULSE_support_run_pulse(Clean_results_folder_except_IC_flag,pulse_dir,...
+        Results_folder_pulse,IC_file,masterfile_fullpath); 
+        
+        gui_varargout.RunningsimulationGauge.Value = 100;
+        gui_varargout.Lamp_5.Color = 'green';
+        drawnow;
+    end
 
     %% Plot Results
-    if Plot_results_flag; PULSE_support_plot_results(Results_folder_pulse,...
-                chemical_species,col_li,masterfile_fullpath,chemistry_file); end
+    if Plot_results_flag
+        gui_varargout.RunningsimulationGauge.Value = 0;
+        gui_varargout.CalcsnowpackdepthGauge.Value = 0;
+        gui_varargout.LoadingResultsGauge.Value = 0;
+        gui_varargout.PlottingresultsGauge.Value = 0;
+        gui_varargout.Lamp_6.Color = [1 1 0];
+        gui_varargout.Lamp_7.Color = [1 1 0];
+        gui_varargout.Lamp_8.Color = [1 1 0];
+        drawnow;
+        
+        PULSE_support_plot_results(Results_folder_pulse,...
+                chemical_species,col_li,masterfile_fullpath,chemistry_file); 
+    
+        gui_varargout.RunningsimulationGauge.Value = 100;
+        gui_varargout.CalcsnowpackdepthGauge.Value = 100;
+        gui_varargout.LoadingResultsGauge.Value = 100;
+        gui_varargout.PlottingresultsGauge.Value = 100;
+        gui_varargout.Lamp_6.Color = 'green';
+        gui_varargout.Lamp_7.Color = 'green';
+        gui_varargout.Lamp_8.Color = 'green';
+        drawnow;
+    end
 
     %% Sensitivity runs (multiple runs)
-    if Sens_run_flag; PULSE_support_Sens_analysys_run(masterfile_fullpath,pulse_dir,Results_folder_pulse,...
-            num_samples,A_D_max,ALPHA_IE_max); end
+    if Sens_run_flag
+        RunningscenariosGauge.Value = 0;
+        gui_varargout.Lamp_2.Color = [1 1 0]; 
+        drawnow;
+        
+        PULSE_support_Sens_analysys_run(masterfile_fullpath,pulse_dir,Results_folder_pulse,...
+            num_samples,A_D_max,ALPHA_IE_max);
+        
+        gui_varargout.RunningscenariosGauge.Value = 100;
+        gui_varargout.Lamp_2.Color = 'green';
+        drawnow;
+    end
 
     % Sensitivity analysis (processing the results in Sensitivity_analysis
-    if Sens_analysis_flag; PULSE_support_Sens_process(chemistry_file,chemical_species,col_li,...
-            masterfile_fullpath); end
+    if Sens_analysis_flag
+        gui_varargout.ProcessingresultsGauge.Value = 0;
+        gui_varargout.Lamp_3.Color = [1 1 0];
+        drawnow;
+        
+        PULSE_support_Sens_process(chemistry_file,chemical_species,col_li,...
+            masterfile_fullpath);
+        
+        gui_varargout.ProcessingresultsGauge.Value = 100;
+        gui_varargout.Lamp_3.Color = 'green';
+        drawnow;
+    end
 
     % Sensitivity results plotting
-    if Sens_plot_results_flag ;PULSE_support_Sens_plot() ; end
+    if Sens_plot_results_flag
+        gui_varargout.PlottingresultsGauge_2.Value = 0;
+        gui_varargout.Lamp_4.Color = [1 1 0];
+        drawnow;
+        
+        PULSE_support_Sens_plot(); 
+        
+        gui_varargout.PlottingresultsGauge_2.Value = 100;
+        gui_varargout.Lamp_4.Color = 'green';
+        drawnow;        
+    end
     
-    varargout.RUNButton.Value = 0;
-    varargout.RUNButton_2.Value = 0;
+    gui_varargout.RUNButton.Value = 0;
+    gui_varargout.RUNButton_2.Value = 0;
     
     
     %% GENERATE MASTER FILE
     if genetate_masterfile == 1
         
-        varargout.newfilehasbeengeneratedLamp.Color = 'white';
+        gui_varargout.newfilehasbeengeneratedLamp.Color = 'white';
         pause(0.1)
         
         masterfile_txt = {'COMMNET', COMMENT;...
@@ -158,15 +218,15 @@ while(winopen == 1)
                   
        writecell(masterfile_txt,masterfile_fullpath,'Delimiter',' ')
         
-        varargout.GENERATEMASTERFILEButton_2.Value = 0;
-        varargout.newfilehasbeengeneratedLamp.Color = 'green';
+        gui_varargout.GENERATEMASTERFILEButton_2.Value = 0;
+        gui_varargout.newfilehasbeengeneratedLamp.Color = 'green';
         
     end
     
     %% Generate 0.txt file 
     if gen_0txtfile_flag == 1
         
-        varargout.newfilehasbeengeneratedLamp_2.Color = 'white';
+        gui_varargout.newfilehasbeengeneratedLamp_2.Color = 'white';
         pause(0.1)
 
         dataraw_chem = xlsread(chemistry_file,chemical_species);
@@ -234,8 +294,8 @@ while(winopen == 1)
 
         writecell(file_0txt_cell,folder0txt_path,'Delimiter',',')
         
-        varargout.GENERATEICFILEButton_2.Value = 0;
-        varargout.newfilehasbeengeneratedLamp_2.Color = 'green';
+        gui_varargout.GENERATEICFILEButton_2.Value = 0;
+        gui_varargout.newfilehasbeengeneratedLamp_2.Color = 'green';
         
 
     end
@@ -345,7 +405,7 @@ while(winopen == 1)
 
         if gen_meteo_file_flag == 1
             
-            varargout.newfilehasbeengeneratedLamp_3.Color = 'white';
+            gui_varargout.newfilehasbeengeneratedLamp_3.Color = 'white';
             pause(0.1)
             
             % data to copy past to model's meteo file (time and prec vol)
@@ -381,14 +441,14 @@ while(winopen == 1)
 
             writecell(Meteo_file_cell,METEO_FILE,'Delimiter',',')
             
-            varargout.GENERATEMETEOFILEButton_3.Value = 0;
-           varargout.newfilehasbeengeneratedLamp_3.Color = 'green';
+            gui_varargout.GENERATEMETEOFILEButton_3.Value = 0;
+           gui_varargout.newfilehasbeengeneratedLamp_3.Color = 'green';
             
         end
 
         if gen_qmelt_file_flag == 1
             
-            varargout.newfilehasbeengeneratedLamp_4.Color = 'white';
+            gui_varargout.newfilehasbeengeneratedLamp_4.Color = 'white';
             pause(0.1)
             
             %% QMELT
@@ -426,8 +486,8 @@ while(winopen == 1)
 
             writecell(qmelt_file_cell,QMELT_FILE,'Delimiter',',')
             
-           varargout.GENERATEQMELTFILEButton.Value = 0;
-           varargout.newfilehasbeengeneratedLamp_4.Color = 'green';
+           gui_varargout.GENERATEQMELTFILEButton.Value = 0;
+           gui_varargout.newfilehasbeengeneratedLamp_4.Color = 'green';
             
         end
 
@@ -451,10 +511,10 @@ while(winopen == 1)
         ylabel('mm')
         %}
         
-       varargout.GENERATEALLFILESButton.Value = 0;
+       gui_varargout.GENERATEALLFILESButton.Value = 0;
         
         try
-            check = varargout.figure1.Position;
+            check = gui_varargout.figure1.Position;
         catch
             clear all;
             winopen = 0;
