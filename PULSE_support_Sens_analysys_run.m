@@ -1,7 +1,7 @@
 
 
-function PULSE_support_Sens_analysys_run(masterfile,pulse_dir,num_samples,...
-        A_D_max,ALPHA_IE_max)
+function PULSE_support_Sens_analysys_run(masterfile,pulse_dir,Results_folder_pulse,...
+    num_samples,A_D_max,ALPHA_IE_max)
     
 sensfoldername = 'Sensitivity_analysis';
 sens_dir = [pwd,'/',sensfoldername];
@@ -51,7 +51,7 @@ parfor i=1:num_samples
     mkdir(sim_subfold);
         
     % copy pulse_cpp and input files
-    mastfile_fullpath = [pulse_dir,'/',masterfile];
+    mastfile_fullpath = masterfile;
     copyfile(mastfile_fullpath,sim_subfold)
     pulse_fullpath = [pulse_dir,'/pulse_cpp'];
     copyfile(pulse_fullpath,sim_subfold)
@@ -64,11 +64,12 @@ parfor i=1:num_samples
     update_masterfile(sim_subfold,masterfile,A_D_all_i,ALPHA_IE_all_i);
     
     % create Results folder
-    res_subfold = [sim_subfold,'/Results'];
+    Results_folder_sens = extractAfter(Results_folder_pulse,'/');
+    res_subfold = [sim_subfold,'/',Results_folder_sens];
     mkdir(res_subfold);
 
     % copy 0.txt file (IC conditions)
-    file_0txt_fullpath = [pulse_dir,'/Results/0.txt'];
+    file_0txt_fullpath = [Results_folder_pulse,'/0.txt'];
     copyfile(file_0txt_fullpath,res_subfold)
     
     % save sensitivity analysis info
@@ -109,7 +110,8 @@ end
 % update master file (remove any subfolder in the path)
 function update_masterfile(sim_subfold,masterfile,A_D_all_i,ALPHA_IE_all_i)
 
-new_masterfile_dir = [sim_subfold,'/',masterfile];
+masterfile_removedir = extractAfter(masterfile,'/');
+new_masterfile_dir = [sim_subfold,'/',masterfile_removedir];
 fid = fopen(new_masterfile_dir);
 new_masterfile = {};
 

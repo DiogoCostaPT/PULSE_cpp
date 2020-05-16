@@ -1,6 +1,6 @@
 
 % Plot results
-function PULSE_support_plot_results(pulse_dir,results_dir,chemical_species,...
+function PULSE_support_plot_results(results_dir,chemical_species,...
                     col_li,masterfile,Obs_file)
 
     % load pulse results
@@ -8,7 +8,7 @@ function PULSE_support_plot_results(pulse_dir,results_dir,chemical_species,...
          v_liqwater,v_swe,v_air] = PULSE_support_load_pulse_results(results_dir,col_li);
                                         
     % get comment and timenum from masterfile
-    [comment,time_sim,H_LAY,L_LAY] = PULSE_support_Getinfo_masterfile(time_sim_elapsec,pulse_dir,masterfile);
+    [comment,time_sim,H_LAY,L_LAY] = PULSE_support_Getinfo_masterfile(time_sim_elapsec,masterfile);
     %H_LAY = H_LAY/10; % mm to cm
     ih = 0:H_LAY:(h_layers_max-1)*H_LAY;
     

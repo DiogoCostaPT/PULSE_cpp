@@ -8,7 +8,7 @@ if Clean_results_folder_except_IC_flag
    deleted_results([results_dir,'/'],IC_file);
 end
 
-command = ['./',pulse_dir,'/pulse_cpp ',pulse_dir,'/',masterfile,' ',results_dir];
+command = ['./',pulse_dir,'/pulse_cpp ',masterfile,' ',results_dir];
 [status,cmdout] = system(command,'-echo');
 
 end

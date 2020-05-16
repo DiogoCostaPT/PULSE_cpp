@@ -1,8 +1,8 @@
 
 % Retrieve data from masterfile
- function [comment,time_sim,H_LAY,L_LAY] = PULSE_support_Getinfo_masterfile(time_sim_elapsec,pulse_dir,masterfile)
+ function [comment,time_sim,H_LAY,L_LAY] = PULSE_support_Getinfo_masterfile(time_sim_elapsec,masterfile)
     
-    fid = fopen([pulse_dir,'/',masterfile]);
+    fid = fopen(masterfile);
     
     while(~feof(fid))
         newline = fgetl(fid);

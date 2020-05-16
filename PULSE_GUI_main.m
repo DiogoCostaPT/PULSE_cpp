@@ -6,13 +6,28 @@ pause(2);
 
 while(winopen == 1)
     
-    GENALLFILES_FLAG = varargout.GENERATEALLFILESButton.Value;
-    genetate_masterfile = varargout.GENERATEMASTERFILEButton_2.Value;
-    gen_0txtfile_flag = varargout.GENERATEICFILEButton_2.Value;   
-    gen_meteo_file_flag = varargout.GENERATEMETEOFILEButton_3.Value;
-    gen_qmelt_file_flag = varargout.GENERATEQMELTFILEButton.Value;
+    try
+        GENALLFILES_FLAG = varargout.GENERATEALLFILESButton.Value;
+        genetate_masterfile = varargout.GENERATEMASTERFILEButton_2.Value;
+        gen_0txtfile_flag = varargout.GENERATEICFILEButton_2.Value;   
+        gen_meteo_file_flag = varargout.GENERATEMETEOFILEButton_3.Value;
+        gen_qmelt_file_flag = varargout.GENERATEQMELTFILEButton.Value;
+        RUN_single = varargout.RUNButton.Value;
+        RUN_sens = varargout.RUNButton_2.Value;
+    catch
+        winopen = 0;
+        continue;
+    end
     
-    if ~GENALLFILES_FLAG && ~genetate_masterfile && ~gen_0txtfile_flag && ~gen_meteo_file_flag && ~gen_qmelt_file_flag  
+    execute_flag = GENALLFILES_FLAG...
+                   + genetate_masterfile ...
+                   + genetate_masterfile...
+                   + gen_meteo_file_flag...
+                   + gen_qmelt_file_flag...
+                   + RUN_single...
+                   + RUN_sens;
+    
+    if execute_flag == 0
         pause(2)
         continue; 
     end
@@ -44,10 +59,10 @@ while(winopen == 1)
     QMELT_FILE = varargout.QMELT_FILEfullorrelativepathEditField.Value;
     
     % IC file 
-    folder_2save_ICfile = varargout.SAVEFILEINFOLDERfullorrelativepathEditField.Value;
+    Results_folder_pulse = varargout.SAVEFILEINFOLDERfullorrelativepathEditField.Value;
     meteo_file = varargout.MeteoObservationsfileEditField.Value;
     chemistry_file = varargout.SnowChemistryfilefullorrelativepathEditField.Value;
-    species = varargout.ChemicalspeciesworksheetnameinthefileaboveEditField.Value; 
+    chemical_species = varargout.ChemicalspeciesworksheetnameinthefileaboveEditField.Value; 
     H_SNOWPACK = varargout.H_SNOWPACKmmEditField.Value; % 10 mm
     L_SNOWPACK = varargout.L_SNOWPACKmmEditField.Value; % 10 mm
     v_frac_air_init = varargout.VFRAC_AIR_FRESHSNOWEditField.Value; % volume percertage
@@ -66,6 +81,59 @@ while(winopen == 1)
     varargout.L_LAYmmEditField_2.Value = varargout.L_LAYmmEditField.Value;
     varargout.VFRAC_AIR_FRESHSNOWEditField_2.Value = varargout.VFRAC_AIR_FRESHSNOWEditField.Value;
     
+    % simuations
+    pulse_dir = varargout.Directoryofpulse_cppexecutableEditField.Value; % bin/
+    col_li = round(L_SNOWPACK/L_LAY/2);
+
+    Run_pulse_flag = 0;
+    Sens_run_flag = 0;
+    Clean_results_folder_except_IC_flag =0;
+    Plot_results_flag = 0;
+    Sens_analysis_flag = 0;
+    Sens_plot_results_flag = 0;
+
+    if RUN_single == 1
+        Run_pulse_flag = varargout.runsimulationCheckBox.Value;
+        Clean_results_folder_except_IC_flag = varargout.deleteResultsfolderexceptICfileCheckBox.Value;
+        Plot_results_flag = varargout.PlotresultssinglerunCheckBox.Value;
+    elseif RUN_sens == 1
+       Sens_run_flag = varargout.RuntestsCheckBox.Value;
+       Sens_analysis_flag = varargout.AnalyzeresultsCheckBox.Value; %0;
+       Sens_plot_results_flag = varargout.PlotSensresultsCheckBox.Value;
+    end
+
+    %Run_pulse_flag = 1;
+    IC_file = varargout.edit3.Value; % 0.txt
+
+    %Sens_run_flag = 0;
+    num_samples = varargout.scenariosEditField.Value; %500;
+    A_D_max = varargout.A_D_maxEditField.Value; %0.0003;           
+    ALPHA_IE_max = varargout.ALPHA_IE_maxEditField.Value; %0.000003;
+
+    %% Run PULSE (once)
+    if Run_pulse_flag; PULSE_support_run_pulse(Clean_results_folder_except_IC_flag,pulse_dir,...
+        Results_folder_pulse,IC_file,masterfile_fullpath); end
+
+    %% Plot Results
+    if Plot_results_flag; PULSE_support_plot_results(Results_folder_pulse,...
+                chemical_species,col_li,masterfile_fullpath,chemistry_file); end
+
+    %% Sensitivity runs (multiple runs)
+    if Sens_run_flag; PULSE_support_Sens_analysys_run(masterfile_fullpath,pulse_dir,Results_folder_pulse,...
+            num_samples,A_D_max,ALPHA_IE_max); end
+
+    % Sensitivity analysis (processing the results in Sensitivity_analysis
+    if Sens_analysis_flag; PULSE_support_Sens_process(chemistry_file,chemical_species,col_li,...
+            masterfile_fullpath); end
+
+    % Sensitivity results plotting
+    if Sens_plot_results_flag ;PULSE_support_Sens_plot() ; end
+    
+    varargout.RUNButton.Value = 0;
+    varargout.RUNButton_2.Value = 0;
+    
+    
+    %% GENERATE MASTER FILE
     if genetate_masterfile == 1
         
         varargout.newfilehasbeengeneratedLamp.Color = 'white';
@@ -101,7 +169,7 @@ while(winopen == 1)
         varargout.newfilehasbeengeneratedLamp_2.Color = 'white';
         pause(0.1)
 
-        dataraw_chem = xlsread(chemistry_file,species);
+        dataraw_chem = xlsread(chemistry_file,chemical_species);
 
         time_obs_chem = dataraw_chem(:,1) + 693960;
 
@@ -161,7 +229,7 @@ while(winopen == 1)
 
         file_0txt_cell = [header;file_0txt_cell];
         
-        folder0txt_path = [folder_2save_ICfile,'/0.txt'];
+        folder0txt_path = [Results_folder_pulse,'/0.txt'];
         folder0txt_path = strrep(folder0txt_path,'//','/');
 
         writecell(file_0txt_cell,folder0txt_path,'Delimiter',',')
@@ -171,6 +239,8 @@ while(winopen == 1)
         
 
     end
+    
+    
     %% Generate Qmelt data
     if gen_meteo_file_flag == 1 || gen_qmelt_file_flag == 1
 
@@ -179,7 +249,7 @@ while(winopen == 1)
         time_meteo = dataraw_meteo.data(:,1) + 695422 ;
 
         % chem data
-        dataraw_chem = xlsread(chemistry_file,species);
+        dataraw_chem = xlsread(chemistry_file,chemical_species);
         depths_obs = [10,20,30,40,50,60,70,80,90,100];
         time_obs_chem = dataraw_chem(:,1) + 693960;
         timestart_chem = time_obs_chem(1);

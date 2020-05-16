@@ -6,12 +6,14 @@ while(varargout.RUNButton.Value ~=1)
 end
 
 %% Set user data
-masterfile = varargout.MasterfilenameEditField.Value; % modset
-pulse_dir = varargout.WorkingdirectoryEditField_2.Value; % bin/
-results_dir = varargout.ResultsdirectoryEditField.Value; %'bin/Results';
-Obs_file = varargout.ObservationfilefullpathEditField.Value; %'BRG_data.xlsx';
-chemical_species = varargout.ChemicalspeciesEditField.Value; %'NO3';
-col_li = 5; % vertical cell to print results
+%masterfile_fullpath = varargout.MasterfilenameEditField.Value; % modset
+%pulse_dir = varargout.DirectoryofPULSE_cppEditField.Value; % bin/
+%folder_2save_ICfile = varargout.ResultsdirectoryEditField.Value; %'bin/Results';
+%chemistry_file = varargout.ObservationfilefullpathEditField.Value; %'BRG_data.xlsx';
+%chemical_species = varargout.ChemicalspeciesEditField.Value; %'NO3';
+%col_li = 5; % vertical cell to print results
+
+%col_li = round(L_SNOWPACK/L_LAY/2);
 
 % Run pulse once or Sensitivity analysis
 optionname = varargout.Switch.Value;
@@ -46,19 +48,19 @@ close(varargout.figure1)
 
 %% Run PULSE (once)
 if Run_pulse_flag; PULSE_support_run_pulse(Clean_results_folder_except_IC_flag,pulse_dir,...
-        results_dir,IC_file,masterfile); end
+        folder_2save_ICfile,IC_file,masterfile_fullpath); end
 
 %% Plot Results
-if Plot_results_flag; PULSE_support_plot_results(pulse_dir,results_dir,...
-            chemical_species,col_li,masterfile,Obs_file); end
+if Plot_results_flag; PULSE_support_plot_results(pulse_dir,folder_2save_ICfile,...
+            chemical_species,col_li,masterfile_fullpath,chemistry_file); end
     
 %% Sensitivity runs (multiple runs)
-if Sens_run_flag; PULSE_support_Sens_analysys_run(masterfile,pulse_dir,num_samples,...
+if Sens_run_flag; PULSE_support_Sens_analysys_run(masterfile_fullpath,pulse_dir,num_samples,...
         A_D_max,ALPHA_IE_max); end
 
 % Sensitivity analysis (processing the results in Sensitivity_analysis
-if Sens_analysis_flag; PULSE_support_Sens_process(Obs_file,chemical_species,col_li,...
-        masterfile); end
+if Sens_analysis_flag; PULSE_support_Sens_process(chemistry_file,chemical_species,col_li,...
+        masterfile_fullpath); end
 
 % Sensitivity results plotting
 if Sens_plot_results_flag ;PULSE_support_Sens_plot() ; end
