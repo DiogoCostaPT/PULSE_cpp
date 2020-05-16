@@ -16,13 +16,13 @@ public:
            rho_ice=0, // kg.m-3 at 0 degrees
            rho_water=0, // kg.m-3 at 0 degrees
            rho_freshsnow = 320,
-           wetfront_z,num_stblty_thrshld_prsity = 1E-6,alphaIE,Tperd;
+           wetfront_z,num_stblty_thrshld_prsity = 1E-6,alphaIE,Tsim,Tmeteofile,Tqmeltfile;
         
     int flag_sens,run_id,s,print_step,
          hydro_solver; // 0) Crank Nicholson, 1) Forward-time, Central-diff space;
     //std::ofstream logPULSEfile;
 
-    std::string start_time[16];
+    std::string start_time[1],end_time[1];
     
 };
 

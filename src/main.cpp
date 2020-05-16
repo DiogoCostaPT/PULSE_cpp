@@ -41,7 +41,7 @@
 int main(int argc, char* argv[]) 
 {   
     
-    double H_local,L_local,h_layer,l_layer,vfrac_air_frshsnow,compatfact,rho_ice,rho_water,rho_freshsnow;
+    double H_local,L_local,h_layer,l_layer,vfrac_air_frshsnow,compatfact;
     int nl,nh;
     int n_qcmelt,n_meteoall;
     std::string sim_purp,qcmelt_file,meteo_file,msg;
@@ -49,6 +49,7 @@ int main(int argc, char* argv[])
     
     std::string modset_flname (argv[1]);
     std::string results_flname (argv[2]);
+    std::string signmg;
 
     // Assign global parameters
     globalpar gp; 
@@ -61,16 +62,7 @@ int main(int argc, char* argv[])
         // read simulation setup
         read_simset(gp,modset_flname,&sim_purp,
             &h_layer,&l_layer,&qcmelt_file,&meteo_file,&logPULSEfile,
-            &n_qcmelt,&n_meteoall,&vfrac_air_frshsnow,&compatfact,
-            &rho_ice,&rho_water,&rho_freshsnow);  
-
-        // Check if input data is consistent
-        if (n_qcmelt!=n_meteoall){
-            msg = "Input timeseries need to have the same size: " + (qcmelt_file)
-                + " and " + (meteo_file);   
-            print_screen_log(&logPULSEfile,&msg); 
-            abort();
-        }
+            &n_qcmelt,&n_meteoall,&vfrac_air_frshsnow,&compatfact);  
 
         // create mesh
         //checkmesh(&H_local,&L_local,&h_layer,&l_layer,&nh,&nl,&logPULSEfile);
@@ -84,15 +76,29 @@ int main(int argc, char* argv[])
         gv.snowl = l_layer;
         gv.vfrac_air_frshsnow = vfrac_air_frshsnow;
         gv.compatfact = compatfact;
-        gp.rho_ice = rho_ice;
-        gp.rho_water = rho_water;
-        gp.rho_freshsnow = rho_freshsnow;
+
 
         // read snowmelt input
         read_qmelfile(gp,gv,&qcmelt_file,&logPULSEfile);
 
         // read meteo file
         read_meteofile(gp,gv,&meteo_file,&logPULSEfile);
+
+        // Check if input data is consistent
+        if (n_qcmelt!=n_meteoall){
+            if (n_qcmelt>n_meteoall){
+                signmg = ">";
+                gp.Tsim = gp.Tmeteofile;
+            }else{
+                signmg = "<";
+                gp.Tsim = gp.Tqmeltfile;
+            }
+            msg = "Input timeseries need to have the same size: '" + (qcmelt_file) + "' "
+                + signmg + " '" + (meteo_file) + "' " + "-> END_TIME reset to min value";   
+            print_screen_log(&logPULSEfile,&msg); 
+        }else{
+            gp.Tsim = gp.Tqmeltfile;
+        }
 
         // initial conditions
         initiate(gp,gv,&logPULSEfile,&results_flname);

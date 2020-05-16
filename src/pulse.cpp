@@ -27,7 +27,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
     tcum = gv.timstart;
     print_next = tcum + gp.print_step;
         
-    while (tcum < gp.Tperd)
+    while (tcum < gp.Tsim)
     {
 
         t += 1;
