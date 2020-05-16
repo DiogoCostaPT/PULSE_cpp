@@ -8,6 +8,9 @@ if Clean_results_folder_except_IC_flag
    deleted_results([results_dir,'/'],IC_file);
 end
 
+%command = ['gnome-terminal -e "./',pulse_dir,'/pulse_cpp ',masterfile,' ',results_dir,'" &'];
+%[status,cmdout] = system(command);
+
 command = ['./',pulse_dir,'/pulse_cpp ',masterfile,' ',results_dir];
 [status,cmdout] = system(command,'-echo');
 
