@@ -18,7 +18,7 @@
         end
         if(contains(newline,'START_TIME'))
             start_time_text = erase(newline,'START_TIME ');
-            start_time_num = datenum(start_time_text,'dd-mm-yyyy HH:MM:SS');
+            start_time_num = datenum(start_time_text(2:end-1),'dd-mm-yyyy HH:MM:SS');
             time_sim = datenum(start_time_num + seconds(time_sim_elapsec));
         end  
     end
