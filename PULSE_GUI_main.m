@@ -69,9 +69,10 @@ while(winopen == 1)
 
     % qmelt and meteo files
     snowmelt_method = gui_varargout.snowmeltcalcmethod1Tindex2CRHMEditField_3.Value; % 0)T-index, 1) CRHM output
-    T_index_coef = gui_varargout.T_index_coefifsnowmeltcalcmethod1EditField_3.Value; % only used if snowmelt_method = 0
-    crhmoutput_dir = gui_varargout.CRHMoutputfilefullorrelativepathEditField.Value; % only used if snowmelt_method =  1;
-   
+    T_index_coef = gui_varargout.T_index_coefonlyusedifsnowmeltcalcmethod1EditField.Value; % only used if snowmelt_method = 0
+    crhmoutput_dir = gui_varargout.CRHMoutputfilefullorrelativepathifsnowmeltcalcmethod2EditField.Value; % only used if snowmelt_method =  1;
+    variableNameCRHM = gui_varargout.snowmeltevent_field.Value; % CRHM snowmelt variable name
+    
     % reset uneditable boxes
     gui_varargout.SnowChemistryfilefullorrelativepathEditField_2.Value = gui_varargout.SnowChemistryfilefullorrelativepathEditField.Value;
     gui_varargout.ChemicalspeciesworksheetnameinthefileaboveEditField_2.Value = gui_varargout.ChemicalspeciesworksheetnameinthefileaboveEditField.Value; 
@@ -459,9 +460,11 @@ while(winopen == 1)
             elseif snowmelt_method == 2
                crhm_output = readtable(crhmoutput_dir);     
                timecrhm = str2double(crhm_output.time(2:end)) + 693960;
-               snowmelt_data = str2double(crhm_output.snowmelt_int_1_); % m-> mm
+               variableNameCRHM = strrep(variableNameCRHM,'(','_');
+               variableNameCRHM = strrep(variableNameCRHM,')','_');
+               snowmelt_data = str2double(crhm_output.(genvarname(variableNameCRHM))); % m-> mm
 
-               date_start = datenum('25-03-2015','dd-mm-yyyy');
+               date_start = datenum(START_TIME,'dd-mm-yyyy HH:MM:SS');
                date_end = datenum(date_start + seconds(5616000));
 
                date_start_loc = find(timecrhm == date_start);
