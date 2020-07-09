@@ -6,9 +6,15 @@ windowtitle = 'Select the folder with the Sensitivity batch runs of interest';
 sensbatch_dir = uigetdir(sens_folder,windowtitle);
 
 
-sens_res_fullpath = [sensbatch_dir,'/Sens_results.mat'];
-load(sens_res_fullpath)
+sens_res_fullpath = [sensbatch_dir,'/Sens_report.txt'];
 
+dataall = readtable(sens_res_fullpath);
+
+A_D_all = dataall.A_D_;
+ALPHA_IE_all = dataall.ALPHA_IE;
+Nash = dataall.Nash;
+RMSE = dataall.RMSE;
+Bias = dataall.Bias;
 
 figure
 subplot(1,3,1)

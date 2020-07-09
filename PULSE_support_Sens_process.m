@@ -116,7 +116,7 @@ end
  hbar.close();
 
 % import Obs_data data
-ResSens_all = cell(num_runs,5);
+ResSens_all = cell(num_runs+1,5);
 ResSens_all(1,1:end) = {'A_D,','ALPHA_IE','Nash','Bias','RMSE'};
 
 % Save now in one file
@@ -131,12 +131,12 @@ parfor run_i = 1:num_runs
     
     reportexists = exist(resreport_fullpath,'file');
     
-     if reportexists ~= 0
+     if reportexists ~= 2
         disp(['SensProcess: cannot find sens report for (',sim_i,') -> skipped'])
         continue;
      else
         dataall = importdata(resreport_fullpath);
-        ResSens_all(run_i,:) = dataall.data;
+        ResSens_all(run_i+1,:) = num2cell(dataall.data);
      end
  
 end
