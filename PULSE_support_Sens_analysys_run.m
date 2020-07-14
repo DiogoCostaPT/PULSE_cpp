@@ -1,5 +1,4 @@
 
-
 function PULSE_support_Sens_analysys_run(masterfile,pulse_dir,Results_folder_pulse,...
     num_samples,A_D_max,ALPHA_IE_max)
     

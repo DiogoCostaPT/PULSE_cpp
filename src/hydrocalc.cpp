@@ -112,7 +112,7 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
         gv.wetfront_cell = std::max(gv.wetfront_cell,0);
 
         if (remove_snow > 0.0f){
-            if (existsnow_vol >= remove_snow ) // don't remove_snow layer
+            if (existsnow_vol >= remove_snow) // don't remove_snow layer
             {
                 
 
@@ -194,61 +194,63 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
     }
 
     // Compaction (Hooke's law)
-    for (ih=0;ih<gv.nh-2;ih++){
-        for (il=0;il<gv.nl-1;il++){
-            
-            dcomp_swe = (ih+1) * gv.snowh * gv.compatfact * (gv.v_swe_comp_max - (*gv.v_swe)(il,ih+1));
-            dcomp_swe = fmax(0.0f,dcomp_swe);
-            dcomp_swe = fmin(dcomp_swe,0.9*(*gv.v_swe)(il,ih));
-            
-            (*gv.c_s)(il,ih+1) = ((*gv.v_swe)(il,ih+1) * (*gv.c_s)(il,ih+1) 
-                                + dcomp_swe *(*gv.c_s)(il,ih))
-                                / ((*gv.v_swe)(il,ih+1) + dcomp_swe);
-            (*gv.c_s)(il,ih) = ((*gv.v_swe)(il,ih) * (*gv.c_s)(il,ih) 
-                                - dcomp_swe * (*gv.c_s)(il,ih))
-                                / ((*gv.v_swe)(il,ih) - dcomp_swe);
-            
-            (*gv.v_swe)(il,ih) = (*gv.v_swe)(il,ih) - dcomp_swe;
-            (*gv.v_swe)(il,ih+1) = (*gv.v_swe)(il,ih+1) + dcomp_swe;
-        }
-        if ( (*gv.v_swe)(round(gv.nl/2),ih) <= gv.v_swe_comp_min){
-
-                // transfer mass from upper layer to lower layer because it is going to be removed
-            if ((*gv.v_liqwater)(round(gv.nl/2),ih)  > 0.0f){
-                (*gv.c_m).col(ih+1) = 
-                ((*gv.c_m).col(ih) % (*gv.v_liqwater).col(ih)
-                + (*gv.c_m).col(ih+1) % (*gv.v_liqwater).col(ih+1))
-                / ((*gv.v_liqwater).col(ih) + (*gv.v_liqwater).col(ih+1));
+    if ((*gv.c_m).n_cols < 1){
+        for (ih=0;ih<gv.nh-2;ih++){
+            for (il=0;il<gv.nl-1;il++){
+                
+                dcomp_swe = (ih+1) * gv.snowh * gv.compatfact * (gv.v_swe_comp_max - (*gv.v_swe)(il,ih+1));
+                dcomp_swe = fmax(0.0f,dcomp_swe);
+                dcomp_swe = fmin(dcomp_swe,0.9*(*gv.v_swe)(il,ih));
+                
+                (*gv.c_s)(il,ih+1) = ((*gv.v_swe)(il,ih+1) * (*gv.c_s)(il,ih+1) 
+                                    + dcomp_swe *(*gv.c_s)(il,ih))
+                                    / ((*gv.v_swe)(il,ih+1) + dcomp_swe);
+                (*gv.c_s)(il,ih) = ((*gv.v_swe)(il,ih) * (*gv.c_s)(il,ih) 
+                                    - dcomp_swe * (*gv.c_s)(il,ih))
+                                    / ((*gv.v_swe)(il,ih) - dcomp_swe);
+                
+                (*gv.v_swe)(il,ih) = (*gv.v_swe)(il,ih) - dcomp_swe;
+                (*gv.v_swe)(il,ih+1) = (*gv.v_swe)(il,ih+1) + dcomp_swe;
             }
-            
-            (*gv.c_s).col(ih+1) = 
-                ((*gv.c_s).col(ih) % (*gv.v_swe).col(ih)
-                + (*gv.c_s).col(ih+1) % (*gv.v_swe).col(ih+1))
-                / ((*gv.v_swe).col(ih) + (*gv.v_swe).col(ih+1));
+            if ( (*gv.v_swe)(round(gv.nl/2),ih) <= gv.v_swe_comp_min){
 
-            (*gv.v_liqwater).col(ih+1) = (*gv.v_liqwater).col(ih+1) + (*gv.v_liqwater).col(ih);
-            (*gv.v_swe).col(ih+1) = (*gv.v_swe).col(ih+1) + (*gv.v_swe).col(ih);
+                    // transfer mass from upper layer to lower layer because it is going to be removed
+                if ((*gv.v_liqwater)(round(gv.nl/2),ih)  > 0.0f){
+                    (*gv.c_m).col(ih+1) = 
+                    ((*gv.c_m).col(ih) % (*gv.v_liqwater).col(ih)
+                    + (*gv.c_m).col(ih+1) % (*gv.v_liqwater).col(ih+1))
+                    / ((*gv.v_liqwater).col(ih) + (*gv.v_liqwater).col(ih+1));
+                }
+                
+                (*gv.c_s).col(ih+1) = 
+                    ((*gv.c_s).col(ih) % (*gv.v_swe).col(ih)
+                    + (*gv.c_s).col(ih+1) % (*gv.v_swe).col(ih+1))
+                    / ((*gv.v_swe).col(ih) + (*gv.v_swe).col(ih+1));
 
-            // adust some variables to the removal of a layer
-            gv.nh = std::fmax(gv.nh - 1,0);
-            gv.wetfront_cell_prev = std::max(gv.wetfront_cell_prev - 1,0);
-            gv.wetfront_cell = std::max(gv.wetfront_cell - 1,0);
-            gv.snowH = std::fmax(gv.snowH - gv.snowh,0); // snowpack depth
+                (*gv.v_liqwater).col(ih+1) = (*gv.v_liqwater).col(ih+1) + (*gv.v_liqwater).col(ih);
+                (*gv.v_swe).col(ih+1) = (*gv.v_swe).col(ih+1) + (*gv.v_swe).col(ih);
 
-            // remove_snow layer
-            (*gv.c_m).shed_col(ih);
-            (*gv.c_s).shed_col(ih);
-            //(*gv.exchange_si).shed_cols(0,0);
-            (*gv.v_liqwater).shed_col(ih);
-            (*gv.v_swe).shed_col(ih);
-            (*gv.v_air).shed_col(ih);
-            (*gv.exchange_is).shed_col(ih);
-            (*gv.vfrac2d_m).shed_col(ih);
-            (*gv.vfrac2d_s).shed_col(ih);
+                // adust some variables to the removal of a layer
+                gv.nh = std::fmax(gv.nh - 1,0);
+                gv.wetfront_cell_prev = std::max(gv.wetfront_cell_prev - 1,0);
+                gv.wetfront_cell = std::max(gv.wetfront_cell - 1,0);
+                gv.snowH = std::fmax(gv.snowH - gv.snowh,0); // snowpack depth
 
-            (*gv.velc_2d).shed_col(ih); 
-            (*gv.disp_2d).shed_col(ih);
+                // remove_snow layer
+                (*gv.c_m).shed_col(ih);
+                (*gv.c_s).shed_col(ih);
+                //(*gv.exchange_si).shed_cols(0,0);
+                (*gv.v_liqwater).shed_col(ih);
+                (*gv.v_swe).shed_col(ih);
+                (*gv.v_air).shed_col(ih);
+                (*gv.exchange_is).shed_col(ih);
+                (*gv.vfrac2d_m).shed_col(ih);
+                (*gv.vfrac2d_s).shed_col(ih);
 
+                (*gv.velc_2d).shed_col(ih); 
+                (*gv.disp_2d).shed_col(ih);
+
+            }
         }
     }
        
