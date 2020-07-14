@@ -194,7 +194,7 @@ void watermass_calc(globalvar& gv,globalpar& gp,double* deltt,double *v,
     }
 
     // Compaction (Hooke's law)
-    if ((*gv.c_m).n_cols < 1){
+    if ((*gv.c_m).n_cols > 1){
         for (ih=0;ih<gv.nh-2;ih++){
             for (il=0;il<gv.nl-1;il++){
                 

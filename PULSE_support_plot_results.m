@@ -26,9 +26,9 @@ function PULSE_support_plot_results(results_dir,chemical_species,...
     figure('name',comment)
     for i = 1:8
         
-        if i==1; var_print = c_m; var_print_name = ['Concentration liquid phase (mg/l): ', chemical_species]; end
-        if i==2; var_print = c_s; var_print_name = ['Concentration solid phase (mg/l): ', chemical_species]; end
-        if i==3; var_print = c_total; var_print_name = ['Concentration snow (liquid + solid phases) (mg/l): ', chemical_species]; end
+        if i==1; var_print = c_m; var_print_name = ['Concentration liquid phase (mg/L): ', chemical_species]; end
+        if i==2; var_print = c_s; var_print_name = ['Concentration solid phase (mg/L): ', chemical_species]; end
+        if i==3; var_print = c_total; var_print_name = ['Concentration snow (liquid + solid phases) (mg/L): ', chemical_species]; end
         
         if i==4; var_print = v_liqwater; var_print_name = 'Volume liquid phase [mm/mm/m]'; end
         if i==5; var_print = v_swe; var_print_name = 'Volume solid phase [mm/mm/m]'; end
@@ -85,7 +85,49 @@ function PULSE_support_plot_results(results_dir,chemical_species,...
     %Model_data_interc = interp1(Data_time(1:end-1),Data(1:end-1),T_WQsort);
     Model_data_interc = interp2(Hmesh,Tmesh,c_total,Y_obs_mesh,X_obs_mesh);
     
-    [r2 rmse] = rsquare(Z_obs_mesh,Model_data_interc);
+    %[r2 rmse] = rsquare(Z_obs_mesh,Model_data_interc);
+    
+     % remove NaNs
+     Model_data_interc_use = Model_data_interc;
+     WQ_use = Z_obs_mesh;
+
+     
+    nanloc = find(isnan(Model_data_interc_use));
+    Model_data_interc_use(nanloc) = [];
+    WQ_use(nanloc) = [];
+    
+    nanloc = find(isnan(WQ_use));
+    Model_data_interc_use(nanloc) = [];
+    WQ_use(nanloc) = [];
+    
+    %figure
+    %scatter(Z_obs_mesh,Model_data_interc)
+    %limmin = min(min(Model_data_interc));
+    %limmax = max(max(Model_data_interc));
+    %hold on
+    %plot([limmin limmin],[limmax limmax],'k')
+    %xlim([limmin limmax])
+    %grid on
+    %xlabel('Obs (mg/l)')
+    %ylabel('Model (mg/l)')
+    
+    
+    % Nash
+    numerator=(WQ_use-Model_data_interc_use).^2;
+    denominator=(WQ_use-mean(WQ_use)).^2;
+    Nash =1-(sum(numerator)/sum(denominator));
+    
+    % RMSE
+    Sumcal = (Model_data_interc_use-WQ_use).^2;
+    numerator = sum(Sumcal);
+    n=numel(WQ_use);
+    RMSE=(numerator/n)^(1/2);
+    
+    % BIAS
+    numerator = sum(WQ_use);
+    denominator = sum(Model_data_interc_use);
+    Bias = numerator/denominator-1;
+    
     
     figure('name',[comment,' obsVSmodel'])
     scatter(Z_obs_mesh,Model_data_interc,'k')
@@ -99,7 +141,16 @@ function PULSE_support_plot_results(results_dir,chemical_species,...
     grid on
     xlabel('Obs (mg/l)')
     ylabel('Model (mg/l)')
-    title(['R2 = ' num2str(r2) '; RMSE = ' num2str(rmse)])
+    title(['RMSE = ', num2str(RMSE),'; Nash = ',num2str(Nash),'; Bias = ',num2str(Bias)])
+    
+    % Export
+    export_ts = timeseries(c_m(:,2),datestr(time_sim));
+    figure
+    plot(export_ts,'r-','linewidth',1)
+    grid on
+    title({'Meltwater discharge concentration: ', chemical_species})
+    ylabel('mg/L')
+    
     
 end
 

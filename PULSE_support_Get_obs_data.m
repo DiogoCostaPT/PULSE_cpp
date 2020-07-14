@@ -3,12 +3,12 @@ function [depth_fixed_int,depth_corr,time,data,elev_meas] = PULSE_support_Get_ob
 
     %BRG_data = readtable(Obs_file,'Sheet','depth_correction');
     %datafields = fieldnames(BRG_data.data);
-    depth_timetable = readtimetable(Obs_file,'Sheet','depth_correction'); % last column is the accumulation average
-    depth = table2array(depth_timetable);
+    depth = readtable(Obs_file,'Sheet','depth_correction'); % last column is the accumulation average
+    %depth = table2array(depth_timetable);
     depth = depth(:,1:end-1);
     
     depth_temporar_increment = 20; % needed to make sure that the interpolation method will work
-    depth_corr = - depth + 100;
+    depth_corr = - table2array(depth(:,2:end)) + 100;
 
     depth_corr_max = max(max(depth_corr));
     depth_corr_min = min(min(depth_corr));
@@ -23,9 +23,9 @@ function [depth_fixed_int,depth_corr,time,data,elev_meas] = PULSE_support_Get_ob
 
 
     % Get matrix data    
-    data_raw = readtimetable(Obs_file,'Sheet',chemical_species);
+    data_raw = readtable(Obs_file,'Sheet',chemical_species);
     time = datenum(data_raw.Var1);
-    data = table2array(data_raw)/1000; %ppb to mg/l
+    data = table2array(data_raw(:,2:end))/1000; %ppb to mg/l
     depths = depths_raw;
     elev_meas = max(depths) - depths;
     

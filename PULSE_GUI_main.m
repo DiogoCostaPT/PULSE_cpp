@@ -31,7 +31,7 @@ while(winopen == 1)
         pause(2)
         continue; 
     end
-    timeend_chem
+    
     if GENALLFILES_FLAG == 1
         genetate_masterfile = 1;
         gen_0txtfile_flag = 1;
@@ -321,7 +321,7 @@ while(winopen == 1)
         % meteo data
         dataraw_meteo = readtable(crhmoutput_dir);
         dataraw_meteo = dataraw_meteo(2:end,:);
-        
+        time_meteo = str2double(dataraw_meteo.time) + 693960;
 
         % sub-set meteo data to chem data time period
         i_tstart = find(time_meteo==timestart_chem);
