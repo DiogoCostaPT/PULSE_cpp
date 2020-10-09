@@ -10,10 +10,11 @@ void read_simset(globalpar& gp,const std::string& modset_flname,
                 std::string* sim_purp,double *h_layer,double *l_layer,
                 std::string* qcmelt_file,std::string* meteo_file ,
                 std::ofstream* logPULSEfile,int* n_qcmelt, 
-                int* n_meteoall, double *vfrac_air_frshsnow, double *compatfact)
+                int* n_meteoall, double *vfrac_air_frshsnow, double *compatfact
+               )
 {
     
-    std::string str, msg, str_hydro_solver;
+    std::string str, msg, str_hydro_solver, str_snowmodel;
     
     std::ifstream file(modset_flname);
     
@@ -27,6 +28,7 @@ void read_simset(globalpar& gp,const std::string& modset_flname,
         if(str.find("END_TIME") != std::string::npos){(*gp.end_time) = str.substr(9);}; // comment
         if(str.find("H_LAY_mm") != std::string::npos){(*h_layer) = std::stof(str.substr(9))/1000;};  // average roughness height (m)
         if(str.find("L_LAY_mm") != std::string::npos){(*l_layer) = std::stof(str.substr(9))/1000;};  // average roughness height (m)
+        if(str.find("SNOWMODEL") != std::string::npos){str_snowmodel = str.substr(10);};  // snow model: internal or external
         if(str.find("VFRAC_AIR_FRESHSNOW") != std::string::npos){(*vfrac_air_frshsnow) = std::stof(str.substr(21));};  // volume fraction of air in snow (%)
         if(str.find("QMELT_FILE") != std::string::npos){*qcmelt_file = str.substr(11);}; // snowmelt file
         if(str.find("METEO_FILE") != std::string::npos){*meteo_file = str.substr(11);}; // snowmelt file
@@ -57,6 +59,12 @@ void read_simset(globalpar& gp,const std::string& modset_flname,
         gp.hydro_solver = 0;
     else if(str_hydro_solver.find("CN") != std::string::npos)
         gp.hydro_solver = 1;
+
+    // Identify the snow model: internal or external
+    if(str_snowmodel.find("internal") != std::string::npos)
+        gp.snowmodel = 0;
+    else if(str_snowmodel.find("external") != std::string::npos)
+        gp.snowmodel = 1;
 
     // Get qmelt file size
     arma::mat filedata; 

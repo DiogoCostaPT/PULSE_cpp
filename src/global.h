@@ -19,7 +19,8 @@ public:
            wetfront_z,num_stblty_thrshld_prsity = 1E-6,alphaIE,Tsim,Tmeteofile,Tqmeltfile;
         
     int flag_sens,run_id,s,print_step,
-         hydro_solver; // 0) Crank Nicholson, 1) Forward-time, Central-diff space;
+         hydro_solver, // 0) Crank Nicholson, 1) Forward-time, Central-diff space;
+         snowmodel; // 0) internal, 1) external
     //std::ofstream logPULSEfile;
 
     std::string start_time[1],end_time[1];
@@ -47,7 +48,7 @@ public:
     // = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     exchange_is = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     qcmel_ts = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_qcmelt,2));
-    meteoall_ts = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_meteoall,5));
+    
     velc_2d = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     disp_2d = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
 
@@ -58,12 +59,15 @@ public:
     v_swe = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     v_air = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
 
+    ice2liq_external = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_meteoall,5));
+    meteoall_ts = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_meteoall,5));
+
   }
     
     size_t nh,nl,n_qcmelt,n_meteoall;
   
     std::unique_ptr<arma::Mat<double>> c_m,c_s,qcmel_ts,meteoall_ts,//exchange_si,
-                  exchange_is,velc_2d,disp_2d,vfrac2d_m,vfrac2d_s,v_liqwater,v_swe,v_air;
+                  exchange_is,velc_2d,disp_2d,vfrac2d_m,vfrac2d_s,v_liqwater,v_swe,v_air,ice2liq_external;
     
     double snowH = 0.0f, // snowpack depth
             snowL = 0.0f, // snowpack horizontal lenght

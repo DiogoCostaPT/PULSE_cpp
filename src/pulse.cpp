@@ -43,7 +43,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
             deltt = std::fmin(print_next-tcum,
                 gv.v_swe_freshsnow_max/(std::abs(gv.snowfall_i) * gv.snowl));
             velc = 0.0f;
-           // watermass_calc(gv,gp,&deltt,&velc,logPULSEfile);
+           // watermass_calc_internal(gv,gp,&deltt,&velc,logPULSEfile);
         } else {// melt       
                 // Estimate interstitial flow velocity 
             velc = (gv.qmelt_i + gv.rainfall_i)/ (gv.vfrac_a + gv.vfrac_m); // interstitial flow velocity [m s-1]
@@ -64,7 +64,12 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
             
         }
 
-        watermass_calc(gv,gp,&deltt,&velc,logPULSEfile);
+        // Snow model: internal or external (SNOWPACK or WARD-snow model)
+        if (gp.snowmodel == 0){ // internal 
+            watermass_calc_internal(gv,gp,&deltt,&velc,logPULSEfile);
+        }else if (gp.snowmodel == 1){ // external
+            watermass_calc_external(gv,gp,&deltt,logPULSEfile);
+        } 
 
         tcum = tcum + deltt; 
 
@@ -92,7 +97,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
                     //crank_nicholson_hydr2D(gv,&deltt);
                         FtCs_solve_hydr2D(gv,&deltt);
 
-                        // Crank Nicolson to limit the fluxes across boundaries
+                    // Crank Nicolson to limit the fluxes across boundaries
                     //exchange_i = arma::max(v * deltt * ((*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) - (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new))/gv.snowh,(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1));
                     //(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) -= exchange_i; // compute onh advection to the wetting front
                     //(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new) += exchange_i; // compute onh advection to the wetting front
