@@ -88,34 +88,3 @@ void checkmesh2(double* H_local,double* L_local,double* h_layer,double* l_layer,
         std::abort();
     }     
 }
-
-//void checkmesh(int* H_local,int* L_local,int* h_layer,int* l_layer,int* nh,int* nl,std::ofstream* logPULSEfile)
-//{
-//
-//    std::string msg;
-//    
-//    double a = double(*H_local)/double(*h_layer);
-//    double b = double(*L_local)/double(*l_layer);
-//    
-//    if(floor(a)==ceil(a) && floor(b)==ceil(b)){      
-//        (*nh) = a;
-//        (*nl) = b;
-//        msg = "Snowpack mesh: created";
-//        print_screen_log(logPULSEfile,&msg);
-//    }else{
-//        if (floor(a)==ceil(a)){
-//        msg = "Snowpack mesh: H = " + std::to_string ((*H_local)) + 
-//                " mm (snowpack depth) is not divisible by h_layer = " + std::to_string((*h_layer)) +
-//                " mm (grid thickness) -> change the simulation setting in file 'simset.pulse'";
-//        print_screen_log(logPULSEfile,&msg);
-//        }
-//        if (floor(b)==ceil(b)){
-//        msg = "Snowpack mesh: L = " + std::to_string ((*L_local)) + 
-//                " mm (snowpack horizontal length) is not divisible by l_layer = " + std::to_string((*l_layer)) +
-//                "mm (grid horizontal length) -> change the simulation setting in file 'simset.pulse'";
-//        print_screen_log(logPULSEfile,&msg);
-//        }
-//        std::abort();
-//    }
-//    
-//}
