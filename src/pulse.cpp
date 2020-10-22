@@ -62,10 +62,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
                 //deltt_volavail_melt = velc * (*deltt) * max(min((*gv.v_liqwater)));
                 deltt = std::fmin(deltt,gv.v_swe_freshsnow_max/(std::abs(gv.snowfall_i) * gv.snowl));
                 deltt = std::fmin(deltt,gv.v_swe_freshsnow_max/(std::abs(gv.qmelt_i) * gv.snowl));
-                
-                // wetting front
-                //wetfront_calc(gp,gv,&velc,&deltt);   
-                
+                                
             }
 
             
@@ -76,18 +73,6 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
 
             if ((gv.qmelt_i+gv.rainfall_i)>0.0f && gv.nh>0){ // if melt
     
-                // calculate volume fractions
-                //vol_fract_calc(gp,gv,&velc,&deltt);
-
-                // check CFC validation
-                //if((gv.wetfront_cell - gv.wetfront_cell_prev) > 1){
-                //    msg = "CFC condition violation - check code";
-                //    print_screen_log(logPULSEfile,&msg);
-                //    abort();
-                //}
-
-                // 
-                //if (gv.vfrac_m < 1-gp.num_stblty_thrshld_prsity && gv.vfrac_i > gp.num_stblty_thrshld_prsity && gv.vfrac_s > gp.num_stblty_thrshld_prsity){
                 if (gv.vfrac_m < 1-gp.num_stblty_thrshld_prsity && gv.vfrac_s > gp.num_stblty_thrshld_prsity){  
                     
                     if (gv.wetfront_cell > 3){ // to have sufficient layers for ADE solver
@@ -98,10 +83,6 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
                         //crank_nicholson_hydr2D(gv,&deltt);
                             FtCs_solve_hydr2D(gv,&deltt);
 
-                        // Crank Nicolson to limit the fluxes across boundaries
-                        //exchange_i = arma::max(v * deltt * ((*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) - (*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new))/gv.snowh,(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1));
-                        //(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new-1) -= exchange_i; // compute onh advection to the wetting front
-                        //(*gv.c_m)(arma::span(0,gv.nl-1),wetfront_cell_new) += exchange_i; // compute onh advection to the wetting front
                         }
                         for(il=0;il<gv.nl ;il++){
                             for(ih=0;ih<gv.nh ;ih++){
@@ -112,35 +93,11 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
                     }
                 }
 
-                if (gv.qmelt_i > 0.0f || gv.rainfall_i > 0.0f){
+                // Ion Exclusion
+                if (gv.qmelt_i > 0.0f || gv.rainfall_i > 0.0f){                    
+                    IonExclusionModel(gp,gv,&deltt);
+                }
 
-                    // Ion exclusion: Exchange with immobile phase (just exchange)
-                    (*gv.exchange_is)  = deltt * gp.alphaIE * (*gv.c_s) % (*gv.v_swe) ; 
-                    float exchange_is_l = 0.0f;
-
-                    // limit the flux to the available material
-                    for(il=0;il<gv.nl ;il++){
-                        for(ih=0;ih<gv.wetfront_cell ;ih++){
-                            if ((*gv.exchange_is).at(il,ih) > 0 && (*gv.v_liqwater).at(il,ih) > 0.0001){
-
-                                //std::cout << std::to_string((*gv.v_liqwater).at(il,ih)) << std::endl;
-                                exchange_is_l = fmin((*gv.exchange_is).at(il,ih),
-                                                    (*gv.c_s).at(il,ih) * (*gv.v_swe).at(il,ih));   
-
-                                (*gv.c_s).at(il,ih) = ((*gv.c_s).at(il,ih) * (*gv.v_swe).at(il,ih) 
-                                        - exchange_is_l) / (*gv.v_swe).at(il,ih);
-
-                                (*gv.c_m).at(il,ih) = ((*gv.c_m).at(il,ih) * (*gv.v_liqwater).at(il,ih) 
-                                        + exchange_is_l) / (*gv.v_liqwater).at(il,ih);
-
-                                (*gv.c_s).at(il,ih) = std::fmax((*gv.c_s).at(il,ih),0.0f);
-                                (*gv.c_m).at(il,ih) = std::fmax((*gv.c_m).at(il,ih),0.0f);  
-
-                            }
-                        };
-                    
-                    }
-                } 
             }
         } else if (gp.snowmodel == 1){ // external
             

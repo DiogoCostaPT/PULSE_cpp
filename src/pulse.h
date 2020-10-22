@@ -11,9 +11,9 @@
 #include "crank_nicholson_solve.h"
 #include "crank_nicholson_solve_hydr2D.h"
 #include "FEM_solver.h"
+#include "IonExclusionModel.h"
 
 void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
-        std::string* results_flname)
-;
+        std::string* results_flname);
 
 #endif
