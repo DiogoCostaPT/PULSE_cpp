@@ -27,17 +27,20 @@ void read_simset(globalpar& gp,const std::string& modset_flname,
         if(str.find("COMMNET") != std::string::npos){*sim_purp = str.substr(8);}; // comment
         if(str.find("START_TIME") != std::string::npos){(*gp.start_time) = str.substr(11);}; // comment
         if(str.find("END_TIME") != std::string::npos){(*gp.end_time) = str.substr(9);}; // comment
+        if(str.find("PRINT_STEP") != std::string::npos){(gp.print_step) = std::stoi(str.substr(11));}; // print time step
+
         if(str.find("H_LAY_mm") != std::string::npos){(*h_layer) = std::stof(str.substr(9))/1000;};  // average roughness height (m)
         if(str.find("L_LAY_mm") != std::string::npos){(*l_layer) = std::stof(str.substr(9))/1000;};  // average roughness height (m)
-        if(str.find("VFRAC_AIR_FRESHSNOW") != std::string::npos){(*vfrac_air_frshsnow) = std::stof(str.substr(21));};  // volume fraction of air in snow (%)
-        if(str.find("PRINT_STEP") != std::string::npos){(gp.print_step) = std::stoi(str.substr(11));}; // print time step
-        if(str.find("A_D") != std::string::npos){(gp.aD) = std::stof(str.substr(4));}; // SWE standard deviation (snow depletion curves, Kevin's paper)
-        if(str.find("ALPHA_IE") != std::string::npos){(gp.alphaIE) = std::stof(str.substr(9));}; // SWE standard deviation (snow depletion curves, Kevin's paper)
-        if(str.find("COMPFACTOR") != std::string::npos){(*compatfact) = std::stof(str.substr(11));}; // compaction factor
+
         if(str.find("DENSITY_ICE") != std::string::npos){(gp.rho_ice) = std::stof(str.substr(12));}; // density of ice 
         if(str.find("DENSITY_WATER") != std::string::npos){(gp.rho_water) = std::stof(str.substr(14));}; // density of water
         if(str.find("DENSITY_FRESHSNOW") != std::string::npos){(gp.rho_freshsnow) = std::stof(str.substr(18));}; // density of freshsnow
+        if(str.find("VFRAC_AIR_FRESHSNOW") != std::string::npos){(*vfrac_air_frshsnow) = std::stof(str.substr(21));};  // volume fraction of air in snow (%)
 
+        if(str.find("A_D") != std::string::npos){(gp.aD) = std::stof(str.substr(4));}; // SWE standard deviation (snow depletion curves, Kevin's paper)
+        if(str.find("ALPHA_IE") != std::string::npos){(gp.alphaIE) = std::stof(str.substr(9));}; // SWE standard deviation (snow depletion curves, Kevin's paper)
+        if(str.find("COMPFACTOR") != std::string::npos){(*compatfact) = std::stof(str.substr(11));}; // compaction factor
+        
         if(str.find("SNOWMODEL") != std::string::npos){str_snowmodel = str.substr(10);};  // snow model: internal or external
 
         // if SNOWMODEL = internal
