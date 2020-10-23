@@ -45,6 +45,7 @@ int main(int argc, char* argv[])
     int nl,nh;
     int n_qcmelt,n_meteoall;
     std::string sim_purp,qcmelt_file,meteo_file,msg;
+    std::string v_ice_file,v_liquid_file,v_ice2liq_1,v_ice2liq_2;
     std::ofstream logPULSEfile ("log.pulse");
     
     std::string modset_flname (argv[1]);
@@ -60,9 +61,12 @@ int main(int argc, char* argv[])
         print_screen_log(&logPULSEfile,&msg);   
 
         // read simulation setup
-        read_simset(gp,modset_flname,&sim_purp,
-            &h_layer,&l_layer,&qcmelt_file,&meteo_file,&logPULSEfile,
-            &n_qcmelt,&n_meteoall,&vfrac_air_frshsnow,&compatfact);  
+        read_simset(gp,modset_flname,
+            &sim_purp,&h_layer,&l_layer,
+            &qcmelt_file,&meteo_file, // if SNOWMODEL = internal
+            &v_ice_file,&v_liquid_file,&v_ice2liq_1,&v_ice2liq_2, // if SNOWMODEL = external
+            &logPULSEfile,&n_qcmelt,
+            &n_meteoall,&vfrac_air_frshsnow,&compatfact);  
 
         // create mesh
         //checkmesh(&H_local,&L_local,&h_layer,&l_layer,&nh,&nl,&logPULSEfile);

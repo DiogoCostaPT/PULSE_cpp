@@ -1,14 +1,15 @@
 
 
 #include "readin.h"
-#include "outwrite.h"
+#include "toolbox.h"
 
 /* *****
  * Read the simset.pulse file (model set up) 
  * **** */
 void read_simset(globalpar& gp,const std::string& modset_flname, 
                 std::string* sim_purp,double *h_layer,double *l_layer,
-                std::string* qcmelt_file,std::string* meteo_file ,
+                std::string* qcmelt_file,std::string* meteo_file, // if SNOWMODEL = internal 
+                std::string* v_ice_file,std::string* v_liquid_file, std::string* v_ice2liq_1, std::string* v_ice2liq_2, // if SNOWMODEL = external
                 std::ofstream* logPULSEfile,int* n_qcmelt, 
                 int* n_meteoall, double *vfrac_air_frshsnow, double *compatfact
                )
@@ -28,18 +29,27 @@ void read_simset(globalpar& gp,const std::string& modset_flname,
         if(str.find("END_TIME") != std::string::npos){(*gp.end_time) = str.substr(9);}; // comment
         if(str.find("H_LAY_mm") != std::string::npos){(*h_layer) = std::stof(str.substr(9))/1000;};  // average roughness height (m)
         if(str.find("L_LAY_mm") != std::string::npos){(*l_layer) = std::stof(str.substr(9))/1000;};  // average roughness height (m)
-        if(str.find("SNOWMODEL") != std::string::npos){str_snowmodel = str.substr(10);};  // snow model: internal or external
         if(str.find("VFRAC_AIR_FRESHSNOW") != std::string::npos){(*vfrac_air_frshsnow) = std::stof(str.substr(21));};  // volume fraction of air in snow (%)
-        if(str.find("QMELT_FILE") != std::string::npos){*qcmelt_file = str.substr(11);}; // snowmelt file
-        if(str.find("METEO_FILE") != std::string::npos){*meteo_file = str.substr(11);}; // snowmelt file
         if(str.find("PRINT_STEP") != std::string::npos){(gp.print_step) = std::stoi(str.substr(11));}; // print time step
         if(str.find("A_D") != std::string::npos){(gp.aD) = std::stof(str.substr(4));}; // SWE standard deviation (snow depletion curves, Kevin's paper)
         if(str.find("ALPHA_IE") != std::string::npos){(gp.alphaIE) = std::stof(str.substr(9));}; // SWE standard deviation (snow depletion curves, Kevin's paper)
-        if(str.find("HYDRO_SOLVER") != std::string::npos){str_hydro_solver = str.substr(13);}; // snowmelt file
         if(str.find("COMPFACTOR") != std::string::npos){(*compatfact) = std::stof(str.substr(11));}; // compaction factor
         if(str.find("DENSITY_ICE") != std::string::npos){(gp.rho_ice) = std::stof(str.substr(12));}; // density of ice 
         if(str.find("DENSITY_WATER") != std::string::npos){(gp.rho_water) = std::stof(str.substr(14));}; // density of water
         if(str.find("DENSITY_FRESHSNOW") != std::string::npos){(gp.rho_freshsnow) = std::stof(str.substr(18));}; // density of freshsnow
+
+        if(str.find("SNOWMODEL") != std::string::npos){str_snowmodel = str.substr(10);};  // snow model: internal or external
+
+        // if SNOWMODEL = internal
+        if(str.find("QMELT_FILE") != std::string::npos){*qcmelt_file = removeSpaces(str.substr(11));}; // snowmelt file
+        if(str.find("METEO_FILE") != std::string::npos){*meteo_file = removeSpaces(str.substr(11));}; // precipitation and precipitation chemistry file
+        if(str.find("HYDRO_SOLVER") != std::string::npos){str_hydro_solver = removeSpaces(str.substr(13));}; // flow solver
+
+        // if SNOWMODEL = external
+        if(str.find("V_ICE_FILE") != std::string::npos){*v_ice_file = removeSpaces(str.substr(11));}; // snowmelt file
+        if(str.find("V_LIQUID_FILE") != std::string::npos){*v_liquid_file = removeSpaces(str.substr(13));}; // snowmelt file
+        if(str.find("V_ICE2LIQ_1_FILE") != std::string::npos){*v_ice2liq_1 = removeSpaces(str.substr(12));}; // snowmelt file
+        if(str.find("V_ICE2LIQ_2_FILE") != std::string::npos){*v_ice2liq_2 = removeSpaces(str.substr(12));}; // snowmelt file
 
     }
     file.close();

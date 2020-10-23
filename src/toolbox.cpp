@@ -88,3 +88,11 @@ void checkmesh2(double* H_local,double* L_local,double* h_layer,double* l_layer,
         std::abort();
     }     
 }
+
+
+// Function to remove all spaces from a given string 
+std::string removeSpaces(std::string str)  
+{ 
+    str.erase(remove(str.begin(), str.end(), ' '), str.end()); 
+    return str; 
+} 
