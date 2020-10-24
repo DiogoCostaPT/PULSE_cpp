@@ -43,9 +43,14 @@ int main(int argc, char* argv[])
     
     double H_local,L_local,h_layer,l_layer,vfrac_air_frshsnow,compatfact;
     int nl,nh;
-    int n_qcmelt,n_meteoall;
-    std::string sim_purp,qcmelt_file,meteo_file,msg;
-    std::string v_ice_file,v_liquid_file,v_ice2liq_1,v_ice2liq_2;
+    int n_qmelt_file,n_meteo_file; // SNOWMODEL == internal
+    int  n_v_ice_file,  n_v_liquid_file,  n_v_ice2liq_1_file,  n_v_ice2liq_2_file,  n_fluxQ_file; // SNOWMODEL = external
+
+    bool err_inputdata_flag = false;
+
+    std::string sim_purp;
+    std::string qmelt_file,meteo_file,msg;
+    std::string v_ice_file,v_liquid_file,v_ice2liq_1_file,v_ice2liq_2_file,fluxQ_file;
     std::ofstream logPULSEfile ("log.pulse");
     
     std::string modset_flname (argv[1]);
@@ -57,23 +62,43 @@ int main(int argc, char* argv[])
     
     //try{
     
-        msg = "......................................... \n PULSE: multi-phase multi-layer snowpack chemistry model \n......................................... \n";
+        msg = " ....................................................... \n" 
+              " ....................................................... \n" 
+              " #####  #   #  #      #####  #####                   \n" 
+              " #   #  #   #  #      #      #                       \n" 
+              " #####  #   #  #      #####  ###                     \n" 
+              " #      #   #  #          #  #                       \n" 
+              " #      #####  #####  #####  #####                   \n" 
+              " multi-phase multi-layer snowpack chemistry model    \n" 
+              " ....................................................... \n"
+              " version 2.1: contact diogo.pinhodacosta@canada.ca       \n" 
+              " ....................................................... \n";
+ 
         print_screen_log(&logPULSEfile,&msg);   
 
         // read simulation setup
-        read_simset(gp,modset_flname,
+        err_inputdata_flag = read_simset(gp,modset_flname,
             &sim_purp,&h_layer,&l_layer,
-            &qcmelt_file,&meteo_file, // if SNOWMODEL = internal
-            &v_ice_file,&v_liquid_file,&v_ice2liq_1,&v_ice2liq_2, // if SNOWMODEL = external
-            &logPULSEfile,&n_qcmelt,
-            &n_meteoall,&vfrac_air_frshsnow,&compatfact);  
+            &qmelt_file,&meteo_file, // if SNOWMODEL = internal
+            &v_ice_file,&v_liquid_file,&v_ice2liq_1_file,&v_ice2liq_2_file,&fluxQ_file,  // if SNOWMODEL = external
+            &logPULSEfile,
+            &n_qmelt_file,&n_meteo_file,
+            &n_v_ice_file,&n_v_liquid_file,&n_v_ice2liq_1_file,&n_v_ice2liq_2_file,&n_fluxQ_file,
+            &vfrac_air_frshsnow,&compatfact);  
+
+        // Terminate model if problem with input data
+        if (err_inputdata_flag == true){
+            msg = "Model aborted: problem with input files";   
+            print_screen_log(&logPULSEfile,&msg);
+            std::abort();
+        }
 
         // create mesh
         //checkmesh(&H_local,&L_local,&h_layer,&l_layer,&nh,&nl,&logPULSEfile);
         checkmesh2(&H_local,&L_local,&h_layer,&l_layer,&nh,&nl,&logPULSEfile,&results_flname);
 
         // Asign global variables (heap)
-        globalvar gv(nh,nl,n_qcmelt,n_meteoall); 
+        globalvar gv(nh,nl,n_qmelt_file,n_meteo_file); 
         gv.snowH = H_local;
         gv.snowL = L_local;
         gv.snowh = h_layer;
@@ -83,21 +108,21 @@ int main(int argc, char* argv[])
 
 
         // read snowmelt input
-        read_qmelfile(gp,gv,&qcmelt_file,&logPULSEfile);
+        read_qmelfile(gp,gv,&qmelt_file,&logPULSEfile);
 
         // read meteo file
         read_meteofile(gp,gv,&meteo_file,&logPULSEfile);
 
         // Check if input data is consistent
-        if (n_qcmelt!=n_meteoall){
-            if (n_qcmelt>n_meteoall){
+        if (n_qmelt_file!=n_meteo_file){
+            if (n_qmelt_file>n_meteo_file){
                 signmg = ">";
                 gp.Tsim = gp.Tmeteofile;
             }else{
                 signmg = "<";
                 gp.Tsim = gp.Tqmeltfile;
             }
-            msg = "Input timeseries need to have the same size: '" + (qcmelt_file) + "' "
+            msg = "Input timeseries need to have the same size: '" + (qmelt_file) + "' "
                 + signmg + " '" + (meteo_file) + "' " + "-> END_TIME reset to min value";   
             print_screen_log(&logPULSEfile,&msg); 
         }else{

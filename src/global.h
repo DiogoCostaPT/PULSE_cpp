@@ -36,18 +36,18 @@ public:
   globalvar() {
 
   }
-  globalvar(size_t nh, size_t nl,size_t n_qcmelt,size_t n_meteoall) {
+  globalvar(size_t nh, size_t nl,size_t n_qmelt_file,size_t n_meteo_file) {
     this->nh = nh;
     this->nl = nl;
-    this->n_qcmelt = n_qcmelt;
-    this->n_meteoall = n_meteoall;
+    this->n_qmelt_file = n_qmelt_file;
+    this->n_meteo_file = n_meteo_file;
    
     c_m = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     //c_i = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     c_s = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     // = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     exchange_is = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
-    qcmel_ts = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_qcmelt,2));
+    qcmel_ts = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_qmelt_file,2));
     
     velc_2d = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     disp_2d = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
@@ -59,12 +59,12 @@ public:
     v_swe = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     v_air = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
 
-    ice2liq_external = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_meteoall,5));
-    meteoall_ts = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_meteoall,5));
+    ice2liq_external = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_meteo_file,5));
+    meteoall_ts = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_meteo_file,5));
 
   }
     
-    size_t nh,nl,n_qcmelt,n_meteoall;
+    size_t nh,nl,n_qmelt_file,n_meteo_file;
   
     std::unique_ptr<arma::Mat<double>> c_m,c_s,qcmel_ts,meteoall_ts,//exchange_si,
                   exchange_is,velc_2d,disp_2d,vfrac2d_m,vfrac2d_s,v_liqwater,v_swe,v_air,ice2liq_external;

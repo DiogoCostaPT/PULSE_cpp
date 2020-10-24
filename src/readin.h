@@ -8,18 +8,20 @@
 #include "outwrite.h"
 #include "toolbox.h"
 
-void read_simset(globalpar& gp,const std::string& modset_flname, 
+bool read_simset(globalpar& gp,const std::string& modset_flname, 
                 std::string* sim_purp,double *h_layer,double *l_layer,
-                std::string* qcmelt_file,std::string* meteo_file, // if SNOWMODEL = internal 
-                std::string* v_ice_file,std::string* v_liquid_file, std::string* v_ice2liq_1, std::string* v_ice2liq_2, // if SNOWMODEL = external
-                std::ofstream* logPULSEfile,int* n_qcmelt, 
-                int* n_meteoall, double *vfrac_air_frshsnow, double *compatfact
-                );
+                std::string* qmelt_file,std::string* meteo_file, // if SNOWMODEL = internal 
+                std::string* v_ice_file,std::string* v_liquid_file, std::string* v_ice2liq_1_file, std::string* v_ice2liq_2_file, std::string* fluxQ_file, // if SNOWMODEL = external
+                std::ofstream* logPULSEfile,
+                int* n_qmelt_file, int* n_meteo_file, 
+                int* n_v_ice_file,int* n_v_liquid_file,int* n_v_ice2liq_1_file,int* n_v_ice2liq_2_file,int* n_fluxQ_file,
+                double *vfrac_air_frshsnow, double *compatfact
+               );
 
-void read_qmelfile(globalpar& gp,globalvar& gv,std::string* qcmelt_file,
+void read_qmelfile(globalpar& gp,globalvar& gv,std::string* qmelt_file,
                 std::ofstream* logPULSEfile);
 
-void read_meteofile(globalpar& gp,globalvar& gv,std::string* qcmelt_file,
+void read_meteofile(globalpar& gp,globalvar& gv,std::string* qmelt_file,
                 std::ofstream* logPULSEfile);               
 
 
