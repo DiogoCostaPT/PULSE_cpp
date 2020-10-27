@@ -43,8 +43,9 @@ int main(int argc, char* argv[])
     
     double H_local,L_local,h_layer,l_layer,vfrac_air_frshsnow,compatfact;
     int nl,nh;
-    int n_qmelt_file,n_meteo_file; // SNOWMODEL == internal
-    int  n_v_ice_file,  n_v_liquid_file,  n_v_ice2liq_1_file,  n_v_ice2liq_2_file,  n_fluxQ_file; // SNOWMODEL = external
+    int n_qmelt_file = 0, n_meteo_file = 0; // SNOWMODEL == internal
+    int n_v_ice_file = 0,  n_v_liquid_file = 0, 
+        n_v_ice2liq_1_file = 0,  n_v_ice2liq_2_file = 0,  n_fluxQ_file = 0; // SNOWMODEL = external
 
     bool err_inputdata_flag = false;
 
@@ -76,7 +77,7 @@ int main(int argc, char* argv[])
  
         print_screen_log(&logPULSEfile,&msg);   
 
-        // read simulation setup
+        // READ SIMULATIONS SETTINGS
         err_inputdata_flag = read_simset(gp,modset_flname,
             &sim_purp,&h_layer,&l_layer,
             &qmelt_file,&meteo_file, // if SNOWMODEL = internal
@@ -86,15 +87,14 @@ int main(int argc, char* argv[])
             &n_v_ice_file,&n_v_liquid_file,&n_v_ice2liq_1_file,&n_v_ice2liq_2_file,&n_fluxQ_file,
             &vfrac_air_frshsnow,&compatfact);  
 
-        // Terminate model if problem with input data
+        // TERMINATE MODEL if problem with input data
         if (err_inputdata_flag == true){
             msg = "Model aborted: problem with input files";   
             print_screen_log(&logPULSEfile,&msg);
             std::abort();
         }
 
-        // create mesh
-        //checkmesh(&H_local,&L_local,&h_layer,&l_layer,&nh,&nl,&logPULSEfile);
+        // CREATE MESH
         checkmesh2(&H_local,&L_local,&h_layer,&l_layer,&nh,&nl,&logPULSEfile,&results_flname);
 
         // Asign global variables (heap)
@@ -106,12 +106,19 @@ int main(int argc, char* argv[])
         gv.vfrac_air_frshsnow = vfrac_air_frshsnow;
         gv.compatfact = compatfact;
 
+        // Read input files 
+        if (gp.snowmodel == 0){ // SNOWMODEL = internal
+            
+            read_qmelfile(gp,gv,&qmelt_file,&logPULSEfile); // read snowmelt input
+            read_meteofile(gp,gv,&meteo_file,&logPULSEfile); // read meteo file
 
-        // read snowmelt input
-        read_qmelfile(gp,gv,&qmelt_file,&logPULSEfile);
+        }else if(gp.snowmodel == 1){ // SNOWMODEL = external
 
-        // read meteo file
-        read_meteofile(gp,gv,&meteo_file,&logPULSEfile);
+            //(gv.ice2liq_1_ext) = read_matrix(gp.n_v_ice2liq_1_file);
+
+        }
+
+        
 
         // Check if input data is consistent
         if (n_qmelt_file!=n_meteo_file){

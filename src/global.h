@@ -47,7 +47,6 @@ public:
     c_s = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     // = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     exchange_is = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
-    qcmel_ts = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_qmelt_file,2));
     
     velc_2d = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     disp_2d = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
@@ -59,16 +58,25 @@ public:
     v_swe = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     v_air = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
 
-    ice2liq_external = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_meteo_file,5));
-    meteoall_ts = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_meteo_file,5));
+    // Depends on SNOWMODEL
+    // For snowmodel = internal
+    meteoall_int = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_meteo_file,5));
+    qcmel_int = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_qmelt_file,2));
+    // For snowmodel = external  
+    ice2liq_1_ext = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
+    ice2liq_2_ext = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
+    fluxQ_ext = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
 
   }
     
     size_t nh,nl,n_qmelt_file,n_meteo_file;
   
-    std::unique_ptr<arma::Mat<double>> c_m,c_s,qcmel_ts,meteoall_ts,//exchange_si,
-                  exchange_is,velc_2d,disp_2d,vfrac2d_m,vfrac2d_s,v_liqwater,v_swe,v_air,ice2liq_external;
+    std::unique_ptr<arma::Mat<double>> c_m,c_s,exchange_is,velc_2d,disp_2d,vfrac2d_m,vfrac2d_s;
+    std::unique_ptr<arma::Mat<double>> v_swe,v_air,v_liqwater;
     
+    std::unique_ptr<arma::Mat<double>> qcmel_int,meteoall_int; // SNOWMODEL = internal
+    std::unique_ptr<arma::Mat<double>> ice2liq_1_ext, ice2liq_2_ext, fluxQ_ext; // SNOWMODEL = external
+
     double snowH = 0.0f, // snowpack depth
             snowL = 0.0f, // snowpack horizontal lenght
             snowl = 0.0f, // grid h lenght

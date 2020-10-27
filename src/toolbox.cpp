@@ -89,6 +89,7 @@ void checkmesh2(double* H_local,double* L_local,double* h_layer,double* l_layer,
     }     
 }
 
+//read_matrix(std::string n_v_ice2liq_1_file)
 
 // Function to remove all spaces from a given string 
 std::string removeSpaces(std::string str)  
