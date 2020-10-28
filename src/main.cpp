@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
     int n_v_ice_file = 0,  n_v_liquid_file = 0, 
         n_v_ice2liq_1_file = 0,  n_v_ice2liq_2_file = 0,  n_fluxQ_file = 0; // SNOWMODEL = external
 
-    bool err_inputdata_flag = false;
+    bool err_flag = false;
 
     std::string sim_purp;
     std::string qmelt_file,meteo_file,msg;
@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
         print_screen_log(&logPULSEfile,&msg);   
 
         // READ SIMULATIONS SETTINGS
-        err_inputdata_flag = read_simset(gp,modset_flname,
+        err_flag = read_simset(gp,modset_flname,
             &sim_purp,&h_layer,&l_layer,
             &qmelt_file,&meteo_file, // if SNOWMODEL = internal
             &v_ice_file,&v_liquid_file,&v_ice2liq_1_file,&v_ice2liq_2_file,&fluxQ_file,  // if SNOWMODEL = external
@@ -88,7 +88,7 @@ int main(int argc, char* argv[])
             &vfrac_air_frshsnow,&compatfact);  
 
         // TERMINATE MODEL if problem with input data
-        if (err_inputdata_flag == true){
+        if (err_flag == true){
             msg = "Model aborted: problem with input files";   
             print_screen_log(&logPULSEfile,&msg);
             std::abort();
@@ -109,12 +109,20 @@ int main(int argc, char* argv[])
         // Read input files 
         if (gp.snowmodel == 0){ // SNOWMODEL = internal
             
-            read_qmelfile(gp,gv,&qmelt_file,&logPULSEfile); // read snowmelt input
-            read_meteofile(gp,gv,&meteo_file,&logPULSEfile); // read meteo file
+            err_flag = read_qmelfile(gp,gv,&qmelt_file,&logPULSEfile); // read snowmelt input
+            if (err_flag == true){
+                std::abort();
+            }
+
+            err_flag = read_meteofile(gp,gv,&meteo_file,&logPULSEfile); // read meteo file
+             if (err_flag == true){
+                std::abort();
+            }
 
         }else if(gp.snowmodel == 1){ // SNOWMODEL = external
 
-            //(gv.ice2liq_1_ext) = read_matrix(gp.n_v_ice2liq_1_file);
+            read_matrixes_ext(gp,gv,
+                &v_ice_file,&v_liquid_file,&v_ice2liq_1_file,&v_ice2liq_2_file,&fluxQ_file);
 
         }
 

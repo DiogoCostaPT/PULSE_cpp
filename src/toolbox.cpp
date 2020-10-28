@@ -89,7 +89,19 @@ void checkmesh2(double* H_local,double* L_local,double* h_layer,double* l_layer,
     }     
 }
 
-//read_matrix(std::string n_v_ice2liq_1_file)
+// Read general matrix file for SNOWPACK = external
+void read_matrixes_ext(globalpar& gp,globalvar& gv,
+            std::string* v_ice_file,std::string* v_liquid_file,std::string* v_ice2liq_1_file,
+            std::string* v_ice2liq_2_file, std::string*fluxQ_file)
+{
+
+    arma::mat filedata; 
+    bool flstatus = filedata.load(*v_ice_file,arma::csv_ascii);
+
+    //ice2liq_1_ext = ;
+    //ice2liq_2_ext = ;
+    //fluxQ_ext = ;
+}
 
 // Function to remove all spaces from a given string 
 std::string removeSpaces(std::string str)  

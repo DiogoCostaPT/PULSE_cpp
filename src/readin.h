@@ -18,10 +18,10 @@ bool read_simset(globalpar& gp,const std::string& modset_flname,
                 double *vfrac_air_frshsnow, double *compatfact
                );
 
-void read_qmelfile(globalpar& gp,globalvar& gv,std::string* qmelt_file,
+bool read_qmelfile(globalpar& gp,globalvar& gv,std::string* qmelt_file,
                 std::ofstream* logPULSEfile);
 
-void read_meteofile(globalpar& gp,globalvar& gv,std::string* qmelt_file,
+bool read_meteofile(globalpar& gp,globalvar& gv,std::string* qmelt_file,
                 std::ofstream* logPULSEfile);               
 
 

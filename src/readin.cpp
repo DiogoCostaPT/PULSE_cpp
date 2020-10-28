@@ -20,7 +20,7 @@ bool read_simset(globalpar& gp,const std::string& modset_flname,
     std::string str, msg, str_hydro_solver, str_snowmodel;
     std::ifstream file(modset_flname);
 
-    bool err_inputdata_flag = false;
+    bool err_flag = false;
     
     while (std::getline(file, str)) 
     {
@@ -93,15 +93,15 @@ bool read_simset(globalpar& gp,const std::string& modset_flname,
             }else{
                 msg = "        > QMELT_FILE: loading failed";
                 print_screen_log(logPULSEfile,&msg);
-                err_inputdata_flag = true;
-                return err_inputdata_flag;
+                err_flag = true;
+                return err_flag;
             }
 
         }else{
             msg = "        > QMELT_FILE: not found";
             print_screen_log(logPULSEfile,&msg); 
-            err_inputdata_flag = true;
-            return err_inputdata_flag;
+            err_flag = true;
+            return err_flag;
         }
 
          // check METEO_FILE
@@ -119,15 +119,15 @@ bool read_simset(globalpar& gp,const std::string& modset_flname,
             }else{
                 msg = "        > METEO_FILE: loading failed";
                 print_screen_log(logPULSEfile,&msg);
-                err_inputdata_flag = true;
-                return err_inputdata_flag;
+                err_flag = true;
+                return err_flag;
             }
 
         }else{
             msg = "        > METEO_FILE: not found";
             print_screen_log(logPULSEfile,&msg); 
-            err_inputdata_flag = true;
-            return err_inputdata_flag;
+            err_flag = true;
+            return err_flag;
         }
 
      // SNOWMODEL = external (e.g., SNOWPACK)
@@ -150,15 +150,15 @@ bool read_simset(globalpar& gp,const std::string& modset_flname,
             }else{
                 msg = "        > V_ICE_FILE: loading failed";
                 print_screen_log(logPULSEfile,&msg);
-                err_inputdata_flag = true;
-                return err_inputdata_flag;
+                err_flag = true;
+                return err_flag;
             }
 
         }else{
             msg = "        > V_ICE_FILE: not found";
             print_screen_log(logPULSEfile,&msg); 
-            err_inputdata_flag = true;
-            return err_inputdata_flag;
+            err_flag = true;
+            return err_flag;
         }
 
          // check V_LIQUID_FILE
@@ -176,15 +176,15 @@ bool read_simset(globalpar& gp,const std::string& modset_flname,
             }else{
                 msg = "        > V_LIQUID_FILE: loading failed";
                  print_screen_log(logPULSEfile,&msg);
-                 err_inputdata_flag = true;
-                return err_inputdata_flag;
+                 err_flag = true;
+                return err_flag;
             }
 
         }else{
             msg = "        > V_LIQUID_FILE: not found";
             print_screen_log(logPULSEfile,&msg); 
-            err_inputdata_flag = true;
-            return err_inputdata_flag;
+            err_flag = true;
+            return err_flag;
         }
 
          // check V_ICE2LIQ_1_FILE
@@ -202,15 +202,15 @@ bool read_simset(globalpar& gp,const std::string& modset_flname,
             }else{
                 msg = "        > V_ICE2LIQ_1_FILE: loading failed";
                  print_screen_log(logPULSEfile,&msg);
-                 err_inputdata_flag = true;
-                return err_inputdata_flag;
+                 err_flag = true;
+                return err_flag;
             }
 
         }else{
             msg = "        > V_ICE2LIQ_1_FILE: not found";
             print_screen_log(logPULSEfile,&msg); 
-            err_inputdata_flag = true;
-            return err_inputdata_flag;
+            err_flag = true;
+            return err_flag;
         }
 
          // check V_ICE2LIQ_2_FILE
@@ -228,15 +228,15 @@ bool read_simset(globalpar& gp,const std::string& modset_flname,
             }else{
                 msg = "        > V_ICE2LIQ_2_FILE: loading failed";
                  print_screen_log(logPULSEfile,&msg);
-                 err_inputdata_flag = true;
-                return err_inputdata_flag;
+                 err_flag = true;
+                return err_flag;
             }
 
         }else{
             msg = "        > V_ICE2LIQ_2_FILE: not found";
             print_screen_log(logPULSEfile,&msg); 
-            err_inputdata_flag = true;
-            return err_inputdata_flag;
+            err_flag = true;
+            return err_flag;
         }
 
          // check FLUXQ_FILE
@@ -254,15 +254,15 @@ bool read_simset(globalpar& gp,const std::string& modset_flname,
             }else{
                 msg = "        > FLUXQ_FILE: loading failed";
                  print_screen_log(logPULSEfile,&msg);
-                 err_inputdata_flag = true;
-                return err_inputdata_flag;
+                 err_flag = true;
+                return err_flag;
             }
 
         }else{
             msg = "        > FLUXQ_FILE: not found";
             print_screen_log(logPULSEfile,&msg); 
-            err_inputdata_flag = true;
-            return err_inputdata_flag;
+            err_flag = true;
+            return err_flag;
         }
     };  
     
@@ -278,24 +278,25 @@ bool read_simset(globalpar& gp,const std::string& modset_flname,
     }else{
         msg = "                > HYDRO_SOLVER: unkown";
         print_screen_log(logPULSEfile,&msg); 
-        err_inputdata_flag = true;
-        return err_inputdata_flag;
+        err_flag = true;
+        return err_flag;
     }
 
 
-    return err_inputdata_flag;
+    return err_flag;
 }    
 
 /* *****
  * Read meteo file
  * **** */
-void read_meteofile(globalpar& gp,globalvar& gv,std::string* meteo_file,
+bool read_meteofile(globalpar& gp,globalvar& gv,std::string* meteo_file,
                     std::ofstream* logPULSEfile)
 {
     unsigned int a; 
     double tprec=0.0f,snowfall_calc_i=0.0f,temp_calc_i=0.0f,precs_i=0.0f,
             rainfall_calc_i = 0.0f,precip_conc_i = 0.0f;
     std::string msg;
+    bool err_flag = false;
      
     arma::mat filedataM; 
     bool flstatusM =  filedataM.load((*meteo_file),arma::csv_ascii);
@@ -321,20 +322,24 @@ void read_meteofile(globalpar& gp,globalvar& gv,std::string* meteo_file,
     } else{
         msg = "PROBLEM loading the file: " + (*meteo_file);   
         print_screen_log(logPULSEfile,&msg);
-        std::abort();
+        err_flag = true;
     } 
+
+    return err_flag;
      
 }
 
 /* *****
  * Read snowmelt file
  * **** */
-void read_qmelfile(globalpar& gp,globalvar& gv,std::string* qmelt_file,
+bool read_qmelfile(globalpar& gp,globalvar& gv,std::string* qmelt_file,
     std::ofstream* logPULSEfile)
 {
     unsigned int a; 
     double tmelts=0.0f,qcmelt_i;
     std::string msg;
+
+    bool err_flag = false;
       
     arma::mat filedataQ; 
     bool flstatusQ =  filedataQ.load((*qmelt_file),arma::csv_ascii);
@@ -355,8 +360,9 @@ void read_qmelfile(globalpar& gp,globalvar& gv,std::string* qmelt_file,
     } else{
         msg = "PROBLEM loading the file: " + (*qmelt_file);   
         print_screen_log(logPULSEfile,&msg);
-        std::abort();
+        err_flag = true;
     } 
         
+    return err_flag;
 }
 
