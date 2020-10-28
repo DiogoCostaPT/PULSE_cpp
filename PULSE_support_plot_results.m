@@ -5,7 +5,7 @@ function PULSE_support_plot_results(results_dir,chemical_species,...
 
     % load pulse results
      [time_sim_elapsec,h_layers_max,c_m,c_s,c_total,poros_m,poros_s,...
-         v_liqwater,v_swe,v_air] = PULSE_support_load_pulse_results(results_dir,col_li);
+         v_liq,v_swe,v_air] = PULSE_support_load_pulse_results(results_dir,col_li);
                                         
     % get comment and timenum from masterfile
     [comment,time_sim,H_LAY,L_LAY] = PULSE_support_Getinfo_masterfile(time_sim_elapsec,masterfile);
@@ -30,7 +30,7 @@ function PULSE_support_plot_results(results_dir,chemical_species,...
         if i==2; var_print = c_s; var_print_name = ['Concentration solid phase (mg/L): ', chemical_species]; end
         if i==3; var_print = c_total; var_print_name = ['Concentration snow (liquid + solid phases) (mg/L): ', chemical_species]; end
         
-        if i==4; var_print = v_liqwater; var_print_name = 'Volume liquid phase [mm/mm/m]'; end
+        if i==4; var_print = v_liq; var_print_name = 'Volume liquid phase [mm/mm/m]'; end
         if i==5; var_print = v_swe; var_print_name = 'Volume solid phase [mm/mm/m]'; end
         if i==6; var_print = v_air; var_print_name = 'Volume air phase [mm/mm/m]'; end
         

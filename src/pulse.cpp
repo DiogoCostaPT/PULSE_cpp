@@ -59,7 +59,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
                 deltt = std::fmin(print_next-tcum,gp.Courant * gv.snowh / velc);
 
                 // limit step so that if there is melt or accumulation it doesn't go more than one cell
-                //deltt_volavail_melt = velc * (*deltt) * max(min((*gv.v_liqwater)));
+                //deltt_volavail_melt = velc * (*deltt) * max(min((*gv.v_liq)));
                 deltt = std::fmin(deltt,gv.v_swe_freshsnow_max/(std::abs(gv.snowfall_i) * gv.snowl));
                 deltt = std::fmin(deltt,gv.v_swe_freshsnow_max/(std::abs(gv.qmelt_i) * gv.snowl));
                                 

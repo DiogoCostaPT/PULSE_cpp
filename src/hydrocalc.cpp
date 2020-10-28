@@ -26,12 +26,12 @@ void watermass_calc_internal(globalvar& gv,globalpar& gp,double* deltt,double *v
     // Refreezing if T<0
     if (gv.tempert_i < 0.0f) 
     {
-        (*gv.c_s) = ((*gv.c_s) % (*gv.v_swe) + (*gv.c_m) % (*gv.v_liqwater))
-            / ((*gv.v_swe) + (*gv.v_liqwater)); // c_m mass will go to c_i
+        (*gv.c_s) = ((*gv.c_s) % (*gv.v_swe) + (*gv.c_m) % (*gv.v_liq))
+            / ((*gv.v_swe) + (*gv.v_liq)); // c_m mass will go to c_i
         (*gv.c_m) =  (*gv.c_m) * 0.0f;
 
-        (*gv.v_swe) = (*gv.v_swe) + (*gv.v_liqwater);
-        (*gv.v_liqwater) = (*gv.v_liqwater) * 0.0f;
+        (*gv.v_swe) = (*gv.v_swe) + (*gv.v_liq);
+        (*gv.v_liq) = (*gv.v_liq) * 0.0f;
 
         gv.wetfront_cell = 0; // assumes refreezing
         gv.wetfront_cell_prev = 0;
@@ -87,7 +87,7 @@ void watermass_calc_internal(globalvar& gv,globalpar& gp,double* deltt,double *v
             (*gv.velc_2d).insert_cols(0,1); 
             (*gv.disp_2d).insert_cols(0,1); 
 
-            (*gv.v_liqwater).insert_cols(0,1); // set to zero by default
+            (*gv.v_liq).insert_cols(0,1); // set to zero by default
             (*gv.v_swe).insert_cols(0,1);
             (*gv.v_swe).col(0) = arma::ones<arma::vec>(nl_l,1) * (add_snow - tofillsnow_vol);
             (*gv.v_air).insert_cols(0,1);
@@ -116,13 +116,13 @@ void watermass_calc_internal(globalvar& gv,globalpar& gp,double* deltt,double *v
             {
                 
 
-                (*gv.c_m).col(0) = ((*gv.c_m).col(0) % (*gv.v_liqwater).col(0) + 
+                (*gv.c_m).col(0) = ((*gv.c_m).col(0) % (*gv.v_liq).col(0) + 
                     (*gv.c_s).col(0) * remove_snow)
-                    / ( (*gv.v_liqwater).col(0) + remove_snow);
+                    / ( (*gv.v_liq).col(0) + remove_snow);
                 // (*gv.c_s) -> no need to calculate for c_s because it will not change (water masses cancel out)
 
                 (*gv.v_swe).col(0) = (*gv.v_swe).col(0) - remove_snow;
-                (*gv.v_liqwater).col(0) = (*gv.v_liqwater).col(0) + remove_snow;
+                (*gv.v_liq).col(0) = (*gv.v_liq).col(0) + remove_snow;
                             
             }else // remove_snow layer
             {
@@ -131,18 +131,18 @@ void watermass_calc_internal(globalvar& gv,globalpar& gp,double* deltt,double *v
                 }else {
                     // transfer mass from upper layer to lower layer because it is going to be removed
                     (*gv.c_m).col(1) = 
-                        ((*gv.c_m).col(0) % (*gv.v_liqwater).col(0)
+                        ((*gv.c_m).col(0) % (*gv.v_liq).col(0)
                         + (*gv.c_s).col(0) % (*gv.v_swe).col(0) 
-                        + (*gv.c_m).col(1) % (*gv.v_liqwater).col(1)
+                        + (*gv.c_m).col(1) % (*gv.v_liq).col(1)
                         + (*gv.c_s).col(1) % (arma::ones(gv.nl,1) * remove_snow - (*gv.v_swe).col(0))) 
-                        / ((*gv.v_liqwater).col(0) 
+                        / ((*gv.v_liq).col(0) 
                             + (*gv.v_swe).col(0) 
-                            + (*gv.v_liqwater).col(1) 
+                            + (*gv.v_liq).col(1) 
                             + arma::ones(gv.nl,1) * remove_snow - (*gv.v_swe).col(0));
                     // (*gv.c_s) -> no need to calculate for c_s because it will not change (water masses cancel out)
 
-                    (*gv.v_liqwater).col(1) = (*gv.v_liqwater).col(1) 
-                        + (*gv.v_liqwater).col(0) 
+                    (*gv.v_liq).col(1) = (*gv.v_liq).col(1) 
+                        + (*gv.v_liq).col(0) 
                         + (*gv.v_swe).col(0) 
                         + arma::ones(gv.nl,1) * remove_snow - (*gv.v_swe).col(0);
                 
@@ -157,7 +157,7 @@ void watermass_calc_internal(globalvar& gv,globalpar& gp,double* deltt,double *v
                     //(*gv.c_i).shed_cols(0,0);
                     (*gv.c_s).shed_col(0);
                     //(*gv.exchange_si).shed_cols(0,0);
-                    (*gv.v_liqwater).shed_col(0);
+                    (*gv.v_liq).shed_col(0);
                     (*gv.v_swe).shed_col(0);
                     (*gv.v_air).shed_col(0);
                     (*gv.exchange_is).shed_col(0);
@@ -171,12 +171,12 @@ void watermass_calc_internal(globalvar& gv,globalpar& gp,double* deltt,double *v
             }
         }
         if (add_rain > 0.0f){
-         (*gv.c_m).col(0) = ((*gv.c_m).col(0) % (*gv.v_liqwater).col(0) + 
+         (*gv.c_m).col(0) = ((*gv.c_m).col(0) % (*gv.v_liq).col(0) + 
                     add_rain * gv.precip_c_i)
-                    / ( (*gv.v_liqwater).col(0) + add_rain);
+                    / ( (*gv.v_liq).col(0) + add_rain);
                 // (*gv.c_s) -> no need to calculate for c_s because it will not change (water masses cancel out)
 
-         (*gv.v_liqwater).col(0) = (*gv.v_liqwater).col(0) + add_rain;
+         (*gv.v_liq).col(0) = (*gv.v_liq).col(0) + add_rain;
         }
 
         // advection (only water)
@@ -184,9 +184,9 @@ void watermass_calc_internal(globalvar& gv,globalpar& gp,double* deltt,double *v
             for (ih=0;ih<gv.wetfront_cell-1;ih++){
                 for (il=0;il<nl_l-1;il++){
                     
-                    dv_snow2liqwater = fmin((*v) * (*deltt),1) * (*gv.v_liqwater).at(il,ih);
-                    (*gv.v_liqwater).at(il,ih) = (*gv.v_liqwater).at(il,ih) - dv_snow2liqwater;
-                    (*gv.v_liqwater).at(il,ih+1) = (*gv.v_liqwater).at(il,ih+1) + dv_snow2liqwater;
+                    dv_snow2liqwater = fmin((*v) * (*deltt),1) * (*gv.v_liq).at(il,ih);
+                    (*gv.v_liq).at(il,ih) = (*gv.v_liq).at(il,ih) - dv_snow2liqwater;
+                    (*gv.v_liq).at(il,ih+1) = (*gv.v_liq).at(il,ih+1) + dv_snow2liqwater;
 
                 }
             }
@@ -215,11 +215,11 @@ void watermass_calc_internal(globalvar& gv,globalpar& gp,double* deltt,double *v
             if ( (*gv.v_swe)(round(gv.nl/2),ih) <= gv.v_swe_comp_min){
 
                     // transfer mass from upper layer to lower layer because it is going to be removed
-                if ((*gv.v_liqwater)(round(gv.nl/2),ih)  > 0.0f){
+                if ((*gv.v_liq)(round(gv.nl/2),ih)  > 0.0f){
                     (*gv.c_m).col(ih+1) = 
-                    ((*gv.c_m).col(ih) % (*gv.v_liqwater).col(ih)
-                    + (*gv.c_m).col(ih+1) % (*gv.v_liqwater).col(ih+1))
-                    / ((*gv.v_liqwater).col(ih) + (*gv.v_liqwater).col(ih+1));
+                    ((*gv.c_m).col(ih) % (*gv.v_liq).col(ih)
+                    + (*gv.c_m).col(ih+1) % (*gv.v_liq).col(ih+1))
+                    / ((*gv.v_liq).col(ih) + (*gv.v_liq).col(ih+1));
                 }
                 
                 (*gv.c_s).col(ih+1) = 
@@ -227,7 +227,7 @@ void watermass_calc_internal(globalvar& gv,globalpar& gp,double* deltt,double *v
                     + (*gv.c_s).col(ih+1) % (*gv.v_swe).col(ih+1))
                     / ((*gv.v_swe).col(ih) + (*gv.v_swe).col(ih+1));
 
-                (*gv.v_liqwater).col(ih+1) = (*gv.v_liqwater).col(ih+1) + (*gv.v_liqwater).col(ih);
+                (*gv.v_liq).col(ih+1) = (*gv.v_liq).col(ih+1) + (*gv.v_liq).col(ih);
                 (*gv.v_swe).col(ih+1) = (*gv.v_swe).col(ih+1) + (*gv.v_swe).col(ih);
 
                 // adust some variables to the removal of a layer
@@ -240,7 +240,7 @@ void watermass_calc_internal(globalvar& gv,globalpar& gp,double* deltt,double *v
                 (*gv.c_m).shed_col(ih);
                 (*gv.c_s).shed_col(ih);
                 //(*gv.exchange_si).shed_cols(0,0);
-                (*gv.v_liqwater).shed_col(ih);
+                (*gv.v_liq).shed_col(ih);
                 (*gv.v_swe).shed_col(ih);
                 (*gv.v_air).shed_col(ih);
                 (*gv.exchange_is).shed_col(ih);
@@ -255,10 +255,10 @@ void watermass_calc_internal(globalvar& gv,globalpar& gp,double* deltt,double *v
     }
        
     // update mass frac
-    (*gv.vfrac2d_m) = (*gv.v_liqwater) / 
-        ((*gv.v_liqwater) +  (*gv.v_swe) +  (*gv.v_air));
+    (*gv.vfrac2d_m) = (*gv.v_liq) / 
+        ((*gv.v_liq) +  (*gv.v_swe) +  (*gv.v_air));
     (*gv.vfrac2d_s) = (*gv.v_swe)
-                / ((*gv.v_liqwater) +  (*gv.v_swe) +  (*gv.v_air));
+                / ((*gv.v_liq) +  (*gv.v_swe) +  (*gv.v_air));
 
     // melt volumes and fractions
     if (gv.wetfront_cell > 0)
@@ -286,8 +286,8 @@ void watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
     //
     // a) Cells that melt -> meltloc  
     // (*gv.c_s) -> c_s concentration doens't change because it is melting
-     (*gv.c_m)(meltloc) = ((*gv.c_m)(meltloc) % (*gv.v_liqwater)(meltloc) + (*gv.c_s)(meltloc) % (*gv.ice2liq_1_ext)(meltloc) * (*deltt) )
-        / ((*gv.v_liqwater)(meltloc) + (*gv.ice2liq_1_ext)(meltloc)); 
+     (*gv.c_m)(meltloc) = ((*gv.c_m)(meltloc) % (*gv.v_liq)(meltloc) + (*gv.c_s)(meltloc) % (*gv.ice2liq_1_ext)(meltloc) * (*deltt) )
+        / ((*gv.v_liq)(meltloc) + (*gv.ice2liq_1_ext)(meltloc)); 
 
     // b) Cells that freeze -> freezeloc
     // (*gv.c_m) -> c_m concentration doens't change because it is freezing
@@ -298,7 +298,7 @@ void watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
     // 2nd) update new swe and liqwater masses
     //
     (*gv.v_swe) = (*gv.v_swe) - (*gv.ice2liq_1_ext) * (*deltt) ;
-    (*gv.v_liqwater) = (*gv.v_liqwater) + (*gv.ice2liq_1_ext) * (*deltt) ;
+    (*gv.v_liq) = (*gv.v_liq) + (*gv.ice2liq_1_ext) * (*deltt) ;
 
 
 }

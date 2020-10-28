@@ -68,6 +68,9 @@ void checkmesh2(double* H_local,double* L_local,double* h_layer,double* l_layer,
     *nh = 0;
     *nl = 0;
 
+    msg = "> Checking MESH... ";
+    print_screen_log(logPULSEfile,&msg);  
+
     if(flstatus == true) 
     {
         for(a=0;a<filedata.col(1).n_elem;a++)
@@ -79,28 +82,57 @@ void checkmesh2(double* H_local,double* L_local,double* h_layer,double* l_layer,
         (*H_local) =  (*nh) * (*h_layer);
         (*L_local) =  (*nl) * (*l_layer);
         
-        msg = "Mesh: identified ";
+        msg = "    > MESH identified";
         print_screen_log(logPULSEfile,&msg);  
         
     }else{
-        msg = "Mesh: not identified -> Results/*.txt file(s) missing";
+        msg = "    > MESH fail: Results/*.txt file(s) missing";
         print_screen_log(logPULSEfile,&msg);  
         std::abort();
     }     
 }
 
 // Read general matrix file for SNOWPACK = external
-void read_matrixes_ext(globalpar& gp,globalvar& gv,
+bool read_matrixes_ext(globalpar& gp,globalvar& gv,
             std::string* v_ice_file,std::string* v_liquid_file,std::string* v_ice2liq_1_file,
-            std::string* v_ice2liq_2_file, std::string*fluxQ_file)
+            std::string* v_ice2liq_2_file, std::string*fluxQ_file,std::ofstream* logPULSEfile)
 {
+    bool err_flag = false;
+    bool flstatus;
+    std::string file_failed;
 
-    arma::mat filedata; 
-    bool flstatus = filedata.load(*v_ice_file,arma::csv_ascii);
+    if (err_flag == false) flstatus = (*gv.v_swe_ext).load(*v_ice_file,arma::csv_ascii);
+    if (flstatus == true) file_failed = (*v_ice_file);
+    
+    if (err_flag == false) flstatus = (*gv.v_liq_ext).load(*v_liquid_file,arma::csv_ascii);
+    if (flstatus == true) file_failed = (*v_liquid_file);
 
-    //ice2liq_1_ext = ;
-    //ice2liq_2_ext = ;
-    //fluxQ_ext = ;
+    if (err_flag == false) flstatus = (*gv.ice2liq_1_ext).load(*v_ice2liq_1_file,arma::csv_ascii);
+    if (flstatus == false){
+        file_failed = (*v_ice2liq_1_file);
+        err_flag = true;
+    }
+
+    if (err_flag == false) flstatus = (*gv.ice2liq_2_ext).load(*v_ice2liq_2_file,arma::csv_ascii);
+    if (flstatus == false){
+        file_failed = (*v_ice2liq_2_file);
+        err_flag = true;
+    }
+
+    if (err_flag == false) flstatus = (*gv.fluxQ_ext).load(*fluxQ_file,arma::csv_ascii);
+    if (flstatus == false){
+        file_failed = (*fluxQ_file);
+        err_flag = true;
+    }
+
+    if (err_flag == true)
+    {
+        std::string msg = "> ERROR reading file: " + file_failed;
+        print_screen_log(logPULSEfile,&msg); 
+        err_flag = true;
+        return err_flag;
+    }
+
 }
 
 // Function to remove all spaces from a given string 

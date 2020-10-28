@@ -44,7 +44,7 @@ bool print_results(globalvar& gv,globalpar& gp, int print_tag, unsigned int prin
             filedataR(a,3) = (*gv.c_s).at(il,ih); 
             filedataR(a,4) = (*gv.vfrac2d_m).at(il,ih);
             filedataR(a,5) = (*gv.vfrac2d_s).at(il,ih);
-            filedataR(a,6) = (*gv.v_liqwater).at(il,ih)*1000*1000; // m*m*m -> mm*mm*m
+            filedataR(a,6) = (*gv.v_liq).at(il,ih)*1000*1000; // m*m*m -> mm*mm*m
             filedataR(a,7) = (*gv.v_swe).at(il,ih)*1000*1000; // m*m*m -> mm*mm*m
             filedataR(a,8) = (*gv.v_air).at(il,ih)*1000*1000; // m*m*m -> mm*mm*m
             //filedataR(a,9) = (*gv.exchange_si).at(il,ih); 
@@ -66,7 +66,7 @@ bool print_results(globalvar& gv,globalpar& gp, int print_tag, unsigned int prin
     header(3) = "c_s [user_defined]";
     header(4) = "vfrac_liqwater [-]";
     header(5) = "vfrac_swe [-]";
-    header(6) = "v_liqwater [mm*mm*m]";
+    header(6) = "v_liq [mm*mm*m]";
     header(7) = "v_swe [mm*mm*m]";
     header(8) = "v_air [mm*mm*m]";     
     

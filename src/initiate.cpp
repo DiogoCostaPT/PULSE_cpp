@@ -47,7 +47,7 @@ void initiate(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
             (*gv.c_s).at(il,ih) = filedata(a,3);
             (*gv. vfrac2d_m).at(il,ih) = filedata(a,4);
             (*gv. vfrac2d_s).at(il,ih) = filedata(a,5);
-            (*gv.v_liqwater).at(il,ih) = filedata(a,6)/(1000*1000); // mm*mm*m -> m*m*m
+            (*gv.v_liq).at(il,ih) = filedata(a,6)/(1000*1000); // mm*mm*m -> m*m*m
             (*gv.v_swe).at(il,ih) = filedata(a,7)/(1000*1000); // mm*mm*m -> m*m*m
             (*gv.v_air).at(il,ih) = filedata(a,8)/(1000*1000); // mm*mm*m -> m*m*m
             //(*gv.exchange_si).at(il,ih) = filedata(a,9);

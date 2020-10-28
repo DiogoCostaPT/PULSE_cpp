@@ -54,7 +54,7 @@ public:
     vfrac2d_m = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     vfrac2d_s = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
 
-    v_liqwater = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
+    v_liq = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     v_swe = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     v_air = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
 
@@ -63,6 +63,8 @@ public:
     meteoall_int = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_meteo_file,5));
     qcmel_int = std::unique_ptr<arma::Mat<double>>( new  arma::mat(n_qmelt_file,2));
     // For snowmodel = external  
+    v_liq_ext = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
+    v_swe_ext = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     ice2liq_1_ext = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     ice2liq_2_ext = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
     fluxQ_ext = std::unique_ptr<arma::Mat<double>>( new  arma::mat(nl,nh));
@@ -72,10 +74,11 @@ public:
     size_t nh,nl,n_qmelt_file,n_meteo_file;
   
     std::unique_ptr<arma::Mat<double>> c_m,c_s,exchange_is,velc_2d,disp_2d,vfrac2d_m,vfrac2d_s;
-    std::unique_ptr<arma::Mat<double>> v_swe,v_air,v_liqwater;
+    std::unique_ptr<arma::Mat<double>> v_swe,v_air,v_liq;
     
     std::unique_ptr<arma::Mat<double>> qcmel_int,meteoall_int; // SNOWMODEL = internal
-    std::unique_ptr<arma::Mat<double>> ice2liq_1_ext, ice2liq_2_ext, fluxQ_ext; // SNOWMODEL = external
+    std::unique_ptr<arma::Mat<double>> v_liq_ext, v_swe_ext, 
+      ice2liq_1_ext, ice2liq_2_ext, fluxQ_ext; // SNOWMODEL = external
 
     double snowH = 0.0f, // snowpack depth
             snowL = 0.0f, // snowpack horizontal lenght

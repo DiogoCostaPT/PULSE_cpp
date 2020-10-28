@@ -260,12 +260,12 @@ while(winopen == 1)
         file_0txt = [];
 
         cm_0 = 0;
-        v_liqwater = 0; % m3
+        v_liq = 0; % m3
         v_swe = H_LAY * L_LAY * DENSITY_FRESHSNOW/DENSITY_WATER; % m3
         v_air = H_LAY * L_LAY * v_frac_air_init;
 
-        vfrac_s = v_swe / (v_swe + v_liqwater);
-        vfrac_m = v_liqwater / (v_swe + v_liqwater);
+        vfrac_s = v_swe / (v_swe + v_liq);
+        vfrac_m = v_liq / (v_swe + v_liq);
 
         for hci = 0:cell_h_num-1
             for lci = 0:cell_l_num-1
@@ -276,7 +276,7 @@ while(winopen == 1)
 
             cs_0 = NO3_conc_mgl(iloc_max(end));
 
-            file_0txt = [file_0txt;[hci,lci,cm_0,cs_0,vfrac_m,vfrac_s,v_liqwater,v_swe,v_air]];
+            file_0txt = [file_0txt;[hci,lci,cm_0,cs_0,vfrac_m,vfrac_s,v_liq,v_swe,v_air]];
 
             end
 
@@ -290,7 +290,7 @@ while(winopen == 1)
         header{4} = "c_s [user_defined]";
         header{5} = "vfrac_liqwater [-]";
         header{6} = "vfrac_swe [-]";
-        header{7} = "v_liqwater [mm*mm*m]";
+        header{7} = "v_liq [mm*mm*m]";
         header{8} = "v_swe [mm*mm*m]";
         header{9} = "v_air [mm*mm*m]";     
 

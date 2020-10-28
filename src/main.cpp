@@ -115,15 +115,18 @@ int main(int argc, char* argv[])
             }
 
             err_flag = read_meteofile(gp,gv,&meteo_file,&logPULSEfile); // read meteo file
-             if (err_flag == true){
+            if (err_flag == true){
                 std::abort();
             }
 
         }else if(gp.snowmodel == 1){ // SNOWMODEL = external
 
-            read_matrixes_ext(gp,gv,
-                &v_ice_file,&v_liquid_file,&v_ice2liq_1_file,&v_ice2liq_2_file,&fluxQ_file);
-
+            err_flag = read_matrixes_ext(gp,gv,
+                &v_ice_file,&v_liquid_file,&v_ice2liq_1_file,&v_ice2liq_2_file,&fluxQ_file,
+                &logPULSEfile);
+            if (err_flag == true){
+                std::abort();
+            }
         }
 
         
