@@ -130,21 +130,37 @@ int main(int argc, char* argv[])
         }
 
         
-
         // Check if input data is consistent
-        if (n_qmelt_file!=n_meteo_file){
-            if (n_qmelt_file>n_meteo_file){
-                signmg = ">";
-                gp.Tsim = gp.Tmeteofile;
+        if (gp.snowmodel == 0){
+            if (n_qmelt_file!=n_meteo_file){
+                if (n_qmelt_file>n_meteo_file){
+                    signmg = ">";
+                    gp.Tsim = gp.Tmeteofile;
+                }else{
+                    signmg = "<";
+                    gp.Tsim = gp.Tqmeltfile;
+                }
+                msg = "Input timeseries need to have the same size: '" + (qmelt_file) + "' "
+                    + signmg + " '" + (meteo_file) + "' " + "-> END_TIME reset to min value";   
+                print_screen_log(&logPULSEfile,&msg); 
             }else{
-                signmg = "<";
                 gp.Tsim = gp.Tqmeltfile;
             }
-            msg = "Input timeseries need to have the same size: '" + (qmelt_file) + "' "
-                + signmg + " '" + (meteo_file) + "' " + "-> END_TIME reset to min value";   
-            print_screen_log(&logPULSEfile,&msg); 
-        }else{
-            gp.Tsim = gp.Tqmeltfile;
+        }else if (gp.snowmodel == 1){
+            bool is_same_size = true;
+            is_same_size = (arma::size((*gv.v_liq_ext)) == arma::size(*gv.v_swe_ext));
+            if (is_same_size = true)
+                is_same_size = (arma::size((*gv.v_liq_ext)) == arma::size(*gv.ice2liq_1_ext));
+            if (is_same_size = true)
+                is_same_size = (arma::size((*gv.v_liq_ext)) == arma::size(*gv.ice2liq_2_ext));
+            if (is_same_size = true)
+                is_same_size = (arma::size((*gv.v_liq_ext)) == arma::size(*gv.fluxQ_ext));
+            if (is_same_size == false)
+            {
+                std::string msg = "> ERROR: matrix dimensions in input files do not match";
+                print_screen_log(&logPULSEfile,&msg); 
+                std::abort();
+            }
         }
 
         // initial conditions
