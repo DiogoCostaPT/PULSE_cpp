@@ -9,7 +9,8 @@
 bool read_simset(globalpar& gp,const std::string& modset_flname, 
                 std::string* sim_purp,double *h_layer,double *l_layer,
                 std::string* qmelt_file,std::string* meteo_file, // if SNOWMODEL = internal 
-                std::string* time_file, std::string* v_ice_file,std::string* v_liquid_file, std::string* v_ice2liq_1_file, std::string* v_ice2liq_2_file, std::string* fluxQ_file, // if SNOWMODEL = external
+                std::string* time_file, std::string* v_ice_file,std::string* v_liquid_file, std::string* v_ice2liq_1_file, 
+                    std::string* v_ice2liq_2_file, std::string* fluxQ_file, std::string* preci_c_ext_file, // if SNOWMODEL = external
                 std::ofstream* logPULSEfile,
                 int* n_qmelt_file, int* n_meteo_file, 
                 int* n_timExt, int* n_maxLayerExt,
@@ -53,6 +54,7 @@ bool read_simset(globalpar& gp,const std::string& modset_flname,
         if(str.find("METEO_FILE") != std::string::npos){*meteo_file = removeSpaces(str.substr(strlen("METEO_FILE")+1));}; // precipitation and precipitation chemistry file
         // if SNOWMODEL = external
         if(str.find("TIME_FILE") != std::string::npos){*time_file = removeSpaces(str.substr(strlen("TIME_FILE")+1));}; 
+        if(str.find("PRECIP_C_FILE") != std::string::npos){*preci_c_ext_file = removeSpaces(str.substr(strlen("PRECIP_C_FILE")+1));}; 
         if(str.find("V_ICE_FILE") != std::string::npos){*v_ice_file = removeSpaces(str.substr(strlen("V_ICE_FILE")+1));}; 
         if(str.find("V_LIQUID_FILE") != std::string::npos){*v_liquid_file = removeSpaces(str.substr(strlen("V_LIQUID_FILE")+1));}; 
         if(str.find("V_ICE2LIQ_1_FILE") != std::string::npos){*v_ice2liq_1_file = removeSpaces(str.substr(strlen("V_ICE2LIQ_1_FILE")+1));}; 
@@ -157,6 +159,31 @@ bool read_simset(globalpar& gp,const std::string& modset_flname,
 
         }else{
             msg = "        > TIME_FILE: not found";
+            print_screen_log(logPULSEfile,&msg); 
+            err_flag = true;
+            return err_flag;
+        }
+
+        // check PRECIP_C_FILE
+        if(!(*preci_c_ext_file).empty()){ 
+            msg = "        > PRECIP_C_FILE found: " + (*preci_c_ext_file);
+            print_screen_log(logPULSEfile,&msg); 
+
+            // Reading PRECIP_C_FILE to get size and allocate correct memory in global
+            arma::mat filedata; 
+            bool flstatus =  filedata.load((*preci_c_ext_file),arma::csv_ascii);
+            if(flstatus==true){
+                msg = "        > PRECIP_C_FILE: loading successful";
+                print_screen_log(logPULSEfile,&msg);
+            }else{
+                msg = "        > PRECIP_C_FILE: loading failed";
+                print_screen_log(logPULSEfile,&msg);
+                err_flag = true;
+                return err_flag;
+            }
+
+        }else{
+            msg = "        > PRECIP_C_FILE: not found";
             print_screen_log(logPULSEfile,&msg); 
             err_flag = true;
             return err_flag;

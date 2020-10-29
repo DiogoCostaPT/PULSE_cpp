@@ -11,7 +11,8 @@
 bool read_simset(globalpar& gp,const std::string& modset_flname, 
                 std::string* sim_purp,double *h_layer,double *l_layer,
                 std::string* qmelt_file,std::string* meteo_file, // if SNOWMODEL = internal 
-                std::string* time_file, std::string* v_ice_file,std::string* v_liquid_file, std::string* v_ice2liq_1_file, std::string* v_ice2liq_2_file, std::string* fluxQ_file, // if SNOWMODEL = external
+                std::string* time_file, std::string* v_ice_file,std::string* v_liquid_file, std::string* v_ice2liq_1_file, 
+                    std::string* v_ice2liq_2_file, std::string* fluxQ_file, std::string* preci_c_ext_file, // if SNOWMODEL = external
                 std::ofstream* logPULSEfile,
                 int* n_qmelt_file, int* n_meteo_file, 
                 int* n_timExt, int* n_maxLayerExt,

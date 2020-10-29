@@ -49,8 +49,9 @@ int main(int argc, char* argv[])
     bool err_flag = false;
 
     std::string sim_purp;
-    std::string qmelt_file,meteo_file,msg;
-    std::string time_file, v_ice_file,v_liquid_file,v_ice2liq_1_file,v_ice2liq_2_file,fluxQ_file;
+    std::string qmelt_file,meteo_file,msg; // // SNOWMODEL == internal
+    std::string time_file, v_ice_file,v_liquid_file,v_ice2liq_1_file, // SNOWMODEL = external
+        v_ice2liq_2_file,fluxQ_file, prec_c_ext_file ;
     std::ofstream logPULSEfile ("log.pulse");
     
     std::string modset_flname (argv[1]);
@@ -80,7 +81,8 @@ int main(int argc, char* argv[])
         err_flag = read_simset(gp,modset_flname,
             &sim_purp,&h_layer,&l_layer,
             &qmelt_file,&meteo_file, // if SNOWMODEL = internal
-            &time_file, &v_ice_file,&v_liquid_file,&v_ice2liq_1_file,&v_ice2liq_2_file,&fluxQ_file,  // if SNOWMODEL = external
+            &time_file, &v_ice_file,&v_liquid_file,&v_ice2liq_1_file, // if SNOWMODEL = external
+                &v_ice2liq_2_file,&fluxQ_file,&prec_c_ext_file,  
             &logPULSEfile,
             &n_qmelt_file,&n_meteo_file,
             &n_timExt, &n_maxLayerExt,
@@ -121,8 +123,8 @@ int main(int argc, char* argv[])
         }else if(gp.snowmodel == 1){ // SNOWMODEL = external
 
             err_flag = read_matrixes_ext(gp,gv,
-                &time_file,&v_ice_file,&v_liquid_file,&v_ice2liq_1_file,&v_ice2liq_2_file,&fluxQ_file,
-                &logPULSEfile);
+                &time_file,&v_ice_file,&v_liquid_file,&v_ice2liq_1_file,
+                &v_ice2liq_2_file,&fluxQ_file,&prec_c_ext_file,&logPULSEfile);
             if (err_flag == true){
                 std::abort();
             }
@@ -149,6 +151,8 @@ int main(int argc, char* argv[])
             bool is_same_size = true;
 
                 if ((*gv.time_ext).n_rows != n_timExt) is_same_size = false;
+
+                if ((*gv.preci_c_ext).n_rows != n_timExt) is_same_size = false;
                 
                 if ((*gv.v_swe_ext).n_rows != n_timExt) is_same_size = false;
                 if ((*gv.v_swe_ext).n_cols != n_maxLayerExt) is_same_size = false;

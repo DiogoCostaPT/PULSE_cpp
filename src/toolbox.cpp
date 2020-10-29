@@ -94,8 +94,9 @@ void checkmesh2(double* H_local,double* L_local,double* h_layer,double* l_layer,
 
 // Read general matrix file for SNOWPACK = external
 bool read_matrixes_ext(globalpar& gp,globalvar& gv,
-            std::string* time_file, std::string* v_ice_file,std::string* v_liquid_file,std::string* v_ice2liq_1_file,
-            std::string* v_ice2liq_2_file, std::string*fluxQ_file,std::ofstream* logPULSEfile)
+            std::string* time_file, std::string* v_ice_file,std::string* v_liquid_file,
+            std::string* v_ice2liq_1_file,std::string* v_ice2liq_2_file, std::string*fluxQ_file, 
+            std::string* prec_c_ext_file,std::ofstream* logPULSEfile)
 {
     bool err_flag = false;
     bool flstatus;
@@ -103,6 +104,9 @@ bool read_matrixes_ext(globalpar& gp,globalvar& gv,
 
     if (err_flag == false) flstatus = (*gv.time_ext).load(*time_file,arma::csv_ascii);
     if (flstatus == true) file_failed = (*time_file);
+
+    if (err_flag == false) flstatus = (*gv.preci_c_ext).load(*prec_c_ext_file,arma::csv_ascii);
+    if (flstatus == true) file_failed = (*prec_c_ext_file);
     
     if (err_flag == false) flstatus = (*gv.v_swe_ext).load(*v_ice_file,arma::csv_ascii);
     if (flstatus == true) file_failed = (*v_ice_file);

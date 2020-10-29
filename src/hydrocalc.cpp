@@ -289,6 +289,7 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
         arma::mat v_ice2liq_1_ext_t = (*gv.v_ice2liq_1_ext)(t,arma::span::all);
         arma::mat v_ice2liq_2_ext_t = (*gv.v_ice2liq_2_ext)(t,arma::span::all);
         arma::mat fluxQ_ext_t = (*gv.fluxQ_ext)(t,arma::span::all);
+        double prec_c_ext_t = (*gv.preci_c_ext)(t,0);
 
         // Identify the layers with snow
         arma::uvec snowlay = arma::find(v_swe_ext_t>0.f);
@@ -316,7 +317,7 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
 
             // Water Quality
             (*gv.c_m).insert_cols(0,diff_num_snowlay); // set to zero by default
-            arma::mat add_snow_layers_swe_conc = arma::ones<arma::mat>(1,diff_num_snowlay) * gv.precip_c_t;
+            arma::mat add_snow_layers_swe_conc = arma::ones<arma::mat>(1,diff_num_snowlay) * prec_c_ext_t;
             (*gv.c_s).insert_cols(0,add_snow_layers_swe_conc); // set to precip_c_t
             
         }else if (diff_num_snowlay < 0){ // Melt !!! At the moment it is just removing that layer
