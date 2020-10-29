@@ -73,7 +73,7 @@ void checkmesh2(double* H_local,double* L_local,double* h_layer,double* l_layer,
 
     if(flstatus == true) 
     {
-        for(a=0;a<filedata.col(1).n_elem;a++)
+        for(a=0;a<filedata.n_rows;a++)
         {
             (*nh) = std::max((*nh), int(filedata(a,0)) + 1);  
             (*nl) = std::max((*nl), int(filedata(a,1)) + 1);  

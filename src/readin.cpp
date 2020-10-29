@@ -9,10 +9,10 @@
 bool read_simset(globalpar& gp,const std::string& modset_flname, 
                 std::string* sim_purp,double *h_layer,double *l_layer,
                 std::string* qmelt_file,std::string* meteo_file, // if SNOWMODEL = internal 
-                std::string* v_ice_file,std::string* v_liquid_file, std::string* v_ice2liq_1_file, std::string* v_ice2liq_2_file, std::string* fluxQ_file, // if SNOWMODEL = external
+                std::string* time_ext_file, std::string* v_ice_file,std::string* v_liquid_file, std::string* v_ice2liq_1_file, std::string* v_ice2liq_2_file, std::string* fluxQ_file, // if SNOWMODEL = external
                 std::ofstream* logPULSEfile,
                 int* n_qmelt_file, int* n_meteo_file, 
-                int* n_v_ice_file,int* n_v_liquid_file,int* n_v_ice2liq_1_file,int* n_v_ice2liq_2_file,int* n_fluxQ_file,
+                int* n_timExt, int* n_maxLayerExt,
                 double *vfrac_air_frshsnow, double *compatfact
                )
 {
@@ -52,6 +52,7 @@ bool read_simset(globalpar& gp,const std::string& modset_flname,
         if(str.find("QMELT_FILE") != std::string::npos){*qmelt_file = removeSpaces(str.substr(strlen("QMELT_FILE")+1));}; // snowmelt file
         if(str.find("METEO_FILE") != std::string::npos){*meteo_file = removeSpaces(str.substr(strlen("METEO_FILE")+1));}; // precipitation and precipitation chemistry file
         // if SNOWMODEL = external
+        if(str.find("TIME_EXT") != std::string::npos){*time_ext_file = removeSpaces(str.substr(strlen("TIME_EXT")+1));}; 
         if(str.find("V_ICE_FILE") != std::string::npos){*v_ice_file = removeSpaces(str.substr(strlen("V_ICE_FILE")+1));}; 
         if(str.find("V_LIQUID_FILE") != std::string::npos){*v_liquid_file = removeSpaces(str.substr(strlen("V_LIQUID_FILE")+1));}; 
         if(str.find("V_ICE2LIQ_1_FILE") != std::string::npos){*v_ice2liq_1_file = removeSpaces(str.substr(strlen("V_ICE2LIQ_1_FILE")+1));}; 
@@ -87,8 +88,8 @@ bool read_simset(globalpar& gp,const std::string& modset_flname,
             arma::mat filedata; 
             bool flstatus =  filedata.load((*qmelt_file),arma::csv_ascii);
             if(flstatus==true){
-                *n_qmelt_file = filedata.col(1).n_elem;
-                msg = "        > QMELT_FILE: loading sucessful";
+                *n_qmelt_file = filedata.n_rows;
+                msg = "        > QMELT_FILE: loading successful";
                 print_screen_log(logPULSEfile,&msg);
             }else{
                 msg = "        > QMELT_FILE: loading failed";
@@ -113,8 +114,8 @@ bool read_simset(globalpar& gp,const std::string& modset_flname,
             arma::mat filedata; 
             bool flstatus =  filedata.load((*meteo_file),arma::csv_ascii);
             if(flstatus==true){
-                *n_meteo_file = filedata.col(1).n_elem;
-                msg = "        > METEO_FILE: loading sucessful";
+                *n_meteo_file = filedata.n_rows;
+                msg = "        > METEO_FILE: loading successful";
                 print_screen_log(logPULSEfile,&msg);
             }else{
                 msg = "        > METEO_FILE: loading failed";
@@ -144,8 +145,9 @@ bool read_simset(globalpar& gp,const std::string& modset_flname,
             arma::mat filedata; 
             bool flstatus =  filedata.load((*v_ice_file),arma::csv_ascii);
             if(flstatus==true){
-                *n_v_ice_file = filedata.col(1).n_elem; 
-                msg = "        > V_ICE_FILE: loading sucessful";
+                *n_timExt = filedata.n_rows;
+                *n_maxLayerExt = filedata.n_cols;
+                msg = "        > V_ICE_FILE: loading successful";
                 print_screen_log(logPULSEfile,&msg);
             }else{
                 msg = "        > V_ICE_FILE: loading failed";
@@ -170,8 +172,7 @@ bool read_simset(globalpar& gp,const std::string& modset_flname,
             arma::mat filedata; 
             bool flstatus =  filedata.load((*v_liquid_file),arma::csv_ascii);
             if(flstatus==true){
-                *n_v_liquid_file = filedata.col(1).n_elem; 
-                msg = "        > V_LIQUID_FILE: loading sucessful";
+                msg = "        > V_LIQUID_FILE: loading successful";
                 print_screen_log(logPULSEfile,&msg);
             }else{
                 msg = "        > V_LIQUID_FILE: loading failed";
@@ -196,8 +197,7 @@ bool read_simset(globalpar& gp,const std::string& modset_flname,
             arma::mat filedata; 
             bool flstatus =  filedata.load((*v_ice2liq_1_file),arma::csv_ascii);
             if(flstatus==true){
-                *n_v_ice2liq_1_file = filedata.col(1).n_elem; 
-                msg = "        > V_ICE2LIQ_1_FILE: loading sucessful";
+                msg = "        > V_ICE2LIQ_1_FILE: loading successful";
                 print_screen_log(logPULSEfile,&msg);
             }else{
                 msg = "        > V_ICE2LIQ_1_FILE: loading failed";
@@ -222,8 +222,7 @@ bool read_simset(globalpar& gp,const std::string& modset_flname,
             arma::mat filedata; 
             bool flstatus =  filedata.load((*v_ice2liq_2_file),arma::csv_ascii);
             if(flstatus==true){
-                *n_v_ice2liq_2_file = filedata.col(1).n_elem; 
-                msg = "        > V_ICE2LIQ_2_FILE: loading sucessful";
+                msg = "        > V_ICE2LIQ_2_FILE: loading successful";
                 print_screen_log(logPULSEfile,&msg);
             }else{
                 msg = "        > V_ICE2LIQ_2_FILE: loading failed";
@@ -248,8 +247,7 @@ bool read_simset(globalpar& gp,const std::string& modset_flname,
             arma::mat filedata; 
             bool flstatus =  filedata.load((*fluxQ_file),arma::csv_ascii);
             if(flstatus==true){
-                *n_fluxQ_file = filedata.col(1).n_elem; 
-                msg = "        > FLUXQ_FILE: loading sucessful";
+                msg = "        > FLUXQ_FILE: loading successful";
                 print_screen_log(logPULSEfile,&msg);
             }else{
                 msg = "        > FLUXQ_FILE: loading failed";
@@ -300,7 +298,7 @@ bool read_meteofile(globalpar& gp,globalvar& gv,std::string* meteo_file,
      
     arma::mat filedataM; 
     bool flstatusM =  filedataM.load((*meteo_file),arma::csv_ascii);
-    int num_cols = filedataM.col(1).n_elem-1;
+    int num_cols = filedataM.n_rows-1;
 
     if(flstatusM == true) {
         for(a=0;a<num_cols;a++){
@@ -343,7 +341,7 @@ bool read_qmelfile(globalpar& gp,globalvar& gv,std::string* qmelt_file,
       
     arma::mat filedataQ; 
     bool flstatusQ =  filedataQ.load((*qmelt_file),arma::csv_ascii);
-    int num_cols = filedataQ.col(1).n_elem-1;
+    int num_cols = filedataQ.n_rows-1;
 
     if(flstatusQ == true) {
         for(a=0;a<num_cols;a++){

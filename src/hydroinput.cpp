@@ -13,7 +13,7 @@ void findInterpMeteo(globalvar& gv,double *tcum)
             precipt_c_calc_i = 0.0f; // concentration of added snow
     unsigned int nprec = 0;;
     
-    nprec = int((*gv.meteoall_int).col(0).n_elem) - 1;
+    nprec = int((*gv.meteoall_int).n_rows) - 1;
     
     // identification of the time step and linear interpolation for time t
     meteo_t_i2 = 0.0f;
@@ -52,7 +52,7 @@ void findInterpQmelt(globalvar& gv,double *tcum)
             qmlt_i = 0.0f; // melt rate
     unsigned int nqmlt = 0;;
     
-    nqmlt = int((*gv.meteoall_int).col(0).n_elem) - 1;
+    nqmlt = int((*gv.meteoall_int).n_rows) - 1;
     
     // identification of the time step and linear interpolation for time t
     qmlt_t_i2 = 0.0f;

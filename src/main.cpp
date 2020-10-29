@@ -44,14 +44,13 @@ int main(int argc, char* argv[])
     double H_local,L_local,h_layer,l_layer,vfrac_air_frshsnow,compatfact;
     int nl,nh;
     int n_qmelt_file = 0, n_meteo_file = 0; // SNOWMODEL == internal
-    int n_v_ice_file = 0,  n_v_liquid_file = 0, 
-        n_v_ice2liq_1_file = 0,  n_v_ice2liq_2_file = 0,  n_fluxQ_file = 0; // SNOWMODEL = external
+    int n_timExt = 0, n_maxLayerExt = 0; // SNOWMODEL = external
 
     bool err_flag = false;
 
     std::string sim_purp;
     std::string qmelt_file,meteo_file,msg;
-    std::string v_ice_file,v_liquid_file,v_ice2liq_1_file,v_ice2liq_2_file,fluxQ_file;
+    std::string time_ext_file, v_ice_file,v_liquid_file,v_ice2liq_1_file,v_ice2liq_2_file,fluxQ_file;
     std::ofstream logPULSEfile ("log.pulse");
     
     std::string modset_flname (argv[1]);
@@ -81,10 +80,10 @@ int main(int argc, char* argv[])
         err_flag = read_simset(gp,modset_flname,
             &sim_purp,&h_layer,&l_layer,
             &qmelt_file,&meteo_file, // if SNOWMODEL = internal
-            &v_ice_file,&v_liquid_file,&v_ice2liq_1_file,&v_ice2liq_2_file,&fluxQ_file,  // if SNOWMODEL = external
+            &time_ext_file, &v_ice_file,&v_liquid_file,&v_ice2liq_1_file,&v_ice2liq_2_file,&fluxQ_file,  // if SNOWMODEL = external
             &logPULSEfile,
             &n_qmelt_file,&n_meteo_file,
-            &n_v_ice_file,&n_v_liquid_file,&n_v_ice2liq_1_file,&n_v_ice2liq_2_file,&n_fluxQ_file,
+            &n_timExt, &n_maxLayerExt,
             &vfrac_air_frshsnow,&compatfact);  
 
         // TERMINATE MODEL if problem with input data
@@ -98,7 +97,7 @@ int main(int argc, char* argv[])
         checkmesh2(&H_local,&L_local,&h_layer,&l_layer,&nh,&nl,&logPULSEfile,&results_flname);
 
         // Asign global variables (heap)
-        globalvar gv(nh,nl,n_qmelt_file,n_meteo_file); 
+        globalvar gv(nh,nl,n_qmelt_file,n_meteo_file,n_timExt,n_maxLayerExt); 
         gv.snowH = H_local;
         gv.snowL = L_local;
         gv.snowh = h_layer;
@@ -130,7 +129,7 @@ int main(int argc, char* argv[])
         }
 
         
-        // Check if input data is consistent
+        // Check if input data is consistent and get Tsim
         if (gp.snowmodel == 0){
             if (n_qmelt_file!=n_meteo_file){
                 if (n_qmelt_file>n_meteo_file){
@@ -148,23 +147,37 @@ int main(int argc, char* argv[])
             }
         }else if (gp.snowmodel == 1){
             bool is_same_size = true;
-            is_same_size = (arma::size((*gv.v_liq_ext)) == arma::size(*gv.v_swe_ext));
-            if (is_same_size = true)
-                is_same_size = (arma::size((*gv.v_liq_ext)) == arma::size(*gv.ice2liq_1_ext));
-            if (is_same_size = true)
-                is_same_size = (arma::size((*gv.v_liq_ext)) == arma::size(*gv.ice2liq_2_ext));
-            if (is_same_size = true)
-                is_same_size = (arma::size((*gv.v_liq_ext)) == arma::size(*gv.fluxQ_ext));
+
+                if ((*gv.v_swe_ext).n_rows != n_timExt) is_same_size = false;
+                if ((*gv.v_swe_ext).n_cols != n_maxLayerExt) is_same_size = false;
+
+                if ((*gv.v_liq_ext).n_rows != n_timExt) is_same_size = false;
+                if ((*gv.v_liq_ext).n_cols != n_maxLayerExt) is_same_size = false;
+
+                if ((*gv.ice2liq_1_ext).n_rows != n_timExt) is_same_size = false;
+                if ((*gv.ice2liq_1_ext).n_cols != n_maxLayerExt) is_same_size = false;
+
+                if ((*gv.ice2liq_2_ext).n_rows != n_timExt) is_same_size = false;
+                if ((*gv.ice2liq_2_ext).n_cols != n_maxLayerExt) is_same_size = false;
+
+                if ((*gv.fluxQ_ext).n_rows != n_timExt) is_same_size = false;
+                if ((*gv.fluxQ_ext).n_cols != n_maxLayerExt) is_same_size = false;
+                
             if (is_same_size == false)
             {
                 std::string msg = "> ERROR: matrix dimensions in input files do not match";
                 print_screen_log(&logPULSEfile,&msg); 
                 std::abort();
             }
+
+            // Get Tsim
+            int num_timesteps = (*gv.v_liq_ext).n_rows-1;
+            gp.Tsim = (*gv.v_liq_ext)(num_timesteps,0);
+
         }
 
         // initial conditions
-        initiate(gp,gv,&logPULSEfile,&results_flname);
+        err_flag = initiate(gp,gv,&logPULSEfile,&results_flname);
 
         // call the main PULSE model
         pulsemodel(gp,gv,&logPULSEfile,&results_flname);
