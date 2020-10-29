@@ -181,7 +181,10 @@ int main(int argc, char* argv[])
         err_flag = initiate(gp,gv,&logPULSEfile,&results_flname);
 
         // call the main PULSE model
-        pulsemodel(gp,gv,&logPULSEfile,&results_flname);
+        err_flag = pulsemodel(gp,gv,&logPULSEfile,&results_flname);
+         if (err_flag == true){
+            std::abort();
+        }
 
         // Simulation completed
         msg = "\n......................................... \n Simulation complete";

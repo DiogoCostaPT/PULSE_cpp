@@ -5,7 +5,7 @@
 /* *****
  * Main PULSE model  
  * **** */
-void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
+bool pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
         std::string* results_flname)
 {
     // initiation
@@ -23,6 +23,8 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
     arma::mat exchange_i;
 
     unsigned int il,ih,print_next;
+
+    bool err_flag = false;
         
     tcum = gv.timstart;
     print_next = tcum + gp.print_step;
@@ -90,31 +92,15 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
 
         } else if (gp.snowmodel == 1){ // external
             
-            // Get input data at t time
-            arma::mat v_swe_ext_t = (*gv.v_swe_ext)(t,arma::span::all);
-            arma::mat v_liq_ext_t = (*gv.v_liq_ext)(t,arma::span::all);
-            arma::mat v_ice2liq_1_ext_t = (*gv.v_ice2liq_1_ext)(t,arma::span::all);
-            arma::mat v_ice2liq_2_ext_t = (*gv.v_ice2liq_2_ext)(t,arma::span::all);
-            arma::mat fluxQ_ext_t = (*gv.fluxQ_ext)(t,arma::span::all);
+            err_flag = watermass_calc_external(gv,gp,&deltt,logPULSEfile, t);
+            if (err_flag == true){
+                std::string msg = "> ERROR in watermass_calc_external";
+                print_screen_log(logPULSEfile,&msg); 
+                err_flag = true;
+                return err_flag;
+            }
 
-            // Identify the layers with snow
-            arma::uvec snowlay = arma::find(v_swe_ext_t>0.f);
-
-            // Remove the layers without snow
-            v_swe_ext_t = v_swe_ext_t.elem(snowlay);
-            v_liq_ext_t = v_liq_ext_t.elem(snowlay);
-            v_ice2liq_1_ext_t = v_ice2liq_1_ext_t.elem(snowlay);
-            v_ice2liq_2_ext_t = v_ice2liq_2_ext_t.elem(snowlay);
-            fluxQ_ext_t = fluxQ_ext_t.elem(snowlay);
-
-            // Identify top input (precipitation)
-            //(*gv.snowfall_t)
-            
-            
-
-            
-
-            watermass_calc_external(gv,gp,&deltt,logPULSEfile);
+            t++;
 
         } 
 

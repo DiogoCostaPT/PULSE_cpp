@@ -275,8 +275,36 @@ void watermass_calc_internal(globalvar& gv,globalpar& gp,double* deltt,double *v
 /* *****
  * EXTERNAL CALCULATION: obtain from external model (e.g., SNOWPACK)
  * **** */
-void watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
-        std::ofstream* logPULSEfile){
+bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
+        std::ofstream* logPULSEfile, int t){
+
+    // Get input data at t time
+    arma::mat v_swe_ext_t = (*gv.v_swe_ext)(t,arma::span::all);
+    arma::mat v_liq_ext_t = (*gv.v_liq_ext)(t,arma::span::all);
+    arma::mat v_ice2liq_1_ext_t = (*gv.v_ice2liq_1_ext)(t,arma::span::all);
+    arma::mat v_ice2liq_2_ext_t = (*gv.v_ice2liq_2_ext)(t,arma::span::all);
+    arma::mat fluxQ_ext_t = (*gv.fluxQ_ext)(t,arma::span::all);
+
+    // Identify the layers with snow
+    arma::uvec snowlay = arma::find(v_swe_ext_t>0.f);
+
+    // Remove the layers without snow
+    v_swe_ext_t = v_swe_ext_t.elem(snowlay);
+    v_liq_ext_t = v_liq_ext_t.elem(snowlay);
+    v_ice2liq_1_ext_t = v_ice2liq_1_ext_t.elem(snowlay);
+    v_ice2liq_2_ext_t = v_ice2liq_2_ext_t.elem(snowlay);
+    fluxQ_ext_t = fluxQ_ext_t.elem(snowlay);
+
+    // Identify top input (precipitation) and apply
+    //arma::uvec new_snowlay = v_swe_ext_t.n_cols - (*gv.v_swe).n_cols;
+    //(*gv.snowfall_t) = v_swe_ext_t.tail_nrows(new_snowlay);
+
+    //-> now add a new layer to (*gv.v_swe_t)
+
+
+
+
+
 
     arma::uvec meltloc = find((*gv.v_ice2liq_1_ext) > 0); // cells that melt
     arma::uvec freezeloc = find((*gv.v_ice2liq_1_ext) < 0); // cells that freeze

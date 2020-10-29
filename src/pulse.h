@@ -13,7 +13,7 @@
 #include "FEM_solver.h"
 #include "IonExclusionModel.h"
 
-void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
+bool pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
         std::string* results_flname);
 
 #endif
