@@ -311,9 +311,14 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
             // SWE and liquid
             arma::mat add_snow_layers_swe = arma::reverse(v_swe_ext_t.tail_cols(diff_num_snowlay)); // reverse because pulse adds new layer at col = 0 and not at the end of the array
             arma::mat add_snow_layers_liq = arma::reverse(v_liq_ext_t.tail_cols(diff_num_snowlay)); // reverse because pulse adds new layer at col = 0 and not at the end of the array
-            (*gv.v_swe).insert_cols(0,add_snow_layers_swe);
-            (*gv.v_liq).insert_cols(0,add_snow_layers_liq);
-            (*gv.v_air).insert_cols(0,diff_num_snowlay);
+            (*gv.vfrac2d_m).insert_cols(0,add_snow_layers_swe);  // set to zero by default
+            (*gv.vfrac2d_s).insert_cols(0,add_snow_layers_swe); //set to one
+            (*gv.v_swe).insert_cols(0,add_snow_layers_swe * gv.nh);
+            (*gv.v_liq).insert_cols(0,add_snow_layers_liq * gv.nh);
+            //(*gv.v_air).insert_cols(0,diff_num_snowlay); // ?? not sure what to put here but likely irrelevatr
+
+            // Other hydraulic variables
+            (*gv.exchange_is).insert_cols(0,add_snow_layers_swe);  // set to zero by default           
 
             // Water Quality
             (*gv.c_m).insert_cols(0,diff_num_snowlay); // set to zero by default
@@ -321,9 +326,14 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
             (*gv.c_s).insert_cols(0,add_snow_layers_swe_conc); // set to precip_c_t
             
         }else if (diff_num_snowlay < 0){ // Melt !!! At the moment it is just removing that layer
+            (*gv.vfrac2d_m).shed_cols(0,abs(diff_num_snowlay)-1);
+            (*gv.vfrac2d_s).shed_cols(0,abs(diff_num_snowlay)-1);
             (*gv.v_swe).shed_cols(0,abs(diff_num_snowlay)-1);
             (*gv.v_liq).shed_cols(0,abs(diff_num_snowlay)-1);
-            (*gv.v_air).shed_cols(0,abs(diff_num_snowlay)-1);
+            //(*gv.v_air).shed_cols(0,abs(diff_num_snowlay)-1);
+            (*gv.exchange_is).shed_cols(0,abs(diff_num_snowlay)-1);
+            (*gv.c_m).shed_cols(0,abs(diff_num_snowlay)-1);
+            (*gv.c_s).shed_cols(0,abs(diff_num_snowlay)-1);
         }
 
 

@@ -35,8 +35,8 @@ bool read_simset(globalpar& gp,const std::string& modset_flname,
         if(str.find("END_TIME") != std::string::npos){(*gp.end_time) = str.substr(strlen("END_TIME")+1);}; // comment
         if(str.find("PRINT_STEP") != std::string::npos){(gp.print_step) = std::stoi(str.substr(strlen("PRINT_STEP")+1));}; // print time step
 
-        if(str.find("H_LAY_mm") != std::string::npos){(*h_layer) = std::stof(str.substr(strlen("H_LAY_mm")+1))/1000;};  // average roughness height (m)
-        if(str.find("L_LAY_mm") != std::string::npos){(*l_layer) = std::stof(str.substr(strlen("L_LAY_mm")+1))/1000;};  // average roughness height (m)
+        if(str.find("H_LAY_mm") != std::string::npos){(*h_layer) = std::stof(str.substr(strlen("H_LAY_mm")+1))/1000;};  // thickness of snowpack, mm -> m
+        if(str.find("L_LAY_mm") != std::string::npos){(*l_layer) = std::stof(str.substr(strlen("L_LAY_mm")+1))/1000;};  // width of snowpack, mm -> m
 
         if(str.find("DENSITY_ICE") != std::string::npos){(gp.rho_ice) = std::stof(str.substr(strlen("DENSITY_ICE")+1));}; // density of ice 
         if(str.find("DENSITY_WATER") != std::string::npos){(gp.rho_water) = std::stof(str.substr(strlen("DENSITY_WATER")+1));}; // density of water
