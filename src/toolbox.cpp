@@ -110,13 +110,13 @@ bool read_matrixes_ext(globalpar& gp,globalvar& gv,
     if (err_flag == false) flstatus = (*gv.v_liq_ext).load(*v_liquid_file,arma::csv_ascii);
     if (flstatus == true) file_failed = (*v_liquid_file);
 
-    if (err_flag == false) flstatus = (*gv.ice2liq_1_ext).load(*v_ice2liq_1_file,arma::csv_ascii);
+    if (err_flag == false) flstatus = (*gv.v_ice2liq_1_ext).load(*v_ice2liq_1_file,arma::csv_ascii);
     if (flstatus == false){
         file_failed = (*v_ice2liq_1_file);
         err_flag = true;
     }
 
-    if (err_flag == false) flstatus = (*gv.ice2liq_2_ext).load(*v_ice2liq_2_file,arma::csv_ascii);
+    if (err_flag == false) flstatus = (*gv.v_ice2liq_2_ext).load(*v_ice2liq_2_file,arma::csv_ascii);
     if (flstatus == false){
         file_failed = (*v_ice2liq_2_file);
         err_flag = true;

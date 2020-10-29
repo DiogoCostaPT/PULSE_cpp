@@ -278,27 +278,27 @@ void watermass_calc_internal(globalvar& gv,globalpar& gp,double* deltt,double *v
 void watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
         std::ofstream* logPULSEfile){
 
-    arma::uvec meltloc = find((*gv.ice2liq_1_ext) > 0); // cells that melt
-    arma::uvec freezeloc = find((*gv.ice2liq_1_ext) < 0); // cells that freeze
+    arma::uvec meltloc = find((*gv.v_ice2liq_1_ext) > 0); // cells that melt
+    arma::uvec freezeloc = find((*gv.v_ice2liq_1_ext) < 0); // cells that freeze
 
     // 
     // 1st) CONCENTRATIONS 
     //
     // a) Cells that melt -> meltloc  
     // (*gv.c_s) -> c_s concentration doens't change because it is melting
-     (*gv.c_m)(meltloc) = ((*gv.c_m)(meltloc) % (*gv.v_liq)(meltloc) + (*gv.c_s)(meltloc) % (*gv.ice2liq_1_ext)(meltloc) * (*deltt) )
-        / ((*gv.v_liq)(meltloc) + (*gv.ice2liq_1_ext)(meltloc)); 
+     (*gv.c_m)(meltloc) = ((*gv.c_m)(meltloc) % (*gv.v_liq)(meltloc) + (*gv.c_s)(meltloc) % (*gv.v_ice2liq_1_ext)(meltloc) * (*deltt) )
+        / ((*gv.v_liq)(meltloc) + (*gv.v_ice2liq_1_ext)(meltloc)); 
 
     // b) Cells that freeze -> freezeloc
     // (*gv.c_m) -> c_m concentration doens't change because it is freezing
-    (*gv.c_s)(freezeloc) = ((*gv.c_s)(freezeloc) % (*gv.v_swe)(freezeloc) - (*gv.c_m)(freezeloc) % (*gv.ice2liq_1_ext)(freezeloc) * (*deltt) )
-    / ((*gv.v_swe)(freezeloc) + (*gv.ice2liq_1_ext)(freezeloc));
+    (*gv.c_s)(freezeloc) = ((*gv.c_s)(freezeloc) % (*gv.v_swe)(freezeloc) - (*gv.c_m)(freezeloc) % (*gv.v_ice2liq_1_ext)(freezeloc) * (*deltt) )
+    / ((*gv.v_swe)(freezeloc) + (*gv.v_ice2liq_1_ext)(freezeloc));
 
     //
     // 2nd) update new swe and liqwater masses
     //
-    (*gv.v_swe) = (*gv.v_swe) - (*gv.ice2liq_1_ext) * (*deltt) ;
-    (*gv.v_liq) = (*gv.v_liq) + (*gv.ice2liq_1_ext) * (*deltt) ;
+    (*gv.v_swe) = (*gv.v_swe) - (*gv.v_ice2liq_1_ext) * (*deltt) ;
+    (*gv.v_liq) = (*gv.v_liq) + (*gv.v_ice2liq_1_ext) * (*deltt) ;
 
 
 }

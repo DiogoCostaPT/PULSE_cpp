@@ -11,6 +11,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
     // initiation
     double tcum = 0.f,
             //q = 0.f, // melt volume/int
+            t = 0.f,
             deltt = 1.0f, // time step calculated from the CFL condition
             velc = 0.0f, // interstitial flow velocity [m s-1]
             D = 0.0f; // dispersion coefficient [m2/s]
@@ -26,13 +27,13 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
     tcum = gv.timstart;
     print_next = tcum + gp.print_step;
 
-
     while (tcum < gp.Tsim)
     {
 
         // Snow model: internal or external (SNOWPACK or WARD-snow model)
         if (gp.snowmodel == 0){ // internal    
-                        
+
+            // Get precipitation and melt rates            
             findInterpMeteo(gv,&tcum);
             findInterpQmelt(gv,&tcum);
 
@@ -88,6 +89,29 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
             }
 
         } else if (gp.snowmodel == 1){ // external
+            
+            // Get input data at t time
+            arma::mat v_swe_ext_t = (*gv.v_swe_ext)(t,arma::span::all);
+            arma::mat v_liq_ext_t = (*gv.v_liq_ext)(t,arma::span::all);
+            arma::mat v_ice2liq_1_ext_t = (*gv.v_ice2liq_1_ext)(t,arma::span::all);
+            arma::mat v_ice2liq_2_ext_t = (*gv.v_ice2liq_2_ext)(t,arma::span::all);
+            arma::mat fluxQ_ext_t = (*gv.fluxQ_ext)(t,arma::span::all);
+
+            // Identify the layers with snow
+            arma::uvec snowlay = arma::find(v_swe_ext_t>0.f);
+
+            // Remove the layers without snow
+            v_swe_ext_t = v_swe_ext_t.elem(snowlay);
+            v_liq_ext_t = v_liq_ext_t.elem(snowlay);
+            v_ice2liq_1_ext_t = v_ice2liq_1_ext_t.elem(snowlay);
+            v_ice2liq_2_ext_t = v_ice2liq_2_ext_t.elem(snowlay);
+            fluxQ_ext_t = fluxQ_ext_t.elem(snowlay);
+
+            // Identify top input (precipitation)
+            
+            
+            
+
             
 
             watermass_calc_external(gv,gp,&deltt,logPULSEfile);

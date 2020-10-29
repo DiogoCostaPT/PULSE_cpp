@@ -156,11 +156,11 @@ int main(int argc, char* argv[])
                 if ((*gv.v_liq_ext).n_rows != n_timExt) is_same_size = false;
                 if ((*gv.v_liq_ext).n_cols != n_maxLayerExt) is_same_size = false;
 
-                if ((*gv.ice2liq_1_ext).n_rows != n_timExt) is_same_size = false;
-                if ((*gv.ice2liq_1_ext).n_cols != n_maxLayerExt) is_same_size = false;
+                if ((*gv.v_ice2liq_1_ext).n_rows != n_timExt) is_same_size = false;
+                if ((*gv.v_ice2liq_1_ext).n_cols != n_maxLayerExt) is_same_size = false;
 
-                if ((*gv.ice2liq_2_ext).n_rows != n_timExt) is_same_size = false;
-                if ((*gv.ice2liq_2_ext).n_cols != n_maxLayerExt) is_same_size = false;
+                if ((*gv.v_ice2liq_2_ext).n_rows != n_timExt) is_same_size = false;
+                if ((*gv.v_ice2liq_2_ext).n_cols != n_maxLayerExt) is_same_size = false;
 
                 if ((*gv.fluxQ_ext).n_rows != n_timExt) is_same_size = false;
                 if ((*gv.fluxQ_ext).n_cols != n_maxLayerExt) is_same_size = false;
