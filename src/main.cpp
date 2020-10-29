@@ -181,7 +181,6 @@ int main(int argc, char* argv[])
         err_flag = initiate(gp,gv,&logPULSEfile,&results_flname);
 
         // call the main PULSE model
-        -> now go to pulsemodel !!!!!!!!!
         pulsemodel(gp,gv,&logPULSEfile,&results_flname);
 
         // Simulation completed

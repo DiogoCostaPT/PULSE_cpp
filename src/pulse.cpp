@@ -11,7 +11,6 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
     // initiation
     double tcum = 0.f,
             //q = 0.f, // melt volume/int
-            t = 1.f, 
             deltt = 1.0f, // time step calculated from the CFL condition
             velc = 0.0f, // interstitial flow velocity [m s-1]
             D = 0.0f; // dispersion coefficient [m2/s]
@@ -30,8 +29,6 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
 
     while (tcum < gp.Tsim)
     {
-        
-        t += 1;
 
         // Snow model: internal or external (SNOWPACK or WARD-snow model)
         if (gp.snowmodel == 0){ // internal    
@@ -65,11 +62,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
                                 
             }
 
-            
             watermass_calc_internal(gv,gp,&deltt,&velc,logPULSEfile);
-        
-
-            tcum = tcum + deltt; 
 
             if ((gv.qmelt_i+gv.rainfall_i)>0.0f && gv.nh>0){ // if melt
     
@@ -84,27 +77,30 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
                             FtCs_solve_hydr2D(gv,&deltt);
 
                         }
+                        // Limit to available material
                         for(il=0;il<gv.nl ;il++){
                             for(ih=0;ih<gv.nh ;ih++){
                                 (*gv.c_m).at(il,ih) = fmax((*gv.c_m).at(il,ih),0.0f);
                             }
                         }
-
                     }
                 }
-
-                // Ion Exclusion
-                if (gv.qmelt_i > 0.0f || gv.rainfall_i > 0.0f){                    
-                    IonExclusionModel(gp,gv,&deltt);
-                }
-
             }
+
         } else if (gp.snowmodel == 1){ // external
             
 
             watermass_calc_external(gv,gp,&deltt,logPULSEfile);
 
         } 
+
+        // Ion Exclusion
+        if (gv.qmelt_i > 0.0f || gv.rainfall_i > 0.0f){                    
+            IonExclusionModel(gp,gv,&deltt);
+        }
+
+        // Add one time step
+        tcum = tcum + deltt; 
 
         // Print results                
             if (tcum>=print_next){
