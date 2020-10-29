@@ -6,9 +6,20 @@
     
     while(~feof(fid))
         newline = fgetl(fid);
+        
+        newline = strtrim(newline);
+        
+        try
+            if(strcmp(newline(1),'#'))
+               continue; 
+            end
+        catch
+            continue;
+        end
     
         if(contains(newline,'COMMNET'))
             comment = erase(newline,'COMMNET ');
+            continue;
         end
         if(contains(newline,'H_LAY_mm'))
             H_LAY = str2double(erase(newline,'H_LAY_mm '));
