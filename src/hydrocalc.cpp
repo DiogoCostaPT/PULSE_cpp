@@ -273,38 +273,62 @@ void watermass_calc_internal(globalvar& gv,globalpar& gp,double* deltt,double *v
 
 
 /* *****
- * EXTERNAL CALCULATION: obtain from external model (e.g., SNOWPACK)
+ * EXTERNAL CALCULATION: obtain from external model (e.g., SNOWPACK) -> just supports 1D
  * **** */
 bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
         std::ofstream* logPULSEfile, int t){
 
-    // Get input data at t time
-    arma::mat v_swe_ext_t = (*gv.v_swe_ext)(t,arma::span::all);
-    arma::mat v_liq_ext_t = (*gv.v_liq_ext)(t,arma::span::all);
-    arma::mat v_ice2liq_1_ext_t = (*gv.v_ice2liq_1_ext)(t,arma::span::all);
-    arma::mat v_ice2liq_2_ext_t = (*gv.v_ice2liq_2_ext)(t,arma::span::all);
-    arma::mat fluxQ_ext_t = (*gv.fluxQ_ext)(t,arma::span::all);
+    bool err_flag = false;
 
-    // Identify the layers with snow
-    arma::uvec snowlay = arma::find(v_swe_ext_t>0.f);
+    try{
+        
 
-    // Remove the layers without snow
-    v_swe_ext_t = v_swe_ext_t.elem(snowlay);
-    v_liq_ext_t = v_liq_ext_t.elem(snowlay);
-    v_ice2liq_1_ext_t = v_ice2liq_1_ext_t.elem(snowlay);
-    v_ice2liq_2_ext_t = v_ice2liq_2_ext_t.elem(snowlay);
-    fluxQ_ext_t = fluxQ_ext_t.elem(snowlay);
+        // Get input data at t time
+        arma::mat v_swe_ext_t = (*gv.v_swe_ext)(t,arma::span::all);
+        arma::mat v_liq_ext_t = (*gv.v_liq_ext)(t,arma::span::all);
+        arma::mat v_ice2liq_1_ext_t = (*gv.v_ice2liq_1_ext)(t,arma::span::all);
+        arma::mat v_ice2liq_2_ext_t = (*gv.v_ice2liq_2_ext)(t,arma::span::all);
+        arma::mat fluxQ_ext_t = (*gv.fluxQ_ext)(t,arma::span::all);
 
-    // Identify top input (precipitation) and apply
-    //arma::uvec new_snowlay = v_swe_ext_t.n_cols - (*gv.v_swe).n_cols;
-    //(*gv.snowfall_t) = v_swe_ext_t.tail_nrows(new_snowlay);
+        // Identify the layers with snow
+        arma::uvec snowlay = arma::find(v_swe_ext_t>0.f);
 
-    //-> now add a new layer to (*gv.v_swe_t)
+        // Remove the layers without snow 
+        v_swe_ext_t = v_swe_ext_t.cols(snowlay);
+        v_liq_ext_t = v_liq_ext_t.cols(snowlay);
+        v_ice2liq_1_ext_t = v_ice2liq_1_ext_t.cols(snowlay);
+        v_ice2liq_2_ext_t = v_ice2liq_2_ext_t.cols(snowlay);
+        fluxQ_ext_t = fluxQ_ext_t.cols(snowlay);
+
+        // Identify top input (precipitation) or top melt AND apply
+        int diff_num_snowlay = v_swe_ext_t.n_cols - (*gv.v_swe).n_cols;  
+        if (diff_num_snowlay > 0){ // Precipitation
+
+            gv.nh++; // remove_snow one layer
+            gv.snowH += gv.snowh; // snowpack depth 
+
+            // SWE and liquid
+            arma::mat add_snow_layers_swe = arma::reverse(v_swe_ext_t.tail_cols(diff_num_snowlay)); // reverse because pulse adds new layer at col = 0 and not at the end of the array
+            arma::mat add_snow_layers_liq = arma::reverse(v_liq_ext_t.tail_cols(diff_num_snowlay)); // reverse because pulse adds new layer at col = 0 and not at the end of the array
+            (*gv.v_swe).insert_cols(0,add_snow_layers_swe);
+            (*gv.v_liq).insert_cols(0,add_snow_layers_liq);
+            (*gv.v_air).insert_cols(0,diff_num_snowlay);
+
+            // Water Quality
+            (*gv.c_m).insert_cols(0,diff_num_snowlay); // set to zero by default
+            arma::mat add_snow_layers_swe_conc = arma::ones<arma::mat>(1,diff_num_snowlay) * gv.precip_c_t;
+            (*gv.c_s).insert_cols(0,add_snow_layers_swe_conc); // set to precip_c_t
+            
+        }else if (diff_num_snowlay < 0){ // Melt !!! At the moment it is just removing that layer
+            (*gv.v_swe).shed_cols(0,abs(diff_num_snowlay)-1);
+            (*gv.v_liq).shed_cols(0,abs(diff_num_snowlay)-1);
+            (*gv.v_air).shed_cols(0,abs(diff_num_snowlay)-1);
+        }
 
 
 
 
-
+/*
 
     arma::uvec meltloc = find((*gv.v_ice2liq_1_ext) > 0); // cells that melt
     arma::uvec freezeloc = find((*gv.v_ice2liq_1_ext) < 0); // cells that freeze
@@ -328,5 +352,12 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
     (*gv.v_swe) = (*gv.v_swe) - (*gv.v_ice2liq_1_ext) * (*deltt) ;
     (*gv.v_liq) = (*gv.v_liq) + (*gv.v_ice2liq_1_ext) * (*deltt) ;
 
+    */
+
+    } catch(const std::exception& e){
+        err_flag = true;
+    }
+
+   return err_flag;
 
 }
