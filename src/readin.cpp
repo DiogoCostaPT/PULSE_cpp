@@ -9,7 +9,7 @@
 bool read_simset(globalpar& gp,const std::string& modset_flname, 
                 std::string* sim_purp,double *h_layer,double *l_layer,
                 std::string* qmelt_file,std::string* meteo_file, // if SNOWMODEL = internal 
-                std::string* time_ext_file, std::string* v_ice_file,std::string* v_liquid_file, std::string* v_ice2liq_1_file, std::string* v_ice2liq_2_file, std::string* fluxQ_file, // if SNOWMODEL = external
+                std::string* time_file, std::string* v_ice_file,std::string* v_liquid_file, std::string* v_ice2liq_1_file, std::string* v_ice2liq_2_file, std::string* fluxQ_file, // if SNOWMODEL = external
                 std::ofstream* logPULSEfile,
                 int* n_qmelt_file, int* n_meteo_file, 
                 int* n_timExt, int* n_maxLayerExt,
@@ -52,7 +52,7 @@ bool read_simset(globalpar& gp,const std::string& modset_flname,
         if(str.find("QMELT_FILE") != std::string::npos){*qmelt_file = removeSpaces(str.substr(strlen("QMELT_FILE")+1));}; // snowmelt file
         if(str.find("METEO_FILE") != std::string::npos){*meteo_file = removeSpaces(str.substr(strlen("METEO_FILE")+1));}; // precipitation and precipitation chemistry file
         // if SNOWMODEL = external
-        if(str.find("TIME_EXT") != std::string::npos){*time_ext_file = removeSpaces(str.substr(strlen("TIME_EXT")+1));}; 
+        if(str.find("TIME_FILE") != std::string::npos){*time_file = removeSpaces(str.substr(strlen("TIME_FILE")+1));}; 
         if(str.find("V_ICE_FILE") != std::string::npos){*v_ice_file = removeSpaces(str.substr(strlen("V_ICE_FILE")+1));}; 
         if(str.find("V_LIQUID_FILE") != std::string::npos){*v_liquid_file = removeSpaces(str.substr(strlen("V_LIQUID_FILE")+1));}; 
         if(str.find("V_ICE2LIQ_1_FILE") != std::string::npos){*v_ice2liq_1_file = removeSpaces(str.substr(strlen("V_ICE2LIQ_1_FILE")+1));}; 
@@ -136,6 +136,33 @@ bool read_simset(globalpar& gp,const std::string& modset_flname,
 
         gp.snowmodel = 1;
 
+        // check TIME_EXT
+        if(!(*time_file).empty()){ 
+            msg = "        > TIME_FILE found: " + (*time_file);
+            print_screen_log(logPULSEfile,&msg); 
+
+            // Reading TIME_FILE to get size and allocate correct memory in global
+            arma::mat filedata; 
+            bool flstatus =  filedata.load((*time_file),arma::csv_ascii);
+            if(flstatus==true){
+                *n_timExt = filedata.n_rows;
+                msg = "        > TIME_FILE: loading successful";
+                print_screen_log(logPULSEfile,&msg);
+            }else{
+                msg = "        > TIME_FILE: loading failed";
+                print_screen_log(logPULSEfile,&msg);
+                err_flag = true;
+                return err_flag;
+            }
+
+        }else{
+            msg = "        > TIME_FILE: not found";
+            print_screen_log(logPULSEfile,&msg); 
+            err_flag = true;
+            return err_flag;
+        }
+    
+
         // check V_ICE_FILE
         if(!(*v_ice_file).empty()){ 
             msg = "        > V_ICE_FILE found: " + (*v_ice_file);
@@ -145,7 +172,6 @@ bool read_simset(globalpar& gp,const std::string& modset_flname,
             arma::mat filedata; 
             bool flstatus =  filedata.load((*v_ice_file),arma::csv_ascii);
             if(flstatus==true){
-                *n_timExt = filedata.n_rows;
                 *n_maxLayerExt = filedata.n_cols;
                 msg = "        > V_ICE_FILE: loading successful";
                 print_screen_log(logPULSEfile,&msg);

@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
 
     std::string sim_purp;
     std::string qmelt_file,meteo_file,msg;
-    std::string time_ext_file, v_ice_file,v_liquid_file,v_ice2liq_1_file,v_ice2liq_2_file,fluxQ_file;
+    std::string time_file, v_ice_file,v_liquid_file,v_ice2liq_1_file,v_ice2liq_2_file,fluxQ_file;
     std::ofstream logPULSEfile ("log.pulse");
     
     std::string modset_flname (argv[1]);
@@ -80,7 +80,7 @@ int main(int argc, char* argv[])
         err_flag = read_simset(gp,modset_flname,
             &sim_purp,&h_layer,&l_layer,
             &qmelt_file,&meteo_file, // if SNOWMODEL = internal
-            &time_ext_file, &v_ice_file,&v_liquid_file,&v_ice2liq_1_file,&v_ice2liq_2_file,&fluxQ_file,  // if SNOWMODEL = external
+            &time_file, &v_ice_file,&v_liquid_file,&v_ice2liq_1_file,&v_ice2liq_2_file,&fluxQ_file,  // if SNOWMODEL = external
             &logPULSEfile,
             &n_qmelt_file,&n_meteo_file,
             &n_timExt, &n_maxLayerExt,
@@ -121,7 +121,7 @@ int main(int argc, char* argv[])
         }else if(gp.snowmodel == 1){ // SNOWMODEL = external
 
             err_flag = read_matrixes_ext(gp,gv,
-                &v_ice_file,&v_liquid_file,&v_ice2liq_1_file,&v_ice2liq_2_file,&fluxQ_file,
+                &time_file,&v_ice_file,&v_liquid_file,&v_ice2liq_1_file,&v_ice2liq_2_file,&fluxQ_file,
                 &logPULSEfile);
             if (err_flag == true){
                 std::abort();
@@ -148,6 +148,8 @@ int main(int argc, char* argv[])
         }else if (gp.snowmodel == 1){
             bool is_same_size = true;
 
+                if ((*gv.time_ext).n_rows != n_timExt) is_same_size = false;
+                
                 if ((*gv.v_swe_ext).n_rows != n_timExt) is_same_size = false;
                 if ((*gv.v_swe_ext).n_cols != n_maxLayerExt) is_same_size = false;
 
@@ -171,8 +173,7 @@ int main(int argc, char* argv[])
             }
 
             // Get Tsim
-            int num_timesteps = (*gv.v_liq_ext).n_rows-1;
-            gp.Tsim = (*gv.v_liq_ext)(num_timesteps,0);
+            gp.Tsim = (*gv.time_ext)(n_timExt-1,0);
 
         }
 
@@ -180,6 +181,7 @@ int main(int argc, char* argv[])
         err_flag = initiate(gp,gv,&logPULSEfile,&results_flname);
 
         // call the main PULSE model
+        -> now go to pulsemodel !!!!!!!!!
         pulsemodel(gp,gv,&logPULSEfile,&results_flname);
 
         // Simulation completed
