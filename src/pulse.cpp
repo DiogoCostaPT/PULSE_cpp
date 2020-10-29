@@ -41,14 +41,14 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
             gv.vfrac_s_prev = gv.vfrac_s;
             //gv.wetfront_cell_prev = gv.wetfront_cell;
 
-            if (gv.qmelt_i==0.0f && gv.rainfall_i == 0.0f){ // accumulation only 
+            if (gv.qmelt_t==0.0f && gv.rainfall_t == 0.0f){ // accumulation only 
                 deltt = std::fmin(print_next-tcum,
-                    gv.v_swe_freshsnow_max/(std::abs(gv.snowfall_i) * gv.snowl));
+                    gv.v_swe_freshsnow_max/(std::abs(gv.snowfall_t) * gv.snowl));
                 velc = 0.0f;
             // watermass_calc_internal(gv,gp,&deltt,&velc,logPULSEfile);
             } else {// melt       
                     // Estimate interstitial flow velocity 
-                velc = (gv.qmelt_i + gv.rainfall_i)/ (gv.vfrac_a + gv.vfrac_m); // interstitial flow velocity [m s-1]
+                velc = (gv.qmelt_t + gv.rainfall_t)/ (gv.vfrac_a + gv.vfrac_m); // interstitial flow velocity [m s-1]
                 D = gp.aD * velc;       // dispersion coefficient [m2/s]
 
                 (*gv.velc_2d) = (*gv.velc_2d)*0 + velc;
@@ -58,14 +58,14 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
 
                 // limit step so that if there is melt or accumulation it doesn't go more than one cell
                 //deltt_volavail_melt = velc * (*deltt) * max(min((*gv.v_liq)));
-                deltt = std::fmin(deltt,gv.v_swe_freshsnow_max/(std::abs(gv.snowfall_i) * gv.snowl));
-                deltt = std::fmin(deltt,gv.v_swe_freshsnow_max/(std::abs(gv.qmelt_i) * gv.snowl));
+                deltt = std::fmin(deltt,gv.v_swe_freshsnow_max/(std::abs(gv.snowfall_t) * gv.snowl));
+                deltt = std::fmin(deltt,gv.v_swe_freshsnow_max/(std::abs(gv.qmelt_t) * gv.snowl));
                                 
             }
 
             watermass_calc_internal(gv,gp,&deltt,&velc,logPULSEfile);
 
-            if ((gv.qmelt_i+gv.rainfall_i)>0.0f && gv.nh>0){ // if melt
+            if ((gv.qmelt_t+gv.rainfall_t)>0.0f && gv.nh>0){ // if melt
     
                 if (gv.vfrac_m < 1-gp.num_stblty_thrshld_prsity && gv.vfrac_s > gp.num_stblty_thrshld_prsity){  
                     
@@ -108,7 +108,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
             fluxQ_ext_t = fluxQ_ext_t.elem(snowlay);
 
             // Identify top input (precipitation)
-            
+            //(*gv.snowfall_t)
             
             
 
@@ -119,7 +119,7 @@ void pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
         } 
 
         // Ion Exclusion
-        if (gv.qmelt_i > 0.0f || gv.rainfall_i > 0.0f){                    
+        if (gv.qmelt_t > 0.0f || gv.rainfall_t > 0.0f){                    
             IonExclusionModel(gp,gv,&deltt);
         }
 

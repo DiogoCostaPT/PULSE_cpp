@@ -16,15 +16,15 @@ void watermass_calc_internal(globalvar& gv,globalpar& gp,double* deltt,double *v
             add_snow,remove_snow,add_rain,dcomp_swe;
 
     // timestep fluxes and volumes
-    add_snow = std::abs(gv.snowfall_i) * gv.snowl * (*deltt); // as vol mm*mm*m
-    remove_snow = std::abs(gv.qmelt_i) * gv.snowl * (*deltt); // as vol mm*mm*m
-    add_rain = std::abs(gv.rainfall_i) * gv.snowl * (*deltt); // as vol mm*mm*m
+    add_snow = std::abs(gv.snowfall_t) * gv.snowl * (*deltt); // as vol mm*mm*m
+    remove_snow = std::abs(gv.qmelt_t) * gv.snowl * (*deltt); // as vol mm*mm*m
+    add_rain = std::abs(gv.rainfall_t) * gv.snowl * (*deltt); // as vol mm*mm*m
 
     existsnow_vol = (*gv.v_swe)(round(gv.nl/2)-1,0); 
     tofillsnow_vol = fmax(gv.v_swe_freshsnow_max - existsnow_vol,0.0f);
 
     // Refreezing if T<0
-    if (gv.tempert_i < 0.0f) 
+    if (gv.tempert_t < 0.0f) 
     {
         (*gv.c_s) = ((*gv.c_s) % (*gv.v_swe) + (*gv.c_m) % (*gv.v_liq))
             / ((*gv.v_swe) + (*gv.v_liq)); // c_m mass will go to c_i
@@ -56,7 +56,7 @@ void watermass_calc_internal(globalvar& gv,globalpar& gp,double* deltt,double *v
         if (tofillsnow_vol >= add_snow) // no need to add_snow new layer
         {
             (*gv.c_s).col(0) = ((*gv.c_s).col(0) % (*gv.v_swe).col(0) +
-                 arma::ones(gv.nl,1) * add_snow * gv.precip_c_i)
+                 arma::ones(gv.nl,1) * add_snow * gv.precip_c_t)
                 / ((*gv.v_swe).col(0) + arma::ones(gv.nl,1) * add_snow);
             (*gv.v_swe).col(0) = (*gv.v_swe).col(0) + arma::ones(gv.nl,1) * add_snow;
         } 
@@ -64,7 +64,7 @@ void watermass_calc_internal(globalvar& gv,globalpar& gp,double* deltt,double *v
         {
 
             (*gv.c_s).col(0) = ((*gv.c_s).col(0) % (*gv.v_swe).col(0) +
-                tofillsnow_vol * gv.precip_c_i) / gv.v_swe_freshsnow_max ;
+                tofillsnow_vol * gv.precip_c_t) / gv.v_swe_freshsnow_max ;
             (*gv.v_swe).col(0) = arma::ones(gv.nl,1) * gv.v_swe_freshsnow_max;
             
             // new layer
@@ -75,8 +75,8 @@ void watermass_calc_internal(globalvar& gv,globalpar& gp,double* deltt,double *v
             gv.wetfront_cell = std::max(gv.wetfront_cell + 1,0);
 
             (*gv.c_m).insert_cols(0,1); // set to zero by default
-            (*gv.c_s).insert_cols(0,1); // set to precip_c_i
-            (*gv.c_s).col(0) = arma::ones<arma::vec>(nl_l,1) * gv.precip_c_i;
+            (*gv.c_s).insert_cols(0,1); // set to precip_c_t
+            (*gv.c_s).col(0) = arma::ones<arma::vec>(nl_l,1) * gv.precip_c_t;
 
             (*gv.exchange_is).insert_cols(0,1);  // set to zero by default
 
@@ -172,7 +172,7 @@ void watermass_calc_internal(globalvar& gv,globalpar& gp,double* deltt,double *v
         }
         if (add_rain > 0.0f){
          (*gv.c_m).col(0) = ((*gv.c_m).col(0) % (*gv.v_liq).col(0) + 
-                    add_rain * gv.precip_c_i)
+                    add_rain * gv.precip_c_t)
                     / ( (*gv.v_liq).col(0) + add_rain);
                 // (*gv.c_s) -> no need to calculate for c_s because it will not change (water masses cancel out)
 

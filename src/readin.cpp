@@ -317,8 +317,8 @@ bool read_meteofile(globalpar& gp,globalvar& gv,std::string* meteo_file,
                     std::ofstream* logPULSEfile)
 {
     unsigned int a; 
-    double tprec=0.0f,snowfall_calc_i=0.0f,temp_calc_i=0.0f,precs_i=0.0f,
-            rainfall_calc_i = 0.0f,precip_conc_i = 0.0f;
+    double tprec=0.0f,snowfall_calc_i=0.0f,temp_calc_t=0.0f,precs_i=0.0f,
+            rainfall_calc_t = 0.0f,precip_conc_i = 0.0f;
     std::string msg;
     bool err_flag = false;
      
@@ -329,14 +329,14 @@ bool read_meteofile(globalpar& gp,globalvar& gv,std::string* meteo_file,
     if(flstatusM == true) {
         for(a=0;a<num_cols;a++){
             tprec = filedataM(a+1,0);  // t prec seconds
-            temp_calc_i = filedataM(a+1,1);  // degrees celsius
-            rainfall_calc_i = filedataM(a+1,2);  // mm/deltatime
+            temp_calc_t = filedataM(a+1,1);  // degrees celsius
+            rainfall_calc_t = filedataM(a+1,2);  // mm/deltatime
             snowfall_calc_i = filedataM(a+1,3);  // mm/deltatime
             precip_conc_i = filedataM(a+1,4);  // conc of precip
             
             (*gv.meteoall_int).at(a,0) = fabs(tprec);  
-            (*gv.meteoall_int).at(a,1) = temp_calc_i;  
-            (*gv.meteoall_int).at(a,2) = fabs(rainfall_calc_i)/1000;  
+            (*gv.meteoall_int).at(a,1) = temp_calc_t;  
+            (*gv.meteoall_int).at(a,2) = fabs(rainfall_calc_t)/1000;  
             (*gv.meteoall_int).at(a,3) = fabs(snowfall_calc_i)/1000;  // mm/deltatime -> m/deltatime
             (*gv.meteoall_int).at(a,4) = fabs(precip_conc_i); 
         }
