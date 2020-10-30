@@ -100,38 +100,38 @@ bool read_matrixes_ext(globalpar& gp,globalvar& gv,
 {
     bool err_flag = false;
     bool flstatus;
-    std::string file_failed, msg;
+    std::string* file_failed, msg;
 
     msg = "> Preparing simulation... ";
     print_screen_log(logPULSEfile,&msg);  
 
     if (err_flag == false) flstatus = (*gv.time_ext).load(*time_file,arma::csv_ascii);
-    if (flstatus == true) file_failed = (*time_file);
+    if (flstatus == false) file_failed = time_file;
 
     if (err_flag == false) flstatus = (*gv.preci_c_ext).load(*prec_c_ext_file,arma::csv_ascii);
-    if (flstatus == true) file_failed = (*prec_c_ext_file);
+    if (flstatus == false) file_failed = prec_c_ext_file;
     
     if (err_flag == false) flstatus = (*gv.v_swe_ext).load(*v_ice_file,arma::csv_ascii);
-    if (flstatus == true) file_failed = (*v_ice_file);
+    if (flstatus == false) file_failed = v_ice_file;
     
     if (err_flag == false) flstatus = (*gv.v_liq_ext).load(*v_liquid_file,arma::csv_ascii);
-    if (flstatus == true) file_failed = (*v_liquid_file);
+    if (flstatus == false) file_failed = v_liquid_file;
 
     if (err_flag == false) flstatus = (*gv.v_ice2liq_1_ext).load(*v_ice2liq_1_file,arma::csv_ascii);
-    if (flstatus == true) file_failed = (*v_ice2liq_1_file);
+    if (flstatus == false) file_failed = v_ice2liq_1_file;
 
     if (err_flag == false) flstatus = (*gv.v_ice2liq_2_ext).load(*v_ice2liq_2_file,arma::csv_ascii);
-    if (flstatus == true) file_failed = (*v_ice2liq_2_file);
+    if (flstatus == false) file_failed = v_ice2liq_2_file;
 
     if (err_flag == false) flstatus = (*gv.fluxQ_ext).load(*fluxQ_file,arma::csv_ascii);
-    if (flstatus == true) file_failed = (*fluxQ_file);
+    if (flstatus == false) file_failed = fluxQ_file;
 
     if (err_flag == false)
     {
-        std::string msg = " > ERROR reading file: " + file_failed;
+        std::string msg = "    > Completed successfully";
         print_screen_log(logPULSEfile,&msg); 
     }else{
-        std::string msg = " > Completed successfully";
+        std::string msg = "    > ERROR reading file: " + (*file_failed);
         print_screen_log(logPULSEfile,&msg); 
         err_flag = true;
         return err_flag;
