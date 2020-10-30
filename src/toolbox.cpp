@@ -115,22 +115,13 @@ bool read_matrixes_ext(globalpar& gp,globalvar& gv,
     if (flstatus == true) file_failed = (*v_liquid_file);
 
     if (err_flag == false) flstatus = (*gv.v_ice2liq_1_ext).load(*v_ice2liq_1_file,arma::csv_ascii);
-    if (flstatus == false){
-        file_failed = (*v_ice2liq_1_file);
-        err_flag = true;
-    }
+    if (flstatus == true) file_failed = (*v_ice2liq_1_file);
 
     if (err_flag == false) flstatus = (*gv.v_ice2liq_2_ext).load(*v_ice2liq_2_file,arma::csv_ascii);
-    if (flstatus == false){
-        file_failed = (*v_ice2liq_2_file);
-        err_flag = true;
-    }
+    if (flstatus == true) file_failed = (*v_ice2liq_2_file);
 
     if (err_flag == false) flstatus = (*gv.fluxQ_ext).load(*fluxQ_file,arma::csv_ascii);
-    if (flstatus == false){
-        file_failed = (*fluxQ_file);
-        err_flag = true;
-    }
+    if (flstatus == true) file_failed = (*fluxQ_file);
 
     if (err_flag == true)
     {

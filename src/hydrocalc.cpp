@@ -292,7 +292,7 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
         double prec_c_ext_t = (*gv.preci_c_ext)(t,0);
 
         // Identify the layers with snow
-        arma::uvec snowlay = arma::find(v_swe_ext_t>0.f);
+        arma::uvec snowlay = arma::find(v_swe_ext_t > 0.f);
 
         // Remove the layers without snow 
         v_swe_ext_t = v_swe_ext_t.cols(snowlay);
@@ -304,6 +304,11 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
         // Identify top input (precipitation) or top melt AND apply
         int diff_num_snowlay = v_swe_ext_t.n_cols - (*gv.v_swe).n_cols;  
         if (diff_num_snowlay > 0){ // Precipitation
+            
+            std::cout << "new" << std::endl;
+            for(int i=0;i<snowlay.n_elem;i++){
+                std::cout << std::to_string(v_liq_ext_t(i)) << std::endl;
+            }
 
             gv.nh++; // remove_snow one layer
             gv.snowH += gv.snowh; // snowpack depth 
@@ -312,9 +317,9 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
             arma::mat add_snow_layers_swe = arma::reverse(v_swe_ext_t.tail_cols(diff_num_snowlay)); // reverse because pulse adds new layer at col = 0 and not at the end of the array
             arma::mat add_snow_layers_liq = arma::reverse(v_liq_ext_t.tail_cols(diff_num_snowlay)); // reverse because pulse adds new layer at col = 0 and not at the end of the array
             (*gv.vfrac2d_m).insert_cols(0,add_snow_layers_swe);  // set to zero by default
-            (*gv.vfrac2d_s).insert_cols(0,add_snow_layers_swe); //set to one
-            (*gv.v_swe).insert_cols(0,add_snow_layers_swe * gv.nh);
-            (*gv.v_liq).insert_cols(0,add_snow_layers_liq * gv.nh);
+            (*gv.vfrac2d_s).insert_cols(0,add_snow_layers_liq); //set to one
+            (*gv.v_swe).insert_cols(0,add_snow_layers_swe * gv.snowh);
+            (*gv.v_liq).insert_cols(0,add_snow_layers_liq * gv.snowh);
             //(*gv.v_air).insert_cols(0,diff_num_snowlay); // ?? not sure what to put here but likely irrelevatr
 
             // Other hydraulic variables
@@ -326,6 +331,7 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
             (*gv.c_s).insert_cols(0,add_snow_layers_swe_conc); // set to precip_c_t
             
         }else if (diff_num_snowlay < 0){ // Melt !!! At the moment it is just removing that layer
+
             (*gv.vfrac2d_m).shed_cols(0,abs(diff_num_snowlay)-1);
             (*gv.vfrac2d_s).shed_cols(0,abs(diff_num_snowlay)-1);
             (*gv.v_swe).shed_cols(0,abs(diff_num_snowlay)-1);
@@ -335,6 +341,13 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
             (*gv.c_m).shed_cols(0,abs(diff_num_snowlay)-1);
             (*gv.c_s).shed_cols(0,abs(diff_num_snowlay)-1);
         }
+
+         /*       
+        1) find problem for blowing solution
+        2) add change in phase: v_ice2liq_1_ext_t
+        3) percolation: fluxQ_ext_t
+        4) add change in phase: v_ice2liq_2_ext_t
+        */
 
 
 
