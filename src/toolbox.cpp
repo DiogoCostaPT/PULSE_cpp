@@ -100,7 +100,10 @@ bool read_matrixes_ext(globalpar& gp,globalvar& gv,
 {
     bool err_flag = false;
     bool flstatus;
-    std::string file_failed;
+    std::string file_failed, msg;
+
+    msg = "> Preparing simulation... ";
+    print_screen_log(logPULSEfile,&msg);  
 
     if (err_flag == false) flstatus = (*gv.time_ext).load(*time_file,arma::csv_ascii);
     if (flstatus == true) file_failed = (*time_file);
@@ -123,9 +126,12 @@ bool read_matrixes_ext(globalpar& gp,globalvar& gv,
     if (err_flag == false) flstatus = (*gv.fluxQ_ext).load(*fluxQ_file,arma::csv_ascii);
     if (flstatus == true) file_failed = (*fluxQ_file);
 
-    if (err_flag == true)
+    if (err_flag == false)
     {
-        std::string msg = "> ERROR reading file: " + file_failed;
+        std::string msg = " > ERROR reading file: " + file_failed;
+        print_screen_log(logPULSEfile,&msg); 
+    }else{
+        std::string msg = " > Completed successfully";
         print_screen_log(logPULSEfile,&msg); 
         err_flag = true;
         return err_flag;
