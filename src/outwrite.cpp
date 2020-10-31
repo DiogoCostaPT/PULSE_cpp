@@ -31,8 +31,10 @@ bool print_results(globalvar& gv,globalpar& gp, int print_tag, unsigned int prin
     std::string filext(".txt");
     tprint += filext;
 
-    arma::mat filedataR(gv.nl*gv.nh,9); 
+    arma::mat filedataR(gv.nl*gv.nh,9,arma::fill::zeros); 
     
+    double temp_to_delete;
+
     for(ih=0;ih<gv.nh;ih++)
     {
         for(il=0;il<gv.nl;il++)
@@ -44,6 +46,12 @@ bool print_results(globalvar& gv,globalpar& gp, int print_tag, unsigned int prin
             filedataR(a,3) = (*gv.c_s).at(il,ih); 
             filedataR(a,4) = (*gv.vfrac2d_m).at(il,ih);
             filedataR(a,5) = (*gv.vfrac2d_s).at(il,ih);
+
+            if ((*gv.vfrac2d_m).at(il,ih)>1 || (*gv.vfrac2d_m).at(il,ih) > 1){
+                            //std::cout << "new" << std::endl;
+                std::cout << std::to_string(filedataR(a,4)) + " ///// " + std::to_string(filedataR(a,5))  << std::endl;
+            }
+            
             filedataR(a,6) = (*gv.v_liq).at(il,ih)*1000*1000; // m*m*m -> mm*mm*m
             filedataR(a,7) = (*gv.v_swe).at(il,ih)*1000*1000; // m*m*m -> mm*mm*m
             filedataR(a,8) = (*gv.v_air).at(il,ih)*1000*1000; // m*m*m -> mm*mm*m

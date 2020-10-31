@@ -282,7 +282,6 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
 
     try{
         
-
         // Get input data at t time
         arma::mat v_swe_ext_t = (*gv.v_swe_ext)(t,arma::span::all);
         arma::mat v_liq_ext_t = (*gv.v_liq_ext)(t,arma::span::all);
@@ -305,32 +304,32 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
         int diff_num_snowlay = v_swe_ext_t.n_cols - (*gv.v_swe).n_cols;  
         if (diff_num_snowlay > 0){ // Precipitation
             
-            std::cout << "new" << std::endl;
-            for(int i=0;i<snowlay.n_elem;i++){
-                std::cout << std::to_string(v_liq_ext_t(i)) << std::endl;
-            }
-
             gv.nh++; // remove_snow one layer
             gv.snowH += gv.snowh; // snowpack depth 
 
             // SWE and liquid
             arma::mat add_snow_layers_swe = arma::reverse(v_swe_ext_t.tail_cols(diff_num_snowlay)); // reverse because pulse adds new layer at col = 0 and not at the end of the array
-            arma::mat add_snow_layers_liq = arma::reverse(v_liq_ext_t.tail_cols(diff_num_snowlay)); // reverse because pulse adds new layer at col = 0 and not at the end of the array
-            (*gv.vfrac2d_m).insert_cols(0,add_snow_layers_swe);  // set to zero by default
-            (*gv.vfrac2d_s).insert_cols(0,add_snow_layers_liq); //set to one
-            (*gv.v_swe).insert_cols(0,add_snow_layers_swe * gv.snowh);
-            (*gv.v_liq).insert_cols(0,add_snow_layers_liq * gv.snowh);
+            arma::mat add_snow_layers_liq = arma::reverse(v_liq_ext_t.tail_cols(diff_num_snowlay)); // reverse because pulse adds new layer at col = 0 and not at the end of the array          
+            
+            (*gv.vfrac2d_m).insert_cols(0,add_snow_layers_liq);  // set to zero by default
+            (*gv.vfrac2d_s).insert_cols(0,add_snow_layers_swe); //set to one
+            (*gv.v_swe) = (*gv.vfrac2d_s) * (gv.snowh);
+            (*gv.v_liq) = (*gv.vfrac2d_m) * (gv.snowh);
             //(*gv.v_air).insert_cols(0,diff_num_snowlay); // ?? not sure what to put here but likely irrelevatr
 
             // Other hydraulic variables
-            (*gv.exchange_is).insert_cols(0,add_snow_layers_swe);  // set to zero by default           
+            (*gv.exchange_is).insert_cols(0,diff_num_snowlay);  // set to zero by default           
 
             // Water Quality
             (*gv.c_m).insert_cols(0,diff_num_snowlay); // set to zero by default
             arma::mat add_snow_layers_swe_conc = arma::ones<arma::mat>(1,diff_num_snowlay) * prec_c_ext_t;
             (*gv.c_s).insert_cols(0,add_snow_layers_swe_conc); // set to precip_c_t
             
+            
         }else if (diff_num_snowlay < 0){ // Melt !!! At the moment it is just removing that layer
+
+            gv.nh--;
+            gv.snowH -= gv.snowh;
 
             (*gv.vfrac2d_m).shed_cols(0,abs(diff_num_snowlay)-1);
             (*gv.vfrac2d_s).shed_cols(0,abs(diff_num_snowlay)-1);

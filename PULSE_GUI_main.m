@@ -90,7 +90,7 @@ while(winopen == 1)
     
     % simuations
     pulse_dir = gui_varargout.Directoryofpulse_cppexecutableEditField.Value; % bin/
-    col_li = round(L_SNOWPACK/L_LAY/2);
+    col_li = 0;round(L_SNOWPACK/L_LAY/2);
 
     Run_pulse_flag = 0;
     Sens_run_flag = 0;

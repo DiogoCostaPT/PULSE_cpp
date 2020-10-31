@@ -99,7 +99,6 @@ bool pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
                 err_flag = true;
                 return err_flag;
             }
-
             t++;
 
         } 
@@ -113,13 +112,13 @@ bool pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
         tcum = tcum + deltt; 
 
         // Print results                
-            if (tcum>=print_next){
+        if (tcum>=print_next){
 
-                end = std::chrono::system_clock::now();
-                elapsed_seconds = end-start;
+            end = std::chrono::system_clock::now();
+            elapsed_seconds = end-start;
 
-                outwritestatus = print_results(gv,gp,std::round(print_next),gp.print_step,elapsed_seconds,
-                        results_flname);
+            outwritestatus = print_results(gv,gp,std::round(print_next),gp.print_step,elapsed_seconds,
+                    results_flname);
 
             if(outwritestatus == true) 
             {
@@ -133,7 +132,7 @@ bool pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
                 print_screen_log(logPULSEfile,&msg);
                 abort();
             }
-            }
+        }
 
     }   
 }
