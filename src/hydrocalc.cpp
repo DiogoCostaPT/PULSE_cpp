@@ -323,8 +323,7 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
             // Water Quality
             (*gv.c_m).insert_cols(0,diff_num_snowlay); // set to zero by default
             arma::mat add_snow_layers_swe_conc = arma::ones<arma::mat>(1,diff_num_snowlay) * prec_c_ext_t;
-            (*gv.c_s).insert_cols(0,add_snow_layers_swe_conc); // set to precip_c_t
-            
+            (*gv.c_s).insert_cols(0,add_snow_layers_swe_conc); // set to precip_c_t            
             
         }else if (diff_num_snowlay < 0){ // Melt !!! At the moment it is just removing that layer
 
@@ -341,8 +340,21 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
             (*gv.c_s).shed_cols(0,abs(diff_num_snowlay)-1);
         }
 
+
+        // First phase change
+        
+        arma::mat chemmass_exch = (*gv.c_s) % v_ice2liq_1_ext_t * gv.snowh;
+         // (*gv.c_s) -> this will not change
+        (*gv.c_m) = ( (*gv.c_m) % (*gv.v_liq) + chemmass_exch) / ( ((*gv.vfrac2d_m) + v_ice2liq_1_ext_t)  * (gv.snowh));
+        
+        (*gv.vfrac2d_s) = (*gv.vfrac2d_s) - v_ice2liq_1_ext_t;
+        (*gv.vfrac2d_m) = (*gv.vfrac2d_m) + v_ice2liq_1_ext_t;
+        (*gv.v_swe) = (*gv.vfrac2d_s) * (gv.snowh);
+        (*gv.v_liq) = (*gv.vfrac2d_m) * (gv.snowh);
+
+        
+
          /*       
-        1) find problem for blowing solution
         2) add change in phase: v_ice2liq_1_ext_t
         3) percolation: fluxQ_ext_t
         4) add change in phase: v_ice2liq_2_ext_t
