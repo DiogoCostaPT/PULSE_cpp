@@ -92,6 +92,9 @@ bool pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
 
         } else if (gp.snowmodel == 1){ // external
             
+            //  Get time step
+            deltt = (*gv.time_ext)(t+1) - (*gv.time_ext)(t); 
+
             err_flag = watermass_calc_external(gv,gp,&deltt,logPULSEfile, t);
             if (err_flag == true){
                 std::string msg = "> ERROR in watermass_calc_external";
