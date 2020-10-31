@@ -304,8 +304,8 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
         int diff_num_snowlay = v_swe_ext_t.n_cols - (*gv.v_swe).n_cols;  
         if (diff_num_snowlay > 0){ // Precipitation
             
-            gv.nh++; // remove_snow one layer
-            gv.snowH += gv.snowh; // snowpack depth 
+            gv.nh += diff_num_snowlay; // remove_snow one layer
+            gv.snowH += gv.snowh * diff_num_snowlay; // snowpack depth 
 
             // SWE and liquid
             arma::mat add_snow_layers_swe = arma::reverse(v_swe_ext_t.tail_cols(diff_num_snowlay)); // reverse because pulse adds new layer at col = 0 and not at the end of the array
@@ -328,8 +328,8 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
             
         }else if (diff_num_snowlay < 0){ // Melt !!! At the moment it is just removing that layer
 
-            gv.nh--;
-            gv.snowH -= gv.snowh;
+            gv.nh -= abs(diff_num_snowlay);
+            gv.snowH -= gv.snowh * abs(diff_num_snowlay);
 
             (*gv.vfrac2d_m).shed_cols(0,abs(diff_num_snowlay)-1);
             (*gv.vfrac2d_s).shed_cols(0,abs(diff_num_snowlay)-1);
