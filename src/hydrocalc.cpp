@@ -280,7 +280,7 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
 
     bool err_flag = false;
 
-    try{
+    //try{
         
         // Get input data at t time
         arma::mat v_swe_ext_t = (*gv.v_swe_ext)(t,arma::span::all);
@@ -342,17 +342,50 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
 
 
         // First phase change
-        
-        arma::mat chemmass_exch = (*gv.c_s) % v_ice2liq_1_ext_t * gv.snowh;
-         // (*gv.c_s) -> this will not change
-        (*gv.c_m) = ( (*gv.c_m) % (*gv.v_liq) + chemmass_exch) / ( ((*gv.vfrac2d_m) + v_ice2liq_1_ext_t)  * (gv.snowh));
-        
+        // if ice -> liq (for chem)
+        arma::mat chemmass_exch_i2l = (*gv.c_s) % v_ice2liq_1_ext_t * gv.snowh;
+        chemmass_exch_i2l.elem(arma::find(v_ice2liq_1_ext_t < 0)).zeros();
+        (*gv.c_m) = ( (*gv.c_m) % (*gv.v_liq) + chemmass_exch_i2l) / ( ((*gv.vfrac2d_m) + v_ice2liq_1_ext_t)  * (gv.snowh));
+        // if liq -> ice (fr chem)
+        arma::mat chemmass_exch_l2i = (*gv.c_m) % v_ice2liq_1_ext_t * gv.snowh;
+        chemmass_exch_l2i.elem(arma::find(v_ice2liq_1_ext_t > 0)).zeros();
+        (*gv.c_s) = ( (*gv.c_s) % (*gv.v_swe) + chemmass_exch_l2i) / ( ((*gv.vfrac2d_s) + v_ice2liq_1_ext_t)  * (gv.snowh));
+        // general for hydro
         (*gv.vfrac2d_s) = (*gv.vfrac2d_s) - v_ice2liq_1_ext_t;
         (*gv.vfrac2d_m) = (*gv.vfrac2d_m) + v_ice2liq_1_ext_t;
         (*gv.v_swe) = (*gv.vfrac2d_s) * (gv.snowh);
         (*gv.v_liq) = (*gv.vfrac2d_m) * (gv.snowh);
 
-        
+        // Percolation (just liquid phase)
+        // chem
+        int num_ele_minus_one = (*gv.vfrac2d_m).n_elem-1;
+        if (num_ele_minus_one > 0){
+            arma::mat chemmass_exch = (*gv.c_m) % fluxQ_ext_t * gv.snowh;
+            (*gv.c_m) = ( (*gv.c_m) % (*gv.v_liq) - chemmass_exch) / ( ((*gv.vfrac2d_m) - fluxQ_ext_t)  * (gv.snowh)); // remove from upper layer
+            (*gv.c_m).tail_cols(num_ele_minus_one) = ( (*gv.c_m).tail_cols(num_ele_minus_one) % (*gv.v_liq).tail_cols(num_ele_minus_one) 
+                            + chemmass_exch.head_cols(num_ele_minus_one)) / ( ((*gv.vfrac2d_m).tail_cols(num_ele_minus_one) + 
+                            fluxQ_ext_t.head_cols(num_ele_minus_one))  * (gv.snowh)); // add to lower layer
+            // hydro
+            (*gv.vfrac2d_m) = (*gv.vfrac2d_m) - fluxQ_ext_t; // remove from upper layer
+            (*gv.vfrac2d_m).tail_cols(num_ele_minus_one) = (*gv.vfrac2d_m).tail_cols(num_ele_minus_one) + fluxQ_ext_t.head_cols(num_ele_minus_one); // add to lower layer
+            (*gv.v_swe) = (*gv.vfrac2d_s) * (gv.snowh);
+            (*gv.v_liq) = (*gv.vfrac2d_m) * (gv.snowh);
+        };
+
+        // Second phase change
+        // if ice -> liq (for chem)
+        chemmass_exch_i2l = (*gv.c_s) % v_ice2liq_2_ext_t * gv.snowh;
+        chemmass_exch_i2l.elem(arma::find(v_ice2liq_2_ext_t < 0)).zeros();
+        (*gv.c_m) = ( (*gv.c_m) % (*gv.v_liq) + chemmass_exch_i2l) / ( ((*gv.vfrac2d_m) + v_ice2liq_2_ext_t)  * (gv.snowh));
+        // if liq -> ice (fr chem)
+        chemmass_exch_l2i = (*gv.c_m) % v_ice2liq_2_ext_t * gv.snowh;
+        chemmass_exch_l2i.elem(arma::find(v_ice2liq_2_ext_t > 0)).zeros();
+        (*gv.c_s) = ( (*gv.c_s) % (*gv.v_swe) + chemmass_exch_l2i) / ( ((*gv.vfrac2d_s) + v_ice2liq_2_ext_t)  * (gv.snowh));
+        // general for hydro
+        (*gv.vfrac2d_s) = (*gv.vfrac2d_s) - v_ice2liq_1_ext_t;
+        (*gv.vfrac2d_m) = (*gv.vfrac2d_m) + v_ice2liq_1_ext_t;
+        (*gv.v_swe) = (*gv.vfrac2d_s) * (gv.snowh);
+        (*gv.v_liq) = (*gv.vfrac2d_m) * (gv.snowh);
 
          /*       
         2) add change in phase: v_ice2liq_1_ext_t
@@ -389,9 +422,9 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
 
     */
 
-    } catch(const std::exception& e){
-        err_flag = true;
-    }
+    //} catch(const std::exception& e){
+    //    err_flag = true;
+    //}
 
    return err_flag;
 
