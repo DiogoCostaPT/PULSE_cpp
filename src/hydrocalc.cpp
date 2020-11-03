@@ -343,13 +343,24 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
 
         // First phase change
         // if ice -> liq (for chem)
-        arma::mat chemmass_exch_i2l = (*gv.c_s) % v_ice2liq_1_ext_t * gv.snowh;
-        chemmass_exch_i2l.elem(arma::find(v_ice2liq_1_ext_t < 0)).zeros();
-        (*gv.c_m) = ( (*gv.c_m) % (*gv.v_liq) + chemmass_exch_i2l) / ( ((*gv.vfrac2d_m) + v_ice2liq_1_ext_t)  * (gv.snowh));
-        // if liq -> ice (fr chem)
-        arma::mat chemmass_exch_l2i = (*gv.c_m) % v_ice2liq_1_ext_t * gv.snowh;
-        chemmass_exch_l2i.elem(arma::find(v_ice2liq_1_ext_t > 0)).zeros();
-        (*gv.c_s) = ( (*gv.c_s) % (*gv.v_swe) + chemmass_exch_l2i) / ( ((*gv.vfrac2d_s) + v_ice2liq_1_ext_t)  * (gv.snowh));
+        arma::mat v_ice2liq_ext_t_melt = v_ice2liq_1_ext_t; // water mass change
+        v_ice2liq_ext_t_melt.elem(arma::find(v_ice2liq_1_ext_t < 0)).zeros(); // only for melt, set freeze to zero here
+        arma::mat chemmass_exch_i2l = (*gv.c_s) % v_ice2liq_ext_t_melt * gv.snowh; // calc the chem mass exchange
+        arma::mat new_water_mass = ((*gv.vfrac2d_m) + v_ice2liq_ext_t_melt)  * (gv.snowh); // new liquid water mass after applying the phase change
+        (*gv.c_m) = ( (*gv.c_m) % (*gv.v_liq) + chemmass_exch_i2l) / new_water_mass; // calculate new chem concentrationj
+        arma::uvec non_zero_loc = arma::find(new_water_mass <= gp.num_stblty_thrshld_prsity); // set to zero cases with very low new_wter_mass 
+         (*gv.c_m).elem(non_zero_loc).zeros(); // set to zero if water mass is too small
+
+        // if liq -> ice (for chem)
+        arma::mat v_ice2liq_ext_t_freeze = v_ice2liq_1_ext_t;
+        v_ice2liq_ext_t_freeze.elem(arma::find(v_ice2liq_1_ext_t > 0)).zeros();
+        arma::mat chemmass_exch_l2i = (*gv.c_m) % v_ice2liq_ext_t_freeze * gv.snowh;    
+        new_water_mass = ((*gv.vfrac2d_s) + v_ice2liq_ext_t_freeze)  * (gv.snowh);
+        (*gv.c_s) = ( (*gv.c_s) % (*gv.v_swe) + chemmass_exch_l2i) / new_water_mass;
+        non_zero_loc = arma::find(new_water_mass <= gp.num_stblty_thrshld_prsity);
+        (*gv.c_s).elem(non_zero_loc).zeros(); // set to zero if water mass is too small
+        
+
         // general for hydro
         (*gv.vfrac2d_s) = (*gv.vfrac2d_s) - v_ice2liq_1_ext_t;
         (*gv.vfrac2d_m) = (*gv.vfrac2d_m) + v_ice2liq_1_ext_t;
@@ -365,6 +376,9 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
             (*gv.c_m).tail_cols(num_ele_minus_one) = ( (*gv.c_m).tail_cols(num_ele_minus_one) % (*gv.v_liq).tail_cols(num_ele_minus_one) 
                             + chemmass_exch.head_cols(num_ele_minus_one)) / ( ((*gv.vfrac2d_m).tail_cols(num_ele_minus_one) + 
                             fluxQ_ext_t.head_cols(num_ele_minus_one))  * (gv.snowh)); // add to lower layer
+            new_water_mass =  ((*gv.vfrac2d_m).tail_cols(num_ele_minus_one) + 
+                            fluxQ_ext_t.head_cols(num_ele_minus_one))  * (gv.snowh);
+            (*gv.c_m).elem(non_zero_loc).zeros(); // set to zero if water mass is too small
             // hydro
             (*gv.vfrac2d_m) = (*gv.vfrac2d_m) - fluxQ_ext_t; // remove from upper layer
             (*gv.vfrac2d_m).tail_cols(num_ele_minus_one) = (*gv.vfrac2d_m).tail_cols(num_ele_minus_one) + fluxQ_ext_t.head_cols(num_ele_minus_one); // add to lower layer
@@ -374,26 +388,28 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
 
         // Second phase change
         // if ice -> liq (for chem)
-        chemmass_exch_i2l = (*gv.c_s) % v_ice2liq_2_ext_t * gv.snowh;
-        chemmass_exch_i2l.elem(arma::find(v_ice2liq_2_ext_t < 0)).zeros();
-        (*gv.c_m) = ( (*gv.c_m) % (*gv.v_liq) + chemmass_exch_i2l) / ( ((*gv.vfrac2d_m) + v_ice2liq_2_ext_t)  * (gv.snowh));
+        v_ice2liq_ext_t_melt = v_ice2liq_2_ext_t; // water mass change
+        v_ice2liq_ext_t_melt.elem(arma::find(v_ice2liq_2_ext_t < 0)).zeros(); // only for melt, set freeze to zero here
+        chemmass_exch_i2l = (*gv.c_s) % v_ice2liq_ext_t_melt * gv.snowh; // calc the chem mass exchange
+        new_water_mass = ((*gv.vfrac2d_m) + v_ice2liq_ext_t_melt)  * (gv.snowh); // new liquid water mass after applying the phase change
+        (*gv.c_m) = ( (*gv.c_m) % (*gv.v_liq) + chemmass_exch_i2l) / new_water_mass; // calculate new chem concentrationj
+        non_zero_loc = arma::find(new_water_mass <= gp.num_stblty_thrshld_prsity); // set to zero cases with very low new_wter_mass 
+         (*gv.c_m).elem(non_zero_loc).zeros(); // set to zero if water mass is too small
+
         // if liq -> ice (fr chem)
-        chemmass_exch_l2i = (*gv.c_m) % v_ice2liq_2_ext_t * gv.snowh;
-        chemmass_exch_l2i.elem(arma::find(v_ice2liq_2_ext_t > 0)).zeros();
-        (*gv.c_s) = ( (*gv.c_s) % (*gv.v_swe) + chemmass_exch_l2i) / ( ((*gv.vfrac2d_s) + v_ice2liq_2_ext_t)  * (gv.snowh));
+        v_ice2liq_ext_t_freeze = v_ice2liq_2_ext_t;
+        v_ice2liq_ext_t_freeze.elem(arma::find(v_ice2liq_2_ext_t > 0)).zeros();
+        chemmass_exch_l2i = (*gv.c_m) % v_ice2liq_ext_t_freeze * gv.snowh;    
+        new_water_mass = ((*gv.vfrac2d_s) + v_ice2liq_ext_t_freeze)  * (gv.snowh);
+        (*gv.c_s) = ( (*gv.c_s) % (*gv.v_swe) + chemmass_exch_l2i) / new_water_mass;
+        non_zero_loc = arma::find(new_water_mass <= gp.num_stblty_thrshld_prsity);
+        (*gv.c_s).elem(non_zero_loc).zeros(); // set to zero if water mass is too small
+
         // general for hydro
-        (*gv.vfrac2d_s) = (*gv.vfrac2d_s) - v_ice2liq_1_ext_t;
-        (*gv.vfrac2d_m) = (*gv.vfrac2d_m) + v_ice2liq_1_ext_t;
+        (*gv.vfrac2d_s) = (*gv.vfrac2d_s) - v_ice2liq_2_ext_t;
+        (*gv.vfrac2d_m) = (*gv.vfrac2d_m) + v_ice2liq_2_ext_t;
         (*gv.v_swe) = (*gv.vfrac2d_s) * (gv.snowh);
         (*gv.v_liq) = (*gv.vfrac2d_m) * (gv.snowh);
-
-         /*       
-        2) add change in phase: v_ice2liq_1_ext_t
-        3) percolation: fluxQ_ext_t
-        4) add change in phase: v_ice2liq_2_ext_t
-        */
-
-
 
 
 /*
