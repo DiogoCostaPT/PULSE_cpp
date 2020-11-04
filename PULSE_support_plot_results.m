@@ -44,6 +44,8 @@ function PULSE_support_plot_results(results_dir,chemical_species,...
         if i==8; var_print = poros_s; var_print_name = 'Volume fraction of solid phase [-]'; end
                 
         var_print(inanloc) = NaN;
+        
+        var_print(var_print<0) = 0;
              
         subplot(3,3,i)
         surf(Tmesh,Hmesh,var_print)
@@ -75,8 +77,14 @@ function PULSE_support_plot_results(results_dir,chemical_species,...
         catch
         end
         %colormap(othercolor('Blues9'))
-        colormap(jet)
-        colorbar
+        colorcode = 'RdBu'; % 'Blues' - liquid content, 'RdBu' - temperature
+        colorm = brewermap(200,colorcode);
+        colorm(1,1) = 0.8;
+        colorm(1,2) = 0.8;
+        colorm(1,3) = 0.8;
+        colormap(colorm)
+        hcb = colorbar;
+        
         view(0,90)
         %xlabel('Date')
         ylabel('Snow height [mm]')
