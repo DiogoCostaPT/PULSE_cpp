@@ -107,7 +107,7 @@ bool pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
         } 
 
         // Ion Exclusion
-        if (gv.qmelt_t > 0.0f || gv.rainfall_t > 0.0f){                    
+        if (~(*gv.v_liq).is_zero()){                    
             IonExclusionModel(gp,gv,&deltt);
         }
 
