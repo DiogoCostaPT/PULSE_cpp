@@ -291,7 +291,7 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
         double prec_c_ext_t = (*gv.preci_c_ext)(t,0);
 
         // Identify the layers with snow
-        arma::uvec snowlay = arma::find(v_swe_ext_t > 0.f);
+        arma::uvec snowlay = arma::find(v_swe_ext_t != 9999);
 
         // Remove the layers without snow 
         v_swe_ext_t = v_swe_ext_t.cols(snowlay);
