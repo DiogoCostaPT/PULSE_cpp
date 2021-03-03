@@ -280,27 +280,49 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
 
     bool err_flag = false;
 
+    // Skip step t = 0 because I need the previous time step
+    if (t == 0){
+        return err_flag;
+    }
+    
     //try{
         
-        // Get input data at t time
+        // Get input data at time and t-1
         arma::mat v_swe_ext_t = (*gv.v_swe_ext)(t,arma::span::all);
         arma::mat v_liq_ext_t = (*gv.v_liq_ext)(t,arma::span::all);
-        arma::mat v_ice2liq_1_ext_t = (*gv.v_ice2liq_1_ext)(t,arma::span::all);
-        arma::mat v_ice2liq_2_ext_t = (*gv.v_ice2liq_2_ext)(t,arma::span::all);
-        arma::mat fluxQ_ext_t = (*gv.fluxQ_ext)(t,arma::span::all);
+        //arma::mat v_ice2liq_1_ext_t = (*gv.v_ice2liq_1_ext)(t,arma::span::all);
+        //arma::mat v_ice2liq_2_ext_t = (*gv.v_ice2liq_2_ext)(t,arma::span::all);
+        //arma::mat fluxQ_ext_t = (*gv.fluxQ_ext)(t,arma::span::all);
+        arma::mat v_swe_ext_tprev = (*gv.v_swe_ext)(t-1,arma::span::all);
+        arma::mat v_liq_ext_tprev = (*gv.v_liq_ext)(t-1,arma::span::all);
+        //arma::mat v_ice2liq_1_ext_tprev = (*gv.v_ice2liq_1_ext)(t-1,arma::span::all);
+        //arma::mat v_ice2liq_2_ext_tprev = (*gv.v_ice2liq_2_ext)(t-1,arma::span::all);
+        //arma::mat fluxQ_ext_tprev = (*gv.fluxQ_ext)(t-1,arma::span::all);
+
         double prec_c_ext_t = (*gv.preci_c_ext)(t,0);
 
         // Identify the layers with snow
-        arma::uvec snowlay = arma::find(v_swe_ext_t != 9999);
+        arma::uvec snowlay_t = arma::find(v_swe_ext_t != 9999);
+        arma::uvec snowlay_tprev = arma::find(v_swe_ext_tprev != 9999);
+        int num_snowlay_t = snowlay_t.n_elem;
+        int num_snowlay_tprev = snowlay_tprev.n_elem;
 
         // Remove the layers without snow 
-        v_swe_ext_t = v_swe_ext_t.cols(snowlay);
-        v_liq_ext_t = v_liq_ext_t.cols(snowlay);
-        v_ice2liq_1_ext_t = v_ice2liq_1_ext_t.cols(snowlay);
-        v_ice2liq_2_ext_t = v_ice2liq_2_ext_t.cols(snowlay);
-        fluxQ_ext_t = fluxQ_ext_t.cols(snowlay);
+        v_swe_ext_t = v_swe_ext_t.cols(snowlay_t);
+        v_liq_ext_t = v_liq_ext_t.cols(snowlay_t);
+        //v_ice2liq_1_ext_t = v_ice2liq_1_ext_t.cols(snowlay);
+        //v_ice2liq_2_ext_t = v_ice2liq_2_ext_t.cols(snowlay);
+        //fluxQ_ext_t = fluxQ_ext_t.cols(snowlay);
+        v_swe_ext_tprev = v_swe_ext_tprev.cols(snowlay_tprev);
+        v_liq_ext_tprev = v_liq_ext_tprev.cols(snowlay_tprev);
 
-        // Identify top input (precipitation) or top melt AND apply
+        // Determine difference delta_swe and delta_liq (only for the layers in common between t and t-1)
+        int num_comon_layers = std::min(num_snowlay_t,num_snowlay_tprev);
+        arma::mat delta_swe = arma::reverse(v_swe_ext_t.head_cols(num_comon_layers) - v_swe_ext_tprev.head_cols(num_comon_layers)); // reverse from snowpack to pulse convention
+        arma::mat delta_liq = arma::reverse(v_liq_ext_t.head_cols(num_comon_layers) - v_liq_ext_tprev.head_cols(num_comon_layers)); // reverse from snowpack to pulse convention
+
+
+        // Identify top input (precipitation)
         int diff_num_snowlay = v_swe_ext_t.n_cols - (*gv.v_swe).n_cols;  
         if (diff_num_snowlay > 0){ // Precipitation
             
@@ -311,8 +333,8 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
             arma::mat add_snow_layers_swe = arma::reverse(v_swe_ext_t.tail_cols(diff_num_snowlay)); // reverse because pulse adds new layer at col = 0 and not at the end of the array
             arma::mat add_snow_layers_liq = arma::reverse(v_liq_ext_t.tail_cols(diff_num_snowlay)); // reverse because pulse adds new layer at col = 0 and not at the end of the array          
             
-            (*gv.vfrac2d_m).insert_cols(0,add_snow_layers_liq);  // set to zero by default
             (*gv.vfrac2d_s).insert_cols(0,add_snow_layers_swe); //set to one
+            (*gv.vfrac2d_m).insert_cols(0,add_snow_layers_liq);  // set to zero by default
             (*gv.v_swe) = (*gv.vfrac2d_s) * (gv.snowh);
             (*gv.v_liq) = (*gv.vfrac2d_m) * (gv.snowh);
             //(*gv.v_air).insert_cols(0,diff_num_snowlay); // ?? not sure what to put here but likely irrelevatr
@@ -325,8 +347,75 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
             arma::mat add_snow_layers_swe_conc = arma::ones<arma::mat>(1,diff_num_snowlay) * prec_c_ext_t;
             (*gv.c_s).insert_cols(0,add_snow_layers_swe_conc); // set to precip_c_t            
             
-        }else if (diff_num_snowlay < 0){ // Melt !!! At the moment it is just removing that layer
+        }
 
+
+        // Mimic mass balance
+        double delta_swe_i;
+        double delta_liq_i;
+        int layer_i;
+        for(int il=0;il<num_comon_layers-1 ;il++){
+
+            layer_i = il;
+            delta_swe_i = delta_swe(layer_i);
+            delta_liq_i = delta_liq(layer_i);
+
+            // delta_swe_i Increase 
+            if (delta_swe_i > 0){ // inner loop between top and respective layer to add the necessary masses
+
+                // start by adding to top layer
+                //(*gv.c_s).col(0) = ((*gv.c_s).col(0) * (*gv.vfrac2d_s).col(0) + prec_c_ext_t * delta_swe_i) 
+                //                / ((*gv.vfrac2d_s).col(0) + delta_swe_i);
+                (*gv.vfrac2d_s).col(0) += delta_swe_i;
+
+                // then move that mass from top layer down to the respective layer where an increase was observed
+                for (int iil=1;iil<=layer_i ;iil++){ // starting from top now adding the masses
+
+                    //(*gv.c_s).col(iil-1); // concentration here will not change
+                    (*gv.vfrac2d_s).col(iil-1) -= delta_swe_i;
+                    
+                    //(*gv.c_s).col(iil) = ((*gv.c_s).col(iil) * (*gv.vfrac2d_s).col(iil-1) +  delta_swe_i + (*gv.c_s).col(iil-1))
+                     //           / ((*gv.vfrac2d_s).col(iil) + delta_swe_i);    
+                    (*gv.vfrac2d_s).col(iil) += delta_swe_i;
+
+                }
+            }else if(delta_swe_i < 0){  // delta_swe_i Decrease
+
+               
+                (*gv.vfrac2d_s).col(layer_i) -= fabs(delta_swe_i);
+                (*gv.vfrac2d_m).col(layer_i) += fabs(delta_swe_i);  
+
+            }
+
+            // Liquid water 
+            if (delta_liq_i > 0){
+                if (layer_i == 0 && delta_swe_i>=0){  // rain
+
+                    (*gv.vfrac2d_m).col(0) += delta_liq_i; // assuming rain because the water needs to come from somewhere
+
+                }else if (layer_i != 0 && delta_swe_i>=0){  // assuming percolation inside the snowpack
+                    (*gv.vfrac2d_m).col(layer_i-1) -= delta_liq_i; // remove from upper layer
+                    (*gv.vfrac2d_m).col(layer_i) += delta_liq_i; // add to lower layer
+                    
+                }else if (layer_i != 0 && delta_swe_i<0){ // assuming melt
+                    (*gv.vfrac2d_s).col(layer_i) -= delta_liq_i;
+                    (*gv.vfrac2d_m).col(layer_i) += delta_liq_i;
+                }
+            }else if (delta_liq_i < 0 && delta_swe_i >= 0){ // assuming refrezing
+                    (*gv.vfrac2d_m).col(layer_i) -= fabs(delta_liq_i);
+                    (*gv.vfrac2d_s).col(layer_i) += fabs(delta_liq_i);
+
+            }
+        
+        }
+        (*gv.v_swe) = (*gv.vfrac2d_s) * (gv.snowh);
+        (*gv.v_liq) = (*gv.vfrac2d_m) * (gv.snowh);
+
+
+
+        // If top layers is removed
+        if (diff_num_snowlay < 0){ 
+            // Remove the layer
             gv.nh -= abs(diff_num_snowlay);
             gv.snowH -= gv.snowh * abs(diff_num_snowlay);
 
@@ -341,7 +430,10 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
         }
 
 
-        // First phase change
+
+
+        /* This calculation was based on v_ice2liq_1_ext_t, v_ice2liq_2_ext_t, adn FluxQ (did not work very well but it might be because of any bugs)
+        // First phase change 
         // if ice -> liq (for chem)
         arma::mat v_ice2liq_ext_t_melt = v_ice2liq_1_ext_t; // water mass change
         v_ice2liq_ext_t_melt.elem(arma::find(v_ice2liq_1_ext_t < 0)).zeros(); // only for melt, set freeze to zero here
@@ -349,18 +441,18 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
         arma::mat new_water_mass = ((*gv.vfrac2d_m) + v_ice2liq_ext_t_melt)  * (gv.snowh); // new liquid water mass after applying the phase change
         (*gv.c_m) = ( (*gv.c_m) % (*gv.v_liq) + chemmass_exch_i2l) / new_water_mass; // calculate new chem concentrationj
         arma::uvec non_zero_loc = arma::find(new_water_mass <= gp.num_stblty_thrshld_prsity); // set to zero cases with very low new_wter_mass 
-         (*gv.c_m).elem(non_zero_loc).zeros(); // set to zero if water mass is too small
+        (*gv.c_m).elem(non_zero_loc).zeros(); // set to zero if water mass is too small
 
         // if liq -> ice (for chem)
         arma::mat v_ice2liq_ext_t_freeze = v_ice2liq_1_ext_t;
         v_ice2liq_ext_t_freeze.elem(arma::find(v_ice2liq_1_ext_t > 0)).zeros();
+        v_ice2liq_ext_t_freeze = - v_ice2liq_ext_t_freeze; 
         arma::mat chemmass_exch_l2i = (*gv.c_m) % v_ice2liq_ext_t_freeze * gv.snowh;    
         new_water_mass = ((*gv.vfrac2d_s) + v_ice2liq_ext_t_freeze)  * (gv.snowh);
         (*gv.c_s) = ( (*gv.c_s) % (*gv.v_swe) + chemmass_exch_l2i) / new_water_mass;
         non_zero_loc = arma::find(new_water_mass <= gp.num_stblty_thrshld_prsity);
         (*gv.c_s).elem(non_zero_loc).zeros(); // set to zero if water mass is too small
         
-
         // general for hydro
         (*gv.vfrac2d_s) = (*gv.vfrac2d_s) - v_ice2liq_1_ext_t;
         (*gv.vfrac2d_m) = (*gv.vfrac2d_m) + v_ice2liq_1_ext_t;
@@ -373,23 +465,22 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
         if (num_ele_minus_one > 0){
             arma::mat chemmass_exch = (*gv.c_m) % fluxQ_ext_t * gv.snowh;
             (*gv.c_m) = ( (*gv.c_m) % (*gv.v_liq) - chemmass_exch) / ( ((*gv.vfrac2d_m) - fluxQ_ext_t)  * (gv.snowh)); // remove from upper layer
-            (*gv.c_m).tail_cols(num_ele_minus_one) = ( (*gv.c_m).tail_cols(num_ele_minus_one) % (*gv.v_liq).tail_cols(num_ele_minus_one) 
-                            + chemmass_exch.head_cols(num_ele_minus_one)) / ( ((*gv.vfrac2d_m).tail_cols(num_ele_minus_one) + 
-                            fluxQ_ext_t.head_cols(num_ele_minus_one))  * (gv.snowh)); // add to lower layer
             new_water_mass =  ((*gv.vfrac2d_m).tail_cols(num_ele_minus_one) + 
                             fluxQ_ext_t.head_cols(num_ele_minus_one))  * (gv.snowh);
+            (*gv.c_m).tail_cols(num_ele_minus_one) = ( (*gv.c_m).tail_cols(num_ele_minus_one) % (*gv.v_liq).tail_cols(num_ele_minus_one) 
+                            + chemmass_exch.head_cols(num_ele_minus_one)) / new_water_mass; // add to lower layer
+            non_zero_loc = arma::find(new_water_mass <= gp.num_stblty_thrshld_prsity);
             (*gv.c_m).elem(non_zero_loc).zeros(); // set to zero if water mass is too small
             // hydro
             (*gv.vfrac2d_m) = (*gv.vfrac2d_m) - fluxQ_ext_t; // remove from upper layer
             (*gv.vfrac2d_m).tail_cols(num_ele_minus_one) = (*gv.vfrac2d_m).tail_cols(num_ele_minus_one) + fluxQ_ext_t.head_cols(num_ele_minus_one); // add to lower layer
-            (*gv.v_swe) = (*gv.vfrac2d_s) * (gv.snowh);
             (*gv.v_liq) = (*gv.vfrac2d_m) * (gv.snowh);
         };
 
         // Second phase change
         // if ice -> liq (for chem)
         v_ice2liq_ext_t_melt = v_ice2liq_2_ext_t; // water mass change
-        v_ice2liq_ext_t_melt.elem(arma::find(v_ice2liq_2_ext_t < 0)).zeros(); // only for melt, set freeze to zero here
+        v_ice2liq_ext_t_melt.elem(arma::find(v_ice2liq_2_ext_t > 0)).zeros(); // only for melt, set freeze to zero here
         chemmass_exch_i2l = (*gv.c_s) % v_ice2liq_ext_t_melt * gv.snowh; // calc the chem mass exchange
         new_water_mass = ((*gv.vfrac2d_m) + v_ice2liq_ext_t_melt)  * (gv.snowh); // new liquid water mass after applying the phase change
         (*gv.c_m) = ( (*gv.c_m) % (*gv.v_liq) + chemmass_exch_i2l) / new_water_mass; // calculate new chem concentrationj
@@ -398,7 +489,8 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
 
         // if liq -> ice (fr chem)
         v_ice2liq_ext_t_freeze = v_ice2liq_2_ext_t;
-        v_ice2liq_ext_t_freeze.elem(arma::find(v_ice2liq_2_ext_t > 0)).zeros();
+        v_ice2liq_ext_t_freeze.elem(arma::find(v_ice2liq_2_ext_t < 0)).zeros();
+        v_ice2liq_ext_t_freeze = -v_ice2liq_ext_t_freeze;
         chemmass_exch_l2i = (*gv.c_m) % v_ice2liq_ext_t_freeze * gv.snowh;    
         new_water_mass = ((*gv.vfrac2d_s) + v_ice2liq_ext_t_freeze)  * (gv.snowh);
         (*gv.c_s) = ( (*gv.c_s) % (*gv.v_swe) + chemmass_exch_l2i) / new_water_mass;
@@ -411,7 +503,7 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
         (*gv.v_swe) = (*gv.vfrac2d_s) * (gv.snowh);
         (*gv.v_liq) = (*gv.vfrac2d_m) * (gv.snowh);
 
-
+*/
 /*
 
     arma::uvec meltloc = find((*gv.v_ice2liq_1_ext) > 0); // cells that melt
