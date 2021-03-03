@@ -3,6 +3,14 @@
 function PULSE_support_plot_results(results_dir,chemical_species,...
                     col_li,masterfile,Obs_file)
 
+    Obs_WQ_file_smooth = '/media/dcosta/data/megasync/ec_main/models/pulse/code/code_snowpack/snowpack_pulse/tools/BRG_data_smoothed.mat';
+    smooth_mat_data_flag = 1;            
+                
+    obs_conc_force_max_caxis = {'true',1, 6, 1, 15};
+    chem_i = 4;
+    num_bins = 200;
+    
+    
     % load pulse results
      [time_sim_elapsec,h_layers_max,c_m,c_s,c_total,poros_m,poros_s,...
          v_liq,v_swe,v_air] = PULSE_support_load_pulse_results(results_dir,col_li);
@@ -17,17 +25,53 @@ function PULSE_support_plot_results(results_dir,chemical_species,...
     
     % Retrieve Obs data for c_total
     Obs_exist_flag = false;
+    
+    %{
     try
         [X_obs_mesh,Y_obs_mesh,Z_obs_mesh,Marsize_obs_mesh,colvec,...
             cmax_ctotal] = PULSE_support_GetTrans_obs_data(Obs_file,c_total,chemical_species); 
-        Y_obs_mesh = Y_obs_mesh * 10; % cm to mm
+        %Y_obs_mesh = Y_obs_mesh * 10; % cm to mm
         Obs_exist_flag = true;
     catch
     end
+    %}
+    
+    if ~smooth_mat_data_flag
+        [X_obs_mesh,Y_obs_mesh,Z_obs_mesh,Marsize_obs_mesh] = PULSE_support_GetTrans_obs_data(Obs_WQ_file,chemical_species);
+                
+     else % using smoothed data
+        load(Obs_WQ_file_smooth)
+        X_obs_mesh = obs_time_extract.(genvarname(chemical_species));
+        Y_obs_mesh = obs_depth_extract.(genvarname(chemical_species));
+        Z_obs_mesh = obs_data_extract.(genvarname(chemical_species));
+        Marsize_obs_mesh = 30 * ones(size(obs_data_extract));
+     end
+
+    Z_obs_mesh(isnan(Z_obs_mesh)) = 0;
+    Z_obs_mesh( Z_obs_mesh<0 ) = 0;
+
+    if ~strcmp(obs_conc_force_max_caxis{1},'true')
+        cmax_obs = max(max(Z_obs_mesh));
+        cmax_mod = max(max(Z));
+        cmax_ctotal = max(cmax_obs,cmax_mod);
+    else
+        cmax_ctotal = obs_conc_force_max_caxis{chem_i+1};
+    end
+    
+    colorcode = 'YlOrRd'; % 'Blues' - liquid content, 'RdBu' - temperature
+    colorm = brewermap(num_bins,colorcode);
+    
+    colorc = round(Z_obs_mesh/cmax_ctotal * (numel(colorm(:,1))-1))+1;
+    for e = 1:numel(colorc)
+        colorc(e) = min(num_bins, colorc(e));
+    end
+    colvec = colorm(colorc,:);
+
+    
    
     inanloc = isnan(c_total);
     
-    
+    Hmesh = Hmesh/10; % mm -> cm
 
     figure('name',comment)
     for i = 1:8
@@ -48,18 +92,20 @@ function PULSE_support_plot_results(results_dir,chemical_species,...
         var_print(var_print<0) = 0;
              
         subplot(3,3,i)
-        surf(Tmesh,Hmesh,var_print)
+        
+        surf(Hmesh,Tmesh,var_print)
         grid on
         if i == 3
             hold on
-            if Obs_exist_flag
-                h1 = scatter3(X_obs_mesh,...
-                              Y_obs_mesh,...
-                              Z_obs_mesh,...
+            %if Obs_exist_flag
+            Y_obs_mesh = 111 - Y_obs_mesh;
+                h1 = scatter3(Y_obs_mesh,...
+                              X_obs_mesh,...
+                              -1*ones(size(Y_obs_mesh)),...
                               Marsize_obs_mesh,...
                                 colvec,...
-                                'filled','markeredgecolor','b');
-            end
+                                'filled','markeredgecolor','k');
+            %end
             cmax_i = cmax_ctotal;          
         %elseif i == 4 || i == 5
         %    cmax_i = 1;
@@ -67,27 +113,27 @@ function PULSE_support_plot_results(results_dir,chemical_species,...
             cmax_i = max(max(var_print));
             cmin_i = min(min(var_print));
         end
-        xlim([min(Tmesh(:,1)) max(Tmesh(:,1))])
-        set(gca, 'XTick',linspace(min(Tmesh(:,1)),max(Tmesh(:,1)),6));
-        set(gca, 'XTickLabel',linspace(min(Tmesh(:,1)),max(Tmesh(:,1)),6));
-        ylim([0 max(Hmesh(1,:))])
-        datetick('x','mmm-dd','keepticks','keeplimits')  
+        ylim([min(Tmesh(:,1)) max(Tmesh(:,1))])
+        set(gca, 'YTick',linspace(min(Tmesh(:,1)),max(Tmesh(:,1)),6));
+        set(gca, 'YTickLabel',linspace(min(Tmesh(:,1)),max(Tmesh(:,1)),6));
+        xlim([0 max(Hmesh(1,:))])
+        datetick('y','mmm-dd','keepticks','keeplimits')  
         try
             caxis([cmin_i cmax_i])
         catch
         end
         %colormap(othercolor('Blues9'))
-        colorcode = 'RdBu'; % 'Blues' - liquid content, 'RdBu' - temperature
-        colorm = brewermap(200,colorcode);
-        colorm(1,1) = 0.8;
-        colorm(1,2) = 0.8;
-        colorm(1,3) = 0.8;
+        colorcode = 'YlOrRd'; % 'Blues' - liquid content, 'RdBu' - temperature
+        colorm = brewermap(num_bins,colorcode);
+        %colorm(1,1) = 0.8;
+        %colorm(1,2) = 0.8;
+        %colorm(1,3) = 0.8;
         colormap(colorm)
         hcb = colorbar;
         
-        view(0,90)
+        view(90,-90)
         %xlabel('Date')
-        ylabel('Snow height [mm]')
+        xlabel('Snowdepth [cm]')
         title(var_print_name,'Interpreter', 'none')
         shading interp
         set(gca, 'layer', 'top');
@@ -96,7 +142,7 @@ function PULSE_support_plot_results(results_dir,chemical_species,...
         
     end
     
-    Y_obs_mesh = Y_obs_mesh * 10; % cm -> mm
+    Y_obs_mesh = Y_obs_mesh; % cm -> mm
     
     %Model_data_interc = interp1(Data_time(1:end-1),Data(1:end-1),T_WQsort);
     Model_data_interc = interp2(Hmesh,Tmesh,c_total,Y_obs_mesh,X_obs_mesh);
