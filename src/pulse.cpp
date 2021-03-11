@@ -1,3 +1,17 @@
+// Copyright 2021: Diogo Costa
+
+// This program, PULSE_cpp, is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) aNCOLS later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "pulse.h"
 
@@ -10,11 +24,11 @@ bool pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
 {
     // initiation
     double tcum = 0.f,
-            //q = 0.f, // melt volume/int
-            t = 0.f,
-            deltt = 1.0f, // time step calculated from the CFL condition
-            velc = 0.0f, // interstitial flow velocity [m s-1]
-            D = 0.0f; // dispersion coefficient [m2/s]
+        //q = 0.f, // melt volume/int
+        t = 0.f,
+        deltt = 1.0f, // time step calculated from the CFL condition
+        velc = 0.0f, // interstitial flow velocity [m s-1]
+        D = 0.0f; // dispersion coefficient [m2/s]
     std::string msg;  
     std::chrono::duration<double> elapsed_seconds;
     auto start = std::chrono::system_clock::now();
