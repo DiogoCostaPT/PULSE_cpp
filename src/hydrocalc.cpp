@@ -301,37 +301,6 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
         return err_flag;
     }
     
-<<<<<<< HEAD
-    if (gv.q_i>0.0f && gv.layer_incrmt>=gv.snowh){ // MELT - remove layer
-        
-         // add all immobile and solid slow that melted from the last cell) 
-        //(*gv.c_m)(arma::span(0,gv.nl-1),1) = ((*gv.c_m)(arma::span(0,gv.nl-1),0) * gv.vfrac_m_prev
-        //    + (*gv.c_s)(arma::span(0,gv.nl-1),0) * gv.vfrac_s_prev
-        //    + (*gv.c_i)(arma::span(0,gv.nl-1),0) * gv.vfrac_i_prev ) / gv.vfrac_m; // gv.vfrac_m;
-
-        //(*gv.c_m)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell_prev)) *= 0;
-        //(*gv.c_s)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell_prev)) *= 0;
-        //(*gv.c_i)(arma::span(0,gv.nl-1),arma::span(0,gv.upperboundary_cell_prev)) *= 0;
-        
-        gv.nh--; // remove one layer
-        gv.wetfront_cell--;
-        gv.wetfront_cell_prev--;
-        gv.snowH -= gv.snowh; // snowpack depth
-        gv.wetfront_z -= gv.snowh;
-        gv.layer_incrmt -= gv.snowh;
-        
-        //gv.upperboundary_cell_prev = gv.upperboundary_cell; // wetting fron cell in the previous time step
-        //gv.upperboundary_z =  std::fmax(gv.upperboundary_z - (*q) * (*deltt),0.0f);
-        //tmp_int = int(std::round(gv.nh-gv.upperboundary_z/gv.snowh));
-        //gv.upperboundary_cell = std::min(tmp_int,nh_l); // in what cell is the wetting front
-        //upperboundary_cell = [upperboundary_cell, upperboundary_cell_new];
-        
-        (*gv.c_m).shed_cols(0,0);
-        (*gv.c_i).shed_cols(0,0);
-        (*gv.c_s).shed_cols(0,0);
-        (*gv.exchange_si).shed_cols(0,0);
-        (*gv.exchange_im).shed_cols(0,0);
-=======
     //try{
         
         // Get input data at time and t-1
@@ -372,7 +341,6 @@ bool watermass_calc_external(globalvar& gv,globalpar& gp,double* deltt,
         // Identify top input (precipitation)
         int diff_num_snowlay = v_swe_ext_t.n_cols - (*gv.v_swe).n_cols;  
         if (diff_num_snowlay > 0){ // Precipitation
->>>>>>> 2d_compaction
             
             gv.nh += diff_num_snowlay; // remove_snow one layer
             gv.snowH += gv.snowh * diff_num_snowlay; // snowpack depth 
