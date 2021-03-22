@@ -1,3 +1,18 @@
+// Copyright 2021: Diogo Costa
+
+// This program, PULSE_cpp, is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) aNCOLS later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 
 #include "crank_nicholson_solve.h"
 
@@ -41,13 +56,15 @@ void crank_nicholson(globalvar& gv,double *deltt,double *v,double *D)
     }
 
     // 2) first row (y=1)
-    A(arma::span(0,nli-1),arma::span(0,nli-1)) = a1*arma::diagmat(arma::ones(1,nli)); //diagonal
+    A(arma::span(0,nli-1),arma::span(0,nli-1)) = A(arma::span(0,nli-1),arma::span(0,nli-1)) 
+                                                + a1*arma::diagmat(arma::ones(1,nli)); //diagonal
     A(0,0)=a1+a2-k3; // left corner
     A(nli-1,nli-1)=a2+a1-k3; // left corner
 
     
     // 3) last row (y=ny)
-    A(arma::span(nt-nli,nt-1),arma::span(nt-nli,nt-1)) = (a2+a3)*arma::diagmat(arma::ones(1,nli)); // diagonal !!!! CHECK IF IT SHOULDN'T BE "+=" (LINE ABOVE) INSTEAD OF "="
+    A(arma::span(nt-nli,nt-1),arma::span(nt-nli,nt-1)) = A(arma::span(nt-nli,nt-1),arma::span(nt-nli,nt-1))
+                            + (a2+a3)*arma::diagmat(arma::ones(1,nli)); // diagonal !!!! CHECK IF IT SHOULDN'T BE "+=" (LINE ABOVE) INSTEAD OF "="
     A(nt-1,nt-1)=a2+a3-k3; // right corner
     A(nt-nli,nt-nli)=a3+a2-k3; // left corner
 
@@ -65,18 +82,20 @@ void crank_nicholson(globalvar& gv,double *deltt,double *v,double *D)
 
     for(il=0;il<(nt/nli)-1 ;il++){         // inner cells - left and right marigns
         B(il*nli+1,il*nli)=0;
-        B(il*nli+1,il*nli+1)=A(il*nli+1,il*nli+1)-k3;
+        B(il*nli+1,il*nli+1)=B(il*nli+1,il*nli+1)-k3;
         B(il*nli+nli,il*nli+nli+1)=0;
-        B(il*nli+nli,il*nli+nli)=A(il*nli+nli,il*nli+nli)-k3;
+        B(il*nli+nli,il*nli+nli)=B(il*nli+nli,il*nli+nli)-k3;
     }
 
     // 2) first row (y=1)
-    B(arma::span(0,nli-1),arma::span(0,nli-1)) = (-a1)*arma::diagmat(arma::ones(1,nli)); //diagonal
+    B(arma::span(0,nli-1),arma::span(0,nli-1)) = B(arma::span(0,nli-1),arma::span(0,nli-1)) 
+                                                + (-a1)*arma::diagmat(arma::ones(1,nli)); //diagonal
     B(0,0)=-a1+a4+k3; // left corner
     B(nli-1,nli-1)=a4-a1+k3; // left corner
 
     // 3) last row (y=ny)
-    B(arma::span(nt-nli,nt-1),arma::span(nt-nli,nt-1)) =(a4-a3)*arma::diagmat(arma::ones(1,nli)); // diagonal !!!! CHECK IF IT SHOULDN'T BE "+=" (LINE ABOVE) INSTEAD OF "="
+    B(arma::span(nt-nli,nt-1),arma::span(nt-nli,nt-1)) = B(arma::span(nt-nli,nt-1),arma::span(nt-nli,nt-1))
+                        +(a4-a3)*arma::diagmat(arma::ones(1,nli)); // diagonal !!!! CHECK IF IT SHOULDN'T BE "+=" (LINE ABOVE) INSTEAD OF "="
     B(nt-1,nt-1)=a4-a3+k3; // right corner
     B(nt-nli,nt-nli)=-a3+a4+k3; // left corner
 
@@ -85,5 +104,6 @@ void crank_nicholson(globalvar& gv,double *deltt,double *v,double *D)
     arma::vec b=B*trans(c1);    // calculation of [b]
     arma::mat c2=arma::solve(A,b);     // calculation of c
     (*gv.c_m)(arma::span(0,nli-1),arma::span(0,gv.wetfront_cell-1)) = arma::reshape(c2,nli,nhi);
+
 
 }

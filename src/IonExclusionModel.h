@@ -13,21 +13,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef PULSEH__INCLUDED
-#define PULSEH__INCLUDED
-
-#include <armadillo>
+#ifndef IONEXCLUSIONMODELH_INCLUDED
+#define IONEXCLUSIONMODELH_INCLUDED
 
 #include "global.h"
-#include "toolbox.h"
-#include "hydroinput.h"
-#include "hydrocalc.h"
-#include "crank_nicholson_solve.h"
-#include "crank_nicholson_solve_hydr2D.h"
-#include "FEM_solver.h"
-#include "IonExclusionModel.h"
 
-bool pulsemodel(globalpar& gp,globalvar& gv,std::ofstream* logPULSEfile,
-        std::string* results_flname);
+void IonExclusionModel(globalpar& gp,globalvar& gv, double* deltt);
 
 #endif

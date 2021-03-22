@@ -1,0 +1,15 @@
+log.pulse
+CMakeFiles/
+Makefile
+cmake_install.cmake
+compile_commands.json
+pulse_cpp
+CMakeCache.txt
+Results/
+Results_backup/
+Results_backup2/
+bin/
+Sensitivity_analysis/
+nbproject
+log.pulse
+code_backups

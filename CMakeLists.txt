@@ -3,12 +3,13 @@ project(pulse_cpp)
 
 file(GLOB SOURCES "src/*.cpp")
 
-set(CXX g++)
+#set(CXX g++)
+#set(ARMA_USE_CXX11)
 set(ARMA_USE_LAPACK true)
 
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS "-O3")
-#set(CMAKE_CXX_FLAGS "-g3 -Wall -pedantic")
+#set(CMAKE_CXX_FLAGS "-O3")
+set(CMAKE_CXX_FLAGS "-g3 -Wall -pedantic")
 #set(CMAKE_CXX_FLAGS "-g ")
 #set(CMAKE_BUILD_TYPE RelWithDebInfo)
 
@@ -27,3 +28,6 @@ add_executable(pulse_cpp
 target_link_libraries(
         pulse_cpp
         ${ARMADILLO_LIBRARIES} )
+
+
+
