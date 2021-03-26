@@ -33,7 +33,7 @@ Linux
 	
 	https://cmake.org/files/
 	
-	Please make sure the cmake version is hogher than 3.10
+	Please make sure the cmake version is higher than 3.10
 	
 4.Compile
 	There is a CmakeLists.txt in the github repo. You could directly compile the application with the command
