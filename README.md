@@ -52,7 +52,7 @@ $ git branch -u origin/main main
 ```
 
 ## Compiling
-* CMake: CMakeList is provided
+* CMake: [CMakeLists.txt](CMakeLists.txt) is provided
 * Library dependencies: Armadillo 
 * CMake minimum version: 3.10
 
