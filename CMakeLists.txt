@@ -1,33 +1,59 @@
 cmake_minimum_required(VERSION 3.10)
-project(pulse_cpp)
 
-file(GLOB SOURCES "src/*.cpp")
+IF(UNIX)
+	IF (UNIX AND NOT APPLE)
+		MESSAGE(STATUS "current platform : Linux")
+	ELSEIF(APPLE)
+		MESSAGE(STATUS "current platform : MacOS")
+	ENDIF()
+	project(pulse_cpp)
 
-#set(CXX g++)
-#set(ARMA_USE_CXX11)
-set(ARMA_USE_LAPACK true)
+	file(GLOB SOURCES "src/*.cpp")
 
-set(CMAKE_CXX_STANDARD 11)
-#set(CMAKE_CXX_FLAGS "-O3")
-set(CMAKE_CXX_FLAGS "-g3 -Wall -pedantic")
-#set(CMAKE_CXX_FLAGS "-g ")
-#set(CMAKE_BUILD_TYPE RelWithDebInfo)
+	#set(CXX g++)
+	#set(ARMA_USE_CXX11)
+	set(ARMA_USE_LAPACK true)
 
-find_package(Armadillo REQUIRED)
-find_package(OpenMP)
+	set(CMAKE_CXX_STANDARD 11)
+	#set(CMAKE_CXX_FLAGS "-O3")
+	set(CMAKE_CXX_FLAGS "-g3 -Wall -pedantic")
+	#set(CMAKE_CXX_FLAGS "-g ")
+	#set(CMAKE_BUILD_TYPE RelWithDebInfo)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+	find_package(Armadillo REQUIRED)
+	find_package(OpenMP)
 
-include_directories(${AMRADILLO_INCLUDE_DIR})
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+	include_directories(${AMRADILLO_INCLUDE_DIR})
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+	add_executable(pulse_cpp ${SOURCES})
+	target_link_libraries(pulse_cpp ${ARMADILLO_LIBRARIES})
+	
+ELSE()	
+	MESSAGE(STATUS "curent platform : windows")
+	project(pulse_cpp)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+	file(GLOB SOURCES "src/*.cpp")
+	# Create Results folder if non-existant
+	set(ARMA_USE_LAPACK true)
+	
+	set(CMAKE_CXX_STANDARD 11)
+	set(CMAKE_CXX_FLAGS "-O3")
 
-add_executable(pulse_cpp
-        ${SOURCES})
+	# Packages
+	find_package(OpenMP)
 
-target_link_libraries(
-        pulse_cpp
-        ${ARMADILLO_LIBRARIES} )
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+	add_executable(pulse_cpp
+        	${SOURCES})
+
+
+	target_include_directories(pulse_cpp PUBLIC "I:/FLUXOS_cpp-master/Armadillo/include")
+
+
+ENDIF()
 
 
