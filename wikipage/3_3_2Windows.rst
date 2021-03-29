@@ -10,7 +10,7 @@ Windows
 	
 .. image:: windows1.PNG
 
-Install LAPACK from http://icl.cs.utk.edu/lapack-for-windows/clapack/index.html
+Install LAPACK referring to http://icl.cs.utk.edu/lapack-for-windows/lapack/#build
 
 Download "blas.lib", "libf2c.lib" and "lapack.lib". Remember the directory to the "lapack.lib"
 
