@@ -38,7 +38,6 @@ ELSE()
 	set(ARMA_USE_LAPACK true)
 	
 	set(CMAKE_CXX_STANDARD 11)
-	set(CMAKE_CXX_FLAGS "-O3")
 
 	# Packages
 	find_package(OpenMP)
@@ -50,8 +49,14 @@ ELSE()
 	add_executable(pulse_cpp
         	${SOURCES})
 
-	#please set the path to the "Armadillo/include" here
-	target_include_directories(pulse_cpp PUBLIC "I:/FLUXOS_cpp/Armadillo/include")
+	#please set the path to the "Armadillo/include", "liblapack.a" and "libblas.a"here
+	target_include_directories(pulse_cpp PUBLIC 
+		"I:/FLUXOS_cpp/Armadillo/include"
+		"I:/lapack-3.9.0/LAPACKE/include")
+
+	target_link_libraries(pulse_cpp
+		"C:/LAPACK/lib/liblapack.a"
+		"C:/LAPACK/lib/libblas.a")
 
 
 ENDIF()
