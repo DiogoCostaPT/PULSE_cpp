@@ -50,10 +50,8 @@ ELSE()
 	add_executable(pulse_cpp
         	${SOURCES})
 
-
-	target_include_directories(pulse_cpp PUBLIC "I:/FLUXOS_cpp-master/Armadillo/include")
+	#please set the path to the "Armadillo/include" here
+	target_include_directories(pulse_cpp PUBLIC "I:/FLUXOS_cpp/Armadillo/include")
 
 
 ENDIF()
-
-
