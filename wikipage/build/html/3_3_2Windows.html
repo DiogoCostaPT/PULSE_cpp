@@ -183,7 +183,6 @@
 </dd>
 </dl>
 <img alt="_images/windows1.PNG" src="_images/windows1.PNG" />
-<p>Install LAPACK from <a class="reference external" href="http://icl.cs.utk.edu/lapack-for-windows/clapack/index.html">http://icl.cs.utk.edu/lapack-for-windows/clapack/index.html</a></p>
 <p>Download “blas.lib”, “libf2c.lib” and “lapack.lib”. Remember the directory to the “lapack.lib”</p>
 <dl>
 <dt>2.OpenMP</dt><dd><p>We could build the C++ compiler with MinGW. Please install the Windows 64bit MinGW, otherwise you are likely meet problems when working with Armadillo library. Here is the link</p>
@@ -198,6 +197,17 @@
 <img alt="_images/windows3.PNG" src="_images/windows3.PNG" />
 <img alt="_images/windows2.PNG" src="_images/windows2.PNG" />
 <ol class="arabic" start="3">
+<li><p>LAPACK and BLAS</p>
+<blockquote>
+<div><p>This application needs LAPACK and BLAS to be installed and set manually on Windows. An instruction of installing with Windows CMake and Visual Studio can be found in</p>
+<p><a class="reference external" href="https://icl.cs.utk.edu/lapack-for-windows/lapack/#build">https://icl.cs.utk.edu/lapack-for-windows/lapack/#build</a></p>
+<p>It is also work to build with Unix Makefile. In the first figure below, after setting the build source directory and the build directory, press the “Configure”. Choose Unix Makefile as the generator. Doing the same thing as the guideline above. When finally press “Generate”, it produces “Makefile” instead of a “.sln” file. In the Windows cmd, input <code class="docutils literal notranslate"><span class="pre">make</span></code>, then <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">install</span></code> can build successfully.</p>
+</div></blockquote>
+</li>
+</ol>
+<img alt="lapack0.PNG" src="lapack0.PNG" />
+<img alt="lapack1.PNG" src="lapack1.PNG" />
+<ol class="arabic" start="4">
 <li><dl>
 <dt>cmake and compile</dt><dd><p>Before runing the cmake file, please write the armadillo include directory to the “target_include_directorties” and “lapack.lib” directory to the “target_link_libraries” in the cmake file. After that, open the cmd and go to the directroy of the “CmakeLists.txt”. Then</p>
 <p><code class="docutils literal notranslate"><span class="pre">cmake</span> <span class="pre">-G</span> <span class="pre">&quot;Unix</span> <span class="pre">Makefiles&quot;</span></code></p>
