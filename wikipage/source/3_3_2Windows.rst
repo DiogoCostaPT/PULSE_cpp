@@ -8,9 +8,7 @@ Windows
 	
 	After extract, copy the include folder to a convenient directory. We will need this directroy for the cmake file.
 	
-.. image:: windows1.PNG
-
-Install LAPACK from http://icl.cs.utk.edu/lapack-for-windows/clapack/index.html
+.. image:: windows1.PNG  
 
 Download "blas.lib", "libf2c.lib" and "lapack.lib". Remember the directory to the "lapack.lib"
 
@@ -33,7 +31,19 @@ Download "blas.lib", "libf2c.lib" and "lapack.lib". Remember the directory to th
 	
 .. image:: windows2.PNG
 
-3. cmake and compile
+3. LAPACK and BLAS
+	
+	This application needs LAPACK and BLAS to be installed and set manually on Windows. An instruction of installing with Windows CMake and Visual Studio can be found in 
+	
+	https://icl.cs.utk.edu/lapack-for-windows/lapack/#build
+	
+	It is also work to build with Unix Makefile. In the first figure below, after setting the build source directory and the build directory, press the "Configure". Choose Unix Makefile as the generator. Doing the same thing as the guideline above. When finally press "Generate", it produces "Makefile" instead of a ".sln" file. In the Windows cmd, input ``make``, then ``make install`` can build successfully.
+	
+.. image:: lapack0.PNG
+
+.. image:: lapack1.PNG
+
+4. cmake and compile
 	Before runing the cmake file, please write the armadillo include directory to the "target_include_directorties" and "lapack.lib" directory to the "target_link_libraries" in the cmake file. After that, open the cmd and go to the directroy of the "CmakeLists.txt". Then
 	
 	``cmake -G "Unix Makefiles"``
