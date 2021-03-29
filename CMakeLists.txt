@@ -38,6 +38,7 @@ ELSE()
 	set(ARMA_USE_LAPACK true)
 	
 	set(CMAKE_CXX_STANDARD 11)
+	set(CMAKE_CXX_FLAGS "-g3 -Wall -pedantic")
 
 	# Packages
 	find_package(OpenMP)
@@ -56,7 +57,8 @@ ELSE()
 
 	target_link_libraries(pulse_cpp
 		"C:/LAPACK/lib/liblapack.a"
-		"C:/LAPACK/lib/libblas.a")
-
-
+		"C:/LAPACK/lib/libblas.a"
+		"-lgfortran"
+		"-lquadmath")
+		
 ENDIF()
